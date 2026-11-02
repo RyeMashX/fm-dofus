@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm test
+      # Cache-busting : GitHub Pages garde CSS/JS 10 min en cache, on suffixe les URLs avec le commit
+      - run: |
+          V=${GITHUB_SHA::8}
+          sed -i "s#style\.css#style.css?v=$V#; s#src/ui\.js#src/ui.js?v=$V#" index.html
+          sed -i -E "s#from '(\./[a-z]+\.js)'#from '\1?v=$V'#g" src/*.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true
