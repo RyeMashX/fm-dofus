@@ -11,6 +11,8 @@
     "build": "node scripts/build-single.js"
   },
   "dependencies": {
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "pngjs": "^7.0.0",
+    "tesseract.js": "^7.0.0"
   }
 }

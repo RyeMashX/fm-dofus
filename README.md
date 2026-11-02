@@ -54,3 +54,12 @@ npm test        # suite de non-régression
 npm run serve   # http://localhost:8080
 npm run build   # dist/fm-dofus.html, page mono-fichier
 ```
+
+## Lecture d'écran (OCR)
+
+En vue FM, « Capturer le jeu » demande au navigateur de partager la fenêtre de Dofus (Chrome ou Edge ; sur Mac, autoriser l'enregistrement d'écran pour le navigateur dans les réglages système). Ensuite :
+
+- « Lire le tableau » lit Min / Max / valeur de chaque ligne du Cordomager et le reliquat, et propose de les appliquer (pour initialiser les jets ; relire après avoir fait défiler si l'objet a plus de lignes que l'écran).
+- « Lire la dernière pose » lit la dernière entrée de l'historique (colonne de gauche) et le reliquat, en déduit la rune, le résultat (SC, SN, EC) et les lignes tombées, et ouvre le panneau de vérification pré-rempli.
+
+L'OCR (tesseract.js) tourne dans le navigateur, rien n'est envoyé ailleurs ; le modèle français (~10 Mo) est téléchargé une fois puis mis en cache. Le lecteur est testé sur les captures de `ocr-samples/` : `node scripts/ocr-test.mjs`.

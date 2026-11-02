@@ -3,6 +3,8 @@ import * as FM from './engine.js';
 import * as Search from './search.js';
 import { STATS, STAT_BY_KEY, RUNES } from './stats.js';
 import { searchItems, iconUrl, labelOf } from './dofusdb.js';
+import * as Cap from './capture.js';
+import { interpretEntry } from './ocr.js';
 
 let root = document;   // document courant : la page, ou la fenêtre flottante (PiP)
 const $ = sel => root.querySelector(sel);
@@ -75,7 +77,7 @@ function renderAll() {
   $$('#view-switch button').forEach(b => b.classList.toggle('on', b.dataset.view === S.settings.view));
   $('#reliquat').value = S.reliquat;
   $('#item-chip').textContent = `${S.template.name} · niv. ${S.item.level}`;
-  if (fm) { renderPose(); renderHistory(); renderAdvice(); }
+  if (fm) { renderPose(); renderHistory(); renderAdvice(); renderCaptureButtons(); }
   else renderItem();
   $('#top-select').value = String(S.settings.top);
   const ss = $('#samples-select'); ss.value = String(S.settings.samples); if (!ss.value) { ss.value = '1500'; S.settings.samples = 1500; }
@@ -307,6 +309,102 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
   save(); renderLossPanel(); renderAll();
   if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice(true);
   else if (S.settings.view === 'fm') $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- Lecture d'écran (capture de fenêtre + OCR) --------------------------------
+let lastEntryKey = null;
+const screenStatus = msg => { const el = $('#screen-status'); if (el) el.textContent = msg; };
+function renderCaptureButtons() {
+  const on = Cap.isCapturing();
+  const start = $('#cap-start'); if (!start) return;
+  start.textContent = on ? 'Arrêter la capture' : 'Capturer le jeu';
+  start.classList.toggle('hidden', !Cap.isSupported());
+  $('#cap-table').classList.toggle('hidden', !on);
+  $('#cap-pose').classList.toggle('hidden', !on);
+  if (!Cap.isSupported()) screenStatus('Capture de fenêtre non disponible dans ce navigateur (Chrome ou Edge conseillés).');
+}
+document.querySelector('#cap-start').onclick = async () => {
+  if (Cap.isCapturing()) { Cap.stopCapture(); renderCaptureButtons(); screenStatus(''); return; }
+  try {
+    const { width, height } = await Cap.startCapture(() => { renderCaptureButtons(); screenStatus('Capture terminée.'); });
+    screenStatus(`Fenêtre capturée (${width}×${height}). Ouvre le Cordomager avec l'historique visible.`);
+  } catch (e) { screenStatus('Capture refusée : ' + e.message); }
+  renderCaptureButtons();
+};
+const progress = m => { if (m?.status === 'loading tesseract core' || m?.status?.includes('loading language')) screenStatus(`Chargement de l'OCR… ${Math.round((m.progress || 0) * 100)} %`); };
+
+async function readAndRender(kind) {
+  const out = $('#screen-out');
+  out.innerHTML = '<p class="muted small">Lecture…</p>';
+  let r;
+  try { r = await Cap.readGame(progress); }
+  catch (e) { out.innerHTML = `<p class="warn small">Lecture impossible : ${esc(e.message)}</p>`; return; }
+  screenStatus('');
+  if (r.error) { out.innerHTML = `<p class="warn small">${esc(r.error)}</p>`; return; }
+  if (kind === 'table') renderTableRead(r); else renderPoseRead(r);
+}
+document.querySelector('#cap-table').onclick = () => readAndRender('table');
+document.querySelector('#cap-pose').onclick = () => readAndRender('pose');
+
+// Lecture du tableau : propose les valeurs lues, ligne par ligne, puis les applique.
+function renderTableRead(r) {
+  const out = $('#screen-out');
+  const rows = [], used = new Set();
+  for (const l of S.item.lines) {
+    const cands = r.table.map((t, i) => ({ t, i })).filter(({ t, i }) => !used.has(i) && t.stat === l.stat && (t.min == null || l.min == null || (t.min === l.min && t.max === l.max)));
+    const pick = cands[0];
+    if (pick) used.add(pick.i);
+    rows.push({ stat: l.stat, old: l.value, nu: pick ? pick.t.value : null });
+  }
+  const unknown = r.table.filter((t, i) => !used.has(i));
+  const changes = rows.filter(x => x.nu != null && x.nu !== x.old);
+  out.innerHTML = `<div class="loss"><div class="row"><strong>Tableau lu</strong><span class="muted small">${rows.filter(x => x.nu != null).length}/${rows.length} lignes${r.reliquat != null ? ` · reliquat ${r.reliquat}` : ''}</span></div>
+    ${rows.map(x => `<div class="lrow"><span class="name">${esc(labelOf(x.stat))}</span><span class="val">${x.nu == null ? '<span class="muted">non lue</span>' : x.nu !== x.old ? `<span class="muted">${x.old} →</span> <b class="warn">${x.nu}</b>` : x.nu}</span></div>`).join('')}
+    ${unknown.length ? `<p class="muted small">Lignes lues sans correspondance : ${unknown.map(t => esc(t.label)).join(', ')}</p>` : ''}
+    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary" ${changes.length || r.reliquat != null ? '' : 'disabled'}>Appliquer</button></div></div>`;
+  $('#read-cancel').onclick = () => { out.innerHTML = ''; };
+  $('#read-apply').onclick = () => {
+    for (const x of rows) if (x.nu != null) S.item.lines.find(l => l.stat === x.stat).value = x.nu;
+    if (r.reliquat != null) { S.reliquat = r.reliquat; S.reliquatBefore = r.reliquat; }
+    save(); out.innerHTML = ''; renderAll();
+  };
+}
+
+// Lecture de la dernière pose : déduit la rune, le résultat et les pertes, puis ouvre le panneau de vérification.
+function renderPoseRead(r) {
+  const out = $('#screen-out');
+  const entry = r.history.at(-1);
+  if (!entry) { out.innerHTML = '<p class="warn small">Aucune entrée d\'historique lue. L\'historique (colonne de gauche) est-il visible ?</p>'; return; }
+  const key = JSON.stringify(entry) + '|' + r.reliquat;
+  const dup = key === lastEntryKey;
+  // rune posée : la ligne positive dont le bonus correspond à une rune ; sinon la rune en attente
+  let rune = pending;
+  for (const it of entry) if (it.delta > 0) { const cand = RUNES.find(x => x.stat === it.stat && x.bonus === it.delta); if (cand) { rune = cand; break; } }
+  const info = interpretEntry(entry, rune);
+  const txt = entry.map(it => it.reliquat ? (it.reliquat > 0 ? '+ reliquat' : '− reliquat') : `${it.delta > 0 ? '+' : ''}${it.delta} ${esc(labelOf(it.stat))}`).join(', ');
+  out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${esc(rune.name)} en ${info.outcome}</strong></div>
+    <div class="small">${txt}${r.reliquat != null ? ` · reliquat affiché ${r.reliquat}` : ' · <span class="warn">reliquat non lu</span>'}</div>
+    ${dup ? '<p class="warn small">Identique à la dernière pose appliquée : as-tu bien posé une nouvelle rune ?</p>' : ''}
+    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
+  $('#read-cancel').onclick = () => { out.innerHTML = ''; };
+  $('#read-apply').onclick = () => {
+    lastEntryKey = key; out.innerHTML = '';
+    pending = rune; renderPose();
+    if (info.outcome === 'SC') {
+      const res = FM.applyMove(state(), rune, Math.random, 'SC');
+      commit({ rune, outcome: 'SC', lines: res.item.lines, reliquat: r.reliquat ?? S.reliquat, changes: res.changes });
+      return;
+    }
+    startOutcome(info.outcome);
+    const d = lossDraft;
+    for (const [stat, delta] of Object.entries(info.deltas)) {
+      if (delta >= 0 || stat === rune.stat && info.outcome === 'SN') continue;
+      const l = d.lines.find(x => x.stat === stat);
+      if (l) d.deltas[stat] = -delta;
+    }
+    if (r.reliquat != null) d.newReliquat = r.reliquat;
+    renderLossPanel();
+  };
 }
 
 // ---- Historique ---------------------------------------------------------------
