@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM Dofus</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>FM Dofus</h1>
+  <span id="status" class="muted"></span>
+</header>
+
+<main>
+  <section id="search" class="card">
+    <h2>Objet</h2>
+    <input id="search-input" type="search" placeholder="Nom de l'objet (DofusDB)…" autocomplete="off">
+    <ul id="search-results" class="results"></ul>
+    <p class="muted small">Ou <button class="link" id="manual-item">créer un objet à la main</button>.</p>
+  </section>
+
+  <section id="item" class="card hidden">
+    <div class="item-head">
+      <img id="item-icon" alt="">
+      <div>
+        <h2 id="item-name"></h2>
+        <span id="item-meta" class="muted small"></span>
+      </div>
+      <div class="spacer"></div>
+      <label class="inline">Niveau <input id="item-level" type="number" min="1" max="200" class="num"></label>
+      <label class="inline">Reliquat <input id="reliquat" type="number" min="0" step="0.1" class="num"></label>
+      <button id="change-item" class="secondary">Changer d'objet</button>
+    </div>
+    <table id="lines"></table>
+    <div class="row">
+      <select id="exo-select"><option value="">+ Ajouter un exo…</option></select>
+      <span class="muted small">Une ligne vide dans le template se remplit normalement ; une stat absente est un exo.</span>
+    </div>
+  </section>
+
+  <section id="advice" class="card hidden">
+    <div class="row">
+      <h2>Prochain coup</h2>
+      <div class="spacer"></div>
+      <label class="inline small">Afficher
+        <select id="top-select"><option value="1">le meilleur</option><option value="3">top 3</option></select>
+      </label>
+      <label class="inline small">Précision
+        <select id="samples-select"><option value="500">rapide</option><option value="1500" selected>normale</option><option value="5000">fine</option></select>
+      </label>
+      <button id="advise" class="primary">Calculer</button>
+    </div>
+    <div id="advice-out"></div>
+  </section>
+
+  <section id="pose" class="card hidden">
+    <h2>Pose</h2>
+    <div class="row">
+      <select id="rune-stat"></select>
+      <div id="rune-tiers" class="tiers"></div>
+      <div class="spacer"></div>
+      <span id="rune-odds" class="odds"></span>
+    </div>
+    <div class="row">
+      <span class="muted small">Résultat dans le jeu :</span>
+      <button class="sc" data-outcome="SC">Succès critique</button>
+      <button class="sn" data-outcome="SN">Succès neutre</button>
+      <button class="ec" data-outcome="EC">Échec critique</button>
+      <div class="spacer"></div>
+      <button id="simulate" class="secondary" title="Tire le résultat et les pertes avec le moteur (pour tester sans le jeu)">Simuler</button>
+    </div>
+    <div id="loss-panel" class="hidden"></div>
+  </section>
+
+  <section id="history" class="card hidden">
+    <div class="row"><h2>Historique</h2><div class="spacer"></div>
+      <span id="history-stats" class="muted small"></span>
+      <button id="undo" class="secondary">Annuler la dernière pose</button>
+      <button id="reset" class="secondary">Recommencer</button>
+    </div>
+    <ol id="history-list"></ol>
+  </section>
+</main>
+
+<footer class="muted small">
+  Modèle de probabilités et de pertes reconstruit à partir du simulateur DoFocus (lectures du 2 nov. 2026). Données d'objets : DofusDB.
+  Ni Ankama ni DoFocus n'ont publié la formule officielle : les chances affichées sont une estimation.
+</footer>
+
+<script type="module" src="src/ui.js"></script>
+</body>
+</html>
