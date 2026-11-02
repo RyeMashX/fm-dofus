@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Aide à la forgemagie Dofus : probabilités, pertes et prochain meilleur coup",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test \"test/**/*.test.js\"",
     "try": "node scripts/try.js",
     "serve": "python3 -m http.server 8080",
     "build": "node scripts/build-single.js"
