@@ -21,9 +21,9 @@ let lossDraft = null;    // saisie des pertes en cours
 let lastAdvice = null;
 
 function blank() {
-  return { template: null, item: null, reliquat: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item' } };
+  return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item' } };
 }
-function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; return s; } catch { return null; } }
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; if (s && s.reliquatBefore == null) s.reliquatBefore = s.reliquat; return s; } catch { return null; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 const state = () => ({ item: S.item, reliquat: S.reliquat });
 const runeOf = (stat, tier) => RUNES.find(r => r.stat === stat && r.tier === tier);
@@ -222,7 +222,9 @@ function startOutcome(outcome) {
     if (t < 0) { lines.push({ stat: rune.stat, value: 0, min: null, max: null }); t = lines.length - 1; }
     lines[t].value += rune.bonus;
   }
-  lossDraft = { rune, outcome, lines, t, lossWeight: rune.weight * (half ? 0.5 : 1), newReliquat: S.reliquat, deltas: {} };
+  // « avant » = reliquat à la fin de la pose précédente ; « après » = ce que le jeu affiche maintenant
+  // (si la barre du haut a déjà été mise à jour, elle sert de valeur « après »)
+  lossDraft = { rune, outcome, lines, t, lossWeight: rune.weight * (half ? 0.5 : 1), before: S.reliquatBefore, newReliquat: S.reliquat, deltas: {} };
   renderLossPanel();
   $('#loss-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -232,7 +234,7 @@ function renderLossPanel() {
   if (!d) { p.classList.add('hidden'); p.innerHTML = ''; return; }
   p.classList.remove('hidden');
   const lost = Object.entries(d.deltas).reduce((a, [stat, n]) => a + n * STAT_BY_KEY[stat].weight, 0);
-  const expected = d.lossWeight + (d.newReliquat - S.reliquat);
+  const expected = d.lossWeight + (d.newReliquat - d.before);
   const gap = w1(lost - expected);
   const rows = d.lines.map((l, i) => {
     const n = d.deltas[l.stat] || 0;
@@ -246,16 +248,17 @@ function renderLossPanel() {
       <button data-minus="${l.stat}" data-n="1" ${canDrop ? '' : 'disabled'}>−1</button>${big ? `<button data-minus="${l.stat}" data-n="5" ${canDrop ? '' : 'disabled'}>−5</button>` : ''}<button data-minus="${l.stat}" data-n="-1" ${n > 0 ? '' : 'disabled'}>+</button>
       <span class="delta">${n ? `−${n} <span class="muted">(${w1(n * STAT_BY_KEY[l.stat].weight)})</span>` : ''}</span></div>`;
   }).join('');
-  const relDelta = w1(d.newReliquat - S.reliquat);
+  const relDelta = w1(d.newReliquat - d.before);
   p.innerHTML = `<div class="loss">
     <div class="row"><strong>${esc(d.rune.name)} en ${d.outcome}</strong><span class="muted small">poids à perdre ${d.lossWeight}</span><div class="spacer"></div>
-      <span class="relgrp"><span class="small">reliquat</span><button class="step small" id="lr-minus">−1</button><input id="loss-reliquat" class="num" type="number" step="1" min="0" value="${d.newReliquat}"><button class="step small" id="lr-plus">+1</button></span></div>
+      <span class="relgrp"><span class="small">reliquat</span><input id="loss-before" class="num small" type="number" step="1" min="0" value="${d.before}" title="reliquat avant la pose"><span class="muted">→</span><button class="step small" id="lr-minus">−1</button><input id="loss-reliquat" class="num" type="number" step="1" min="0" value="${d.newReliquat}" title="reliquat après la pose (affiché par le jeu)"><button class="step small" id="lr-plus">+1</button></span></div>
     <div>${rows}</div>
     <div class="check ${Math.abs(gap) < 0.01 ? 'ok' : 'warn'}">Retiré ${w1(lost)} · attendu ${w1(expected)} (rune ${d.lossWeight} ${relDelta >= 0 ? '+' : '−'} ${Math.abs(relDelta)} reliquat)${Math.abs(gap) < 0.01 ? ' · cohérent' : ` · écart ${gap > 0 ? '+' : ''}${gap}`}</div>
     <div class="row"><div class="spacer"></div><button id="loss-cancel" class="secondary small">Annuler</button><button id="loss-ok" class="primary">Valider</button></div>
   </div>`;
   const setRel = v => { d.newReliquat = Math.max(0, w1(Number(v) || 0)); renderLossPanel(); };
   $('#loss-reliquat').onchange = e => setRel(e.target.value);
+  $('#loss-before').onchange = e => { d.before = Math.max(0, w1(Number(e.target.value) || 0)); renderLossPanel(); };
   $('#lr-minus').onclick = () => setRel(d.newReliquat - 1);
   $('#lr-plus').onclick = () => setRel(d.newReliquat + 1);
   $$('#loss-panel button[data-minus]').forEach(b => b.onclick = () => bump(b.dataset.minus, +b.dataset.n));
@@ -266,7 +269,7 @@ function renderLossPanel() {
     const lines = d.lines.map(l => ({ ...l, value: l.value - (d.deltas[l.stat] || 0) }));
     for (const [stat, n] of Object.entries(d.deltas)) if (n) changes.push({ stat, delta: -n });
     lossDraft = null;
-    commit({ rune: d.rune, outcome: d.outcome, lines, reliquat: d.newReliquat, changes, gap });
+    commit({ rune: d.rune, outcome: d.outcome, lines, reliquat: d.newReliquat, changes, gap, reliquatBefore: d.before });
   };
 }
 function bump(stat, n) {
@@ -276,12 +279,13 @@ function bump(stat, n) {
   renderLossPanel();
 }
 
-function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0 }) {
+function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
   S.history.push({ id: Date.now(), rune: { stat: rune.stat, tier: rune.tier, name: rune.name }, outcome, changes,
-                   reliquatDelta: w1(reliquat - S.reliquat), simulated, gap,
-                   before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: S.reliquat } });
+                   reliquatDelta: w1(reliquat - reliquatBefore), simulated, gap,
+                   before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore, reliquatBefore: S.reliquatBefore } });
   S.item.lines = lines.filter(l => l.min != null || l.value > 0);
   S.reliquat = reliquat;
+  S.reliquatBefore = reliquat;
   save(); renderLossPanel(); renderAll();
   if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice();
 }
@@ -300,12 +304,12 @@ function renderHistory() {
 }
 $('#undo').onclick = () => {
   const e = S.history.pop(); if (!e) return;
-  S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; lastAdvice = null; save(); renderAll();
+  S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat; lastAdvice = null; save(); renderAll();
 };
 $('#reset').onclick = () => {
   if (!confirm('Remettre toutes les lignes à zéro et vider l\'historique ?')) return;
   S.item.lines = S.item.lines.filter(l => l.min != null).map(l => ({ ...l, value: 0 }));
-  S.reliquat = 0; S.history = []; lastAdvice = null; save(); renderAll();
+  S.reliquat = 0; S.reliquatBefore = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };
 
 function setStatus(msg) { const el = $('#status'); if (el) el.textContent = msg; }
