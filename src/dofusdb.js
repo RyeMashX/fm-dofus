@@ -32,9 +32,12 @@ export const EFFECTS = {
   111: ['pa', 1], 168: ['pa', -1], 1079: ['pa', -1],
 };
 
-// Types d'objets équipables (typeId DofusDB) : amulette, arc, baguette, bâton, dague, épée, marteau, pelle,
-// anneau, ceinture, bottes, chapeau, cape, hache, outil, pioche, faux, bouclier, dofus, trophée, prysmaradite…
-const EQUIP_TYPES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 19, 20, 21, 22, 82, 114, 151, 271];
+// Types d'objets équipables (typeId DofusDB, super-types amulette/arme/anneau/ceinture/bottes/bouclier/chapeau/cape/dofus) :
+// amulette, arc, baguette, bâton, dague, épée, marteau, pelle, anneau, ceinture, bottes, chapeau, cape, hache, outil,
+// pioche, faux, dofus, bouclier, arme magique, trophée, prysmaradite, lance.
+const EQUIP_TYPES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 19, 20, 21, 22, 23, 82, 114, 151, 217, 271];
+// Types d'armes (pour les runes de chasse).
+export const WEAPON_TYPES = new Set([2, 3, 4, 5, 6, 7, 8, 19, 20, 21, 22, 114, 271]);
 
 function effectToLine(e) {
   const map = EFFECTS[e.effectId];
@@ -53,7 +56,8 @@ export function itemToTemplate(it) {
     if (l) lines.push(l); else unknown.push(e.effectId);
   }
   return { id: it.id, name: it.name?.fr || it.name?.en || `#${it.id}`, level: it.level ?? 200,
-           type: it.type?.name?.fr || '', iconId: it.iconId, img: it.img, lines, unknown };
+           type: it.type?.name?.fr || '', typeId: it.typeId, weapon: WEAPON_TYPES.has(it.typeId),
+           iconId: it.iconId, img: it.img, lines, unknown };
 }
 
 const cache = new Map();
