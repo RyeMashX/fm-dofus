@@ -77,8 +77,14 @@ button:disabled { opacity: .4; cursor: default; }
 .chip .cn { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip .pc { color: var(--sc); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 2px; }
 .chip .pc.sn { color: var(--sn); } .chip .pc.ec { color: var(--ec); } .chip .pc.mix { color: var(--text); }
-.showsel label { display: inline-flex; align-items: center; gap: 2px; margin-right: 8px; cursor: pointer; }
-.showsel input { margin: 0 3px 0 0; accent-color: var(--accent); }
+.showsel { display: inline-flex; align-items: center; gap: 6px; }
+.showsel .tog { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.4; border: 1px solid var(--line); background: transparent; color: var(--muted); opacity: .55; cursor: pointer; }
+.showsel .tog + .tog { margin-left: 4px; }
+.showsel .tog[aria-pressed="true"] { opacity: 1; color: #fff; }
+.showsel .tog.sc[aria-pressed="true"] { background: var(--sc); border-color: var(--sc); }
+.showsel .tog.sn[aria-pressed="true"] { background: var(--sn); border-color: var(--sn); }
+.showsel .tog.ec[aria-pressed="true"] { background: var(--ec); border-color: var(--ec); }
+.showsel .tog:hover { opacity: 1; }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
 button.cta-cap:hover { background: var(--sc); color: #fff; }
 button.cta-auto { background: #1a1630; border-color: #8f7df0; color: #b8aaff; font-weight: 600; }

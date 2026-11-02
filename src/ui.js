@@ -114,7 +114,7 @@ function renderItem() {
   $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
   $('#item-level-text').textContent = S.item.level;
   const show = S.settings.show;
-  for (const k of ['sc', 'sn', 'ec']) { const cb = $('#show-' + k); if (cb) cb.checked = !!show[k]; }
+  for (const k of ['sc', 'sn', 'ec']) { const b = $('#show-' + k); if (b) b.setAttribute('aria-pressed', String(!!show[k])); }
   const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
   const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
@@ -165,7 +165,7 @@ $('#exo-select').onchange = e => {
   S.target[e.target.value] = S.target[e.target.value] ?? 1;
   save(); renderAll();
 };
-for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onchange = e => { S.settings.show[k] = e.target.checked; save(); renderItem(); };
+for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onclick = () => { S.settings.show[k] = !S.settings.show[k]; save(); renderItem(); };
 $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
 $('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu.')) { S = blank(); save(); renderAll(); } };
 
