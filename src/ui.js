@@ -127,10 +127,11 @@ $('#advise').onclick = () => {
   if (!Object.keys(S.target).length) { out.innerHTML = '<p class="muted">Renseigne au moins une cible (colonne « Cible »).</p>'; return; }
   out.innerHTML = '<p class="muted">Calcul…</p>';
   setTimeout(() => {
-    const res = Search.nextBestMoves(state(), S.target, { samples: S.settings.samples, top: S.settings.top, seed: Date.now() & 0xffff });
+    const res = Search.nextBestMoves(state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff });
     if (res.reached) { out.innerHTML = '<p class="ok">Cible atteinte sur toutes les lignes.</p>'; return; }
     if (!res.moves.length) { out.innerHTML = '<p class="muted">Aucune rune posable sur les lignes cibles (plafonds atteints ?).</p>'; return; }
-    out.innerHTML = `<div class="advice">${res.moves.map((m, k) => moveCard(m, k === 0)).join('')}</div>
+    const note = res.heavyFirst ? `<p class="warn small">Exo lourd en attente : il se pose avant tout le reste, chaque échec détruit jusqu'à ${res.moves[0].rune.weight} de poids sur l'objet. Les autres lignes attendront qu'il soit passé.</p>` : '';
+    out.innerHTML = `${note}<div class="advice">${res.moves.map((m, k) => moveCard(m, k === 0)).join('')}</div>
       <p class="muted small">Poses restantes estimées avant ce coup : ${res.h0.toFixed(1)}. Les chances sont celles du modèle, l'estimation du nombre de poses est indicative.</p>`;
     out.querySelectorAll('button[data-rune]').forEach(b => b.onclick = () => {
       const [stat, tier] = b.dataset.rune.split(':'); pending = { stat, tier: +tier }; renderPoseSelector();

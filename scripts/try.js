@@ -6,7 +6,7 @@ const belt={level:200,lines:[L('vita',325,301,350),L('fo',60,51,70),L('cha',60,5
  L('po',1,1,1),L('do_neutre',12,11,15),L('do_terre',12,11,15),L('do_eau',12,11,15),L('prospe',13,11,15),L('re_per_terre',6,5,7),L('re_cri',25,21,30)]};
 function run(target,state,label){
   console.time(label);
-  const r=S.nextBestMoves(state,target,{samples:1000,top:3});
+  const r=S.nextBestMoves(state,target,{samples:300,top:3});
   console.timeEnd(label);
   console.log(label,'h0=',r.h0?.toFixed(1));
   for(const m of r.moves) console.log(`  ${m.rune.name.padEnd(10)} SC ${FM.fmt(m.odds.sc)} SN ${FM.fmt(m.odds.sn)} EC ${FM.fmt(m.odds.ec)} | score ${m.score.toFixed(1)} net ${m.netGain.toFixed(2)} | P(abîme cible) ${(m.pHurtTarget*100).toFixed(0)}%`);

@@ -54,7 +54,7 @@ tr.neg td.stat { color: var(--muted); }
 .loss { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 10px; background: #15171b; }
 .loss table td { padding: 3px 8px; }
 .loss .delta { color: var(--ec); min-width: 32px; display: inline-block; text-align: right; }
-.loss .ok { color: var(--sc); } .loss .warn { color: var(--accent); }
+.ok { color: var(--sc); } .warn { color: var(--accent); }
 ol#history-list { margin: 6px 0 0; padding-left: 22px; }
 ol#history-list li { padding: 3px 0; font-size: 14px; }
 .tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 6px; }
