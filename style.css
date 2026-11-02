@@ -7,7 +7,8 @@ html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.
 main, header.top, footer, .reliquat { max-width: var(--w, 560px); }
 body.view-item { --w: 1060px; }
 body.view-fm { --w: 460px; }
-body.view-bilan, body.view-settings, body.view-search { --w: 560px; }
+body.view-bilan, body.view-search { --w: 560px; }
+body.view-settings { --w: 700px; }
 .gear { padding: 3px 8px; font-size: 15px; line-height: 1; }
 .seg button.glow { color: var(--sc); font-weight: 700; box-shadow: inset 0 0 0 1px var(--sc); animation: glow 1.6s ease-in-out infinite alternate; }
 .seg button.glow.on { background: var(--sc); color: #fff; animation: none; }
@@ -52,7 +53,9 @@ body.view-bilan, body.view-settings, body.view-search { --w: 560px; }
 .prow .name { font-size: 13px; }
 .pcell { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
 .pcell .cn { font-size: 12px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pcell input { width: 76px; }
+.pcell input { width: 72px; flex: none; }
+.pcell .x3 { padding: 2px 5px; font-size: 11px; font-weight: 700; color: var(--accent); background: transparent; border-color: var(--line); }
+.pcell .x3:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 main { margin: 0 auto; padding: 0 10px 40px; }
 header.top { display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: 10px 10px 4px; }
 h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }

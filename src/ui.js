@@ -496,9 +496,14 @@ function renderSettings() {
   const list = STATS.filter(st => !q || norm(st.label).includes(norm(q)) || st.tiers.some(([n]) => norm(n).includes(norm(q))));
   $('#prices-list').innerHTML = list.map(st => `<div class="prow"><span class="name">${esc(st.label)}</span>${st.tiers.map(([name], k) => {
     const r = runeOf(st.key, k);
-    return `<label class="pcell">${runeImg(r, 'ricon sm')}<span class="cn">${esc(name)}</span><input type="number" class="num small" min="0" step="1" inputmode="numeric" data-id="${r.id}" value="${p[r.id] ?? ''}" placeholder="—"></label>`;
+    const lower = k > 0 ? runeOf(st.key, k - 1) : null;
+    return `<label class="pcell">${runeImg(r, 'ricon sm')}<span class="cn">${esc(name)}</span><input type="number" class="num small" min="0" step="1" inputmode="numeric" data-id="${r.id}" value="${p[r.id] ?? ''}" placeholder="—">${lower ? `<button type="button" class="x3" data-x3="${r.id}" data-from="${lower.id}" title="Craft : 3 × ${esc(lower.name)}">×3</button>` : ''}</label>`;
   }).join('')}</div>`).join('') || '<p class="muted small">Aucune rune ne correspond.</p>';
   $$('#prices-list input').forEach(i => i.onchange = e => setPrice(e.target.dataset.id, Number(e.target.value) || 0));
+  $$('#prices-list button[data-x3]').forEach(b => b.onclick = () => {
+    const from = prices()[b.dataset.from]; if (!(from > 0)) { setStatus('Renseigne d\'abord le prix de la rune inférieure.'); setTimeout(() => setStatus(''), 2500); return; }
+    setPrice(b.dataset.x3, from * 3); renderSettings();
+  });
 }
 document.querySelector('#prices-filter').oninput = () => renderSettings();
 document.querySelector('#prices-export').onclick = () => {
