@@ -2,7 +2,7 @@
 import * as FM from '../src/engine.js';
 import { RUNES } from '../src/stats.js';
 import { readFileSync } from 'node:fs';
-const j = JSON.parse(readFileSync('process.argv[2] || 'journals/2026-11-02-reine-et-strigide.json'')).entries.filter(e => e.odds && !e.odds.blocked && e.odds.regime !== 'exo');
+const j = JSON.parse(readFileSync(process.argv[2] || 'journals/2026-11-02-reine-et-strigide.json')).entries.filter(e => e.odds && !e.odds.blocked && e.odds.regime !== 'exo');
 const runeOf = e => RUNES.find(r => r.stat === e.rune.stat && r.tier === e.rune.tier);
 function ll(label) {
   let s = 0; const bins = {};
