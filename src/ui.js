@@ -67,6 +67,7 @@ function renderAll() {
   $('#reliquat-bar').classList.toggle('hidden', !has);
   if (!has) { $$('.view-item, .view-fm').forEach(s => s.classList.add('hidden')); return; }
   const fm = S.settings.view === 'fm';
+  document.body.className = fm ? 'view-fm' : 'view-item';
   $$('.view-item').forEach(s => s.classList.toggle('hidden', fm));
   $$('.view-fm').forEach(s => s.classList.toggle('hidden', !fm));
   $$('#view-switch button').forEach(b => b.classList.toggle('on', b.dataset.view === S.settings.view));
@@ -163,7 +164,8 @@ function renderAdvice() {
   out.innerHTML = note + `<div class="advice">${res.moves.map(m => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
-      <div class="h"><strong>${esc(m.rune.name)}</strong><span class="muted small">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}</span>${oddsText(m.odds)}</div>
+      <div class="h"><strong>${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
+      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span>≈ <b>${m.score.toFixed(1)}</b> poses restantes</span><span class="risk">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span></div>
     </div>`;

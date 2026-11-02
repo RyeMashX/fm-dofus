@@ -74,13 +74,16 @@ export function buildTables(state, target) {
         if (pass < 0.005) continue;
         // casse collatérale par tentative, en poses ; pour les runes lourdes (≥ 25) elle dépend de l'état
         // courant et se calcule dans estimateRemaining
-        const c = r.weight >= HEAVY ? 0 : (1 - o.sc / 100) * Math.max(0, r.weight - reliquat) * share / wpp;
+        const c = (1 - o.sc / 100) * Math.max(0, r.weight - reliquat) * share / wpp;
         const val = (1 + c + pass * Eof(Math.min(v + r.bonus, t))) / pass;
         if (val < best) { best = val; bestRune = r; }
       }
       E.set(v, best); choice.set(v, bestRune);
     }
-    const heavy = (choice.get(t - 1)?.weight ?? 0) >= HEAVY ? choice.get(t - 1) : null;
+    // "lourd" = exo hors template dont la rune pèse ≥ 25 (PA, PM, PO, invo à 1 %) ; une ligne du template
+    // qui est tombée se repasse normalement et ne relève pas de cette règle.
+    const isExo = !line || line.min == null;
+    const heavy = isExo && (choice.get(t - 1)?.weight ?? 0) >= HEAVY ? choice.get(t - 1) : null;
     tables[stat] = { t, lo, E, choice, heavy, Eof: v => v >= t ? 0 : E.get(Math.max(v, lo)) ?? BIG };
   }
   return { tables, share, wpp };
