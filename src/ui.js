@@ -77,23 +77,30 @@ function useTemplate(t) {
 }
 
 // ---- Vues ---------------------------------------------------------------------
-function setView(v) { S.settings.view = v; save(); renderAll(); }
+let settingsOpen = false;   // l'écran de réglages se superpose à la vue courante
+function setView(v) { S.settings.view = v; settingsOpen = false; save(); renderAll(); }
 $$('#view-switch button').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelector('#settings-btn').onclick = () => { settingsOpen = true; renderAll(); };
+document.querySelector('#settings-back').onclick = () => { settingsOpen = false; renderAll(); };
+document.querySelector('#bilan-prices').onclick = () => { settingsOpen = true; renderAll(); };
 
 function renderAll() {
   const has = !!S.item;
-  $('#search').classList.toggle('hidden', has);
+  const view = settingsOpen ? 'settings' : has ? S.settings.view : 'search';
+  root.body.className = 'view-' + view + (root !== document ? ' pip' : '');
+  $('#search').classList.toggle('hidden', view !== 'search');
   $('#view-switch').classList.toggle('hidden', !has);
-  $('#reliquat-bar').classList.toggle('hidden', !has);
-  if (!has) { $$('.view-item, .view-fm').forEach(s => s.classList.add('hidden')); return; }
-  const fm = S.settings.view === 'fm';
-  root.body.className = (fm ? 'view-fm' : 'view-item') + (root !== document ? ' pip' : '');
-  $$('.view-item').forEach(s => s.classList.toggle('hidden', fm));
-  $$('.view-fm').forEach(s => s.classList.toggle('hidden', !fm));
-  $$('#view-switch button').forEach(b => b.classList.toggle('on', b.dataset.view === S.settings.view));
+  $('#reliquat-bar').classList.toggle('hidden', !(view === 'item' || view === 'fm'));
+  for (const v of ['item', 'fm', 'bilan', 'settings']) $$('.view-' + v).forEach(s => s.classList.toggle('hidden', view !== v));
+  $$('#view-switch button').forEach(b => b.classList.toggle('on', !settingsOpen && b.dataset.view === S.settings.view));
+  if (view === 'settings') { renderSettings(); return; }
+  if (!has) return;
+  const reached = Object.keys(S.target).length > 0 && Search.targetReached(S.item, S.target);
+  $('#tab-bilan').classList.toggle('glow', reached);
   $('#reliquat').value = S.reliquat;
   $('#item-chip').textContent = `${S.template.name} · niv. ${S.item.level}`;
-  if (fm) { renderPose(); renderHistory(); renderAdvice(); }
+  if (view === 'fm') { renderPose(); renderHistory(); renderAdvice(); }
+  else if (view === 'bilan') renderBilan(reached);
   else renderItem();
   renderCaptureButtons();
   $('#top-select').value = String(S.settings.top);
@@ -444,6 +451,93 @@ function renderPoseRead(r) {
     <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
   $('#read-cancel').onclick = () => { out.innerHTML = ''; };
   $('#read-apply').onclick = apply;
+}
+
+// ---- Prix des runes (réglages) ------------------------------------------------
+const PKEY = 'fm-dofus:prices';
+function prices() { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch { return {}; } }
+function setPrice(id, v) { const p = prices(); if (v > 0) p[id] = v; else delete p[id]; try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch {} }
+const kamas = n => Math.round(n).toLocaleString('fr-FR') + ' k';
+function renderSettings() {
+  const p = prices(); const q = ($('#prices-filter').value || '').trim().toLowerCase();
+  const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const list = STATS.filter(st => !q || norm(st.label).includes(norm(q)) || st.tiers.some(([n]) => norm(n).includes(norm(q))));
+  $('#prices-list').innerHTML = list.map(st => `<div class="prow"><span class="name">${esc(st.label)}</span>${st.tiers.map(([name], k) => {
+    const r = runeOf(st.key, k);
+    return `<label class="pcell">${runeImg(r, 'ricon sm')}<span class="cn">${esc(name)}</span><input type="number" class="num small" min="0" step="1" inputmode="numeric" data-id="${r.id}" value="${p[r.id] ?? ''}" placeholder="—"></label>`;
+  }).join('')}</div>`).join('') || '<p class="muted small">Aucune rune ne correspond.</p>';
+  $$('#prices-list input').forEach(i => i.onchange = e => setPrice(e.target.dataset.id, Number(e.target.value) || 0));
+}
+document.querySelector('#prices-filter').oninput = () => renderSettings();
+document.querySelector('#prices-export').onclick = () => {
+  const blob = new Blob([JSON.stringify({ version: 1, prices: prices() }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fm-dofus-prix.json'; document.body.appendChild(a); a.click(); a.remove();
+};
+document.querySelector('#prices-import').onclick = () => document.querySelector('#prices-file').click();
+document.querySelector('#prices-file').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); const p = j.prices || j; const cur = prices(); for (const [id, v] of Object.entries(p)) if (Number(v) > 0) cur[id] = Number(v); localStorage.setItem(PKEY, JSON.stringify(cur)); renderSettings(); }
+  catch { alert('Fichier de prix illisible.'); }
+  e.target.value = '';
+};
+
+// ---- Bilan --------------------------------------------------------------------
+function bilanData() {
+  const h = S.history, p = prices();
+  const byRune = new Map(); const n = { SC: 0, SN: 0, EC: 0 };
+  let cost = 0, missing = new Set(), lostWeight = 0, simulated = 0;
+  let sumObs = 0, sumMean = 0, sumVar = 0, expSC = 0, expEC = 0, rated = 0;
+  for (const e of h) {
+    const r = runeOf(e.rune.stat, e.rune.tier); const id = r?.id ?? `${e.rune.stat}:${e.rune.tier}`;
+    const b = byRune.get(id) || { rune: r, name: e.rune.name, n: 0, SC: 0, SN: 0, EC: 0, cost: 0, unit: p[id] };
+    b.n++; b[e.outcome]++; n[e.outcome]++;
+    if (p[id] > 0) { b.cost += p[id]; cost += p[id]; } else missing.add(e.rune.name);
+    byRune.set(id, b);
+    if (e.simulated) simulated++;
+    for (const c of e.changes) if (c.delta < 0) lostWeight += -c.delta * STAT_BY_KEY[c.stat].weight;
+    // chance : résultat observé (SC +1, SN 0, EC −1) contre l'espérance au moment de la pose
+    try {
+      const o = FM.odds({ level: S.item.level, lines: e.before.lines }, r);
+      if (!o.blocked) {
+        const sc = o.sc / 100, ec = o.ec / 100, mean = sc - ec, v = e.outcome === 'SC' ? 1 : e.outcome === 'EC' ? -1 : 0;
+        sumObs += v; sumMean += mean; sumVar += (sc + ec) - mean * mean; expSC += sc; expEC += ec; rated++;
+      }
+    } catch {}
+  }
+  const z = sumVar > 0 ? (sumObs - sumMean) / Math.sqrt(sumVar) : 0;
+  let expectedAtStart = null;
+  try { if (h.length && Object.keys(S.target).length) expectedAtStart = Search.estimateRemaining({ item: { level: S.item.level, lines: h[0].before.lines }, reliquat: h[0].before.reliquat }, S.target); } catch {}
+  const ms = h.length > 1 ? h.at(-1).id - h[0].id : 0;
+  return { h, n, byRune: [...byRune.values()].sort((a, b) => b.cost - a.cost || b.n - a.n), cost, missing: [...missing], lostWeight: w1(lostWeight), simulated,
+           luck: { z, expSC, expEC, rated }, expectedAtStart, ms };
+}
+const luckLabel = z => z >= 2 ? 'très chanceux' : z >= 1 ? 'chanceux' : z > -1 ? 'dans la norme' : z > -2 ? 'malchanceux' : 'très malchanceux';
+function renderBilan(reached) {
+  const d = bilanData(); const out = $('#bilan-out');
+  const miss = Object.keys(S.target).length ? Search.missing(S.item, S.target) : [];
+  $('#bilan-state').innerHTML = reached ? '<span class="ok">✓ cible atteinte</span>' : Object.keys(S.target).length ? `<span class="muted">en cours · ${miss.length} ligne${miss.length > 1 ? 's' : ''} à finir</span>` : '<span class="muted">pas de cible</span>';
+  if (!d.h.length) { out.innerHTML = '<p class="muted small">Aucune pose pour l\'instant.</p>'; return; }
+  const N = d.h.length, L = d.luck;
+  const pc = k => Math.round(d.n[k] / N * 100);
+  const dur = d.ms ? (d.ms >= 3600e3 ? `${Math.floor(d.ms / 3600e3)} h ${String(Math.round(d.ms % 3600e3 / 60e3)).padStart(2, '0')}` : `${Math.round(d.ms / 60e3)} min`) : '—';
+  const zc = Math.max(-3, Math.min(3, L.z));
+  out.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="v">${N}</div><div class="l">runes posées${d.expectedAtStart != null ? `<br><span class="muted">≈ ${d.expectedAtStart.toFixed(0)} attendues au départ</span>` : ''}</div></div>
+      <div class="kpi"><div class="v">${d.cost ? kamas(d.cost) : '—'}</div><div class="l">coût total${d.missing.length ? `<br><span class="warn">${d.missing.length} rune${d.missing.length > 1 ? 's' : ''} sans prix</span>` : d.cost ? `<br><span class="muted">${kamas(d.cost / N)} par pose</span>` : '<br><span class="muted">renseigne les prix</span>'}</div></div>
+      <div class="kpi"><div class="v"><span class="odds"><b>${pc('SC')} %</b> <i>${pc('SN')} %</i> <s>${pc('EC')} %</s></span></div><div class="l">SC · SN · EC<div class="bar"><i class="sc" style="width:${pc('SC')}%"></i><i class="sn" style="width:${pc('SN')}%"></i><i class="ec" style="width:${pc('EC')}%"></i></div></div></div>
+      <div class="kpi luck"><div class="v ${L.z >= 1 ? 'ok' : L.z <= -1 ? 'bad' : ''}">${L.z >= 0 ? '+' : '−'}${Math.abs(L.z).toFixed(1).replace('.', ',')} σ</div><div class="l">${luckLabel(L.z)}
+        <div class="gauge"><i style="left:${((zc + 3) / 6 * 100).toFixed(1)}%"></i></div>
+        <span class="muted">SC ${d.n.SC} obtenu${d.n.SC > 1 ? 's' : ''} pour ${L.expSC.toFixed(1).replace('.', ',')} attendu${L.expSC >= 2 ? 's' : ''} · EC ${d.n.EC} pour ${L.expEC.toFixed(1).replace('.', ',')}</span></div></div>
+      <div class="kpi"><div class="v">${String(d.lostWeight).replace('.', ',')}</div><div class="l">poids détruit par les échecs</div></div>
+      <div class="kpi"><div class="v">${String(S.reliquat).replace('.', ',')}</div><div class="l">reliquat final</div></div>
+      <div class="kpi"><div class="v">${dur}</div><div class="l">durée de la session${d.simulated ? `<br><span class="warn">${d.simulated} pose${d.simulated > 1 ? 's' : ''} simulée${d.simulated > 1 ? 's' : ''}</span>` : ''}</div></div>
+    </div>
+    <h3>Par rune</h3>
+    <div class="rtable">${d.byRune.map(b => `<div class="rrow">${runeImg(b.rune, 'ricon sm')}<span class="cn">${esc(b.name)}</span><span class="cnt">× ${b.n}</span>
+      <span class="tags"><span class="tag SC">${b.SC}</span><span class="tag SN">${b.SN}</span><span class="tag EC">${b.EC}</span></span>
+      <span class="cost">${b.unit > 0 ? `<span class="muted small">${kamas(b.unit)} ×</span> ${kamas(b.cost)}` : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>
+    <p class="muted small">Indice de chance : écart entre les résultats obtenus (SC = +1, SN = 0, EC = −1) et leur espérance d'après le modèle au moment de chaque pose, en écarts-types. Au-delà de ±1 σ, la session sort de la zone habituelle ; ±2 σ est rare (environ 1 session sur 20).</p>`;
 }
 
 // ---- Historique ---------------------------------------------------------------

@@ -15,7 +15,9 @@
   <div id="view-switch" class="seg hidden">
     <button data-view="item">Objet</button>
     <button data-view="fm">FM</button>
+    <button data-view="bilan" id="tab-bilan">Bilan</button>
   </div>
+  <button id="settings-btn" class="secondary small gear" title="Réglages : prix des runes">⚙</button>
 </header>
 
 <div id="reliquat-bar" class="reliquat hidden">
@@ -104,6 +106,25 @@
     <div class="row small"><span id="journal-stats" class="muted"></span><div class="spacer"></div>
       <button id="journal-export" class="secondary small" title="Télécharge le journal (JSON) pour analyse">Exporter le journal</button>
       <button id="journal-clear" class="link small">vider</button></div>
+  </section>
+
+  <!-- Bilan -->
+  <section id="bilan" class="card view-bilan hidden">
+    <div class="row"><h2>Bilan</h2><span id="bilan-state" class="small"></span><div class="spacer"></div>
+      <button id="bilan-prices" class="link small">prix des runes</button></div>
+    <div id="bilan-out"></div>
+  </section>
+
+  <!-- Réglages -->
+  <section id="settings" class="card view-settings hidden">
+    <div class="row"><h2>Prix des runes</h2><div class="spacer"></div>
+      <button id="prices-export" class="secondary small" title="Télécharge les prix (JSON)">Exporter</button>
+      <button id="prices-import" class="secondary small" title="Charge un fichier de prix (JSON)">Importer</button>
+      <input id="prices-file" type="file" accept="application/json" class="hidden">
+      <button id="settings-back" class="primary small">Retour</button></div>
+    <p class="muted small">Prix unitaire en kamas, utilisé pour le coût total du bilan. Les prix sont conservés dans ce navigateur.</p>
+    <input id="prices-filter" type="search" placeholder="Filtrer (vitalité, do, ré…)" autocomplete="off">
+    <div id="prices-list"></div>
   </section>
 </main>
 

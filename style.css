@@ -7,6 +7,35 @@ html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.
 main, header.top, footer, .reliquat { max-width: var(--w, 560px); }
 body.view-item { --w: 1060px; }
 body.view-fm { --w: 460px; }
+body.view-bilan, body.view-settings, body.view-search { --w: 560px; }
+.gear { padding: 3px 8px; font-size: 15px; line-height: 1; }
+.seg button.glow { color: var(--sc); font-weight: 700; box-shadow: inset 0 0 0 1px var(--sc); animation: glow 1.6s ease-in-out infinite alternate; }
+.seg button.glow.on { background: var(--sc); color: #fff; animation: none; }
+@keyframes glow { from { background: transparent; } to { background: #17382a; } }
+/* Bilan */
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 12px; }
+.kpi { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.kpi .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.kpi .v.ok { color: var(--sc); } .kpi .v.bad { color: var(--ec); }
+.kpi .l { font-size: 12px; color: var(--text); margin-top: 2px; }
+.kpi .bar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; margin-top: 6px; background: #2a2d35; }
+.kpi.luck { grid-column: span 3; }
+.gauge { position: relative; height: 6px; margin: 6px 0 4px; border-radius: 3px; background: linear-gradient(90deg, var(--ec), #3a3d45 50%, var(--sc)); }
+.gauge i { position: absolute; top: -4px; width: 4px; height: 14px; margin-left: -2px; background: #fff; border-radius: 2px; box-shadow: 0 0 0 1px #000; }
+#bilan h3 { font-size: 13px; margin: 10px 0 4px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.rtable { display: flex; flex-direction: column; }
+.rrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid #22252c; }
+.rrow .cn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rrow .cnt { font-weight: 600; font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
+.rrow .tags { display: inline-flex; gap: 3px; }
+.rrow .tag { min-width: 22px; text-align: center; }
+.rrow .cost { width: 150px; text-align: right; font-variant-numeric: tabular-nums; }
+/* Réglages : prix */
+.prow { display: grid; grid-template-columns: 120px repeat(3, 1fr); gap: 6px; align-items: center; padding: 4px 0; border-top: 1px solid #22252c; }
+.prow .name { font-size: 13px; }
+.pcell { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.pcell .cn { font-size: 12px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcell input { width: 76px; }
 main { margin: 0 auto; padding: 0 10px 40px; }
 header.top { display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: 10px 10px 4px; }
 h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }
@@ -147,6 +176,7 @@ ol#history-list li { padding: 2px 0; font-size: 13px; }
 .tag { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
 .tag.SC { background: var(--sc); color: #fff; } .tag.SN { background: var(--sn); color: #fff; } .tag.EC { background: var(--ec); color: #fff; }
 
+@media (max-width: 480px) { .kpis { grid-template-columns: repeat(2, 1fr); } .kpi.luck { grid-column: span 2; } .rrow .cost { width: 120px; } .prow { grid-template-columns: 1fr; } }
 @media (max-width: 700px) {
   .line { flex-direction: column; align-items: stretch; gap: 4px; }
   .line .l1 { width: auto; }
