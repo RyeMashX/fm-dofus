@@ -168,11 +168,13 @@ function renderAdvice() {
   if (res.reached) { out.innerHTML = '<p class="ok">Cible atteinte sur toutes les lignes.</p>'; return; }
   if (!res.moves.length) { out.innerHTML = '<p class="muted small">Aucune rune posable sur les lignes cibles (plafonds atteints ?).</p>'; return; }
   const note = res.heavyFirst ? `<p class="warn small">Exo lourd en attente : à poser avant tout le reste, chaque échec détruit jusqu'à ${res.moves[0].rune.weight} de poids sur l'objet.</p>` : '';
-  out.innerHTML = note + `<div class="advice">${res.moves.map(m => {
+  const best = res.moves[0].score;
+  out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
+    const tie = k > 0 && m.score - best < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}</div>
+      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ' · <span class="warn">nettoyage d\'over</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span>≈ <b>${m.score.toFixed(1)}</b> poses restantes</span><span class="risk">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span></div>
     </div>`;
