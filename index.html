@@ -9,8 +9,22 @@
 <body>
 <header class="top">
   <h1>FM Dofus</h1>
-  <span id="status" class="muted"></span>
+  <span id="status" class="muted small"></span>
+  <div class="spacer"></div>
+  <div id="view-switch" class="seg hidden">
+    <button data-view="item">Objet</button>
+    <button data-view="fm">FM</button>
+  </div>
 </header>
+
+<div id="reliquat-bar" class="reliquat hidden">
+  <span class="lbl">Reliquat</span>
+  <button id="rel-minus" class="step">−1</button>
+  <input id="reliquat" type="number" step="1" min="0" class="num" inputmode="decimal">
+  <button id="rel-plus" class="step">+1</button>
+  <div class="spacer"></div>
+  <span id="item-chip" class="chip"></span>
+</div>
 
 <main>
   <section id="search" class="card">
@@ -20,72 +34,66 @@
     <p class="muted small">Ou <button class="link" id="manual-item">créer un objet à la main</button>.</p>
   </section>
 
-  <section id="item" class="card hidden">
+  <!-- Vue Objet -->
+  <section id="item" class="card view-item hidden">
     <div class="item-head">
       <img id="item-icon" alt="">
-      <div>
+      <div class="grow">
         <h2 id="item-name"></h2>
-        <span id="item-meta" class="muted small"></span>
+        <div class="muted small"><span id="item-meta"></span> · niveau <span id="item-level-text"></span>
+          <button class="link small" id="item-level-edit">modifier</button>
+          <input id="item-level" type="number" class="num small hidden" min="1" max="200"></div>
       </div>
-      <div class="spacer"></div>
-      <label class="inline">Niveau <input id="item-level" type="number" min="1" max="200" class="num"></label>
-      <label class="inline">Reliquat <input id="reliquat" type="number" min="0" step="0.1" class="num"></label>
-      <button id="change-item" class="secondary">Changer d'objet</button>
+      <button id="change-item" class="secondary small">Changer</button>
     </div>
-    <table id="lines"></table>
+    <div class="legend small muted"><span><b class="cur-dot"></b> actuel</span><span><b class="tgt-dot"></b> cible</span><span><i class="sw sc"></i>SC <i class="sw sn"></i>SN <i class="sw ec"></i>EC</span></div>
+    <div id="lines"></div>
     <div class="row">
       <select id="exo-select"><option value="">+ Ajouter un exo…</option></select>
-      <span class="muted small">Une ligne vide dans le template se remplit normalement ; une stat absente est un exo.</span>
     </div>
   </section>
 
-  <section id="advice" class="card hidden">
+  <!-- Vue FM -->
+  <section id="advice" class="card view-fm hidden">
     <div class="row">
       <h2>Prochain coup</h2>
       <div class="spacer"></div>
-      <label class="inline small">Afficher
-        <select id="top-select"><option value="1">le meilleur</option><option value="3">top 3</option></select>
-      </label>
-      <label class="inline small">Précision
-        <select id="samples-select"><option value="500">rapide</option><option value="1500" selected>normale</option><option value="5000">fine</option></select>
-      </label>
+      <select id="top-select" class="small"><option value="1">meilleur</option><option value="3">top 3</option></select>
+      <select id="samples-select" class="small"><option value="500">rapide</option><option value="1500" selected>normal</option><option value="5000">fin</option></select>
       <button id="advise" class="primary">Calculer</button>
     </div>
     <div id="advice-out"></div>
   </section>
 
-  <section id="pose" class="card hidden">
-    <h2>Pose</h2>
+  <section id="pose" class="card view-fm hidden">
     <div class="row">
+      <div id="pose-rune" class="grow"></div>
+      <button class="link small" id="other-rune">autre rune</button>
+    </div>
+    <div id="rune-picker" class="row hidden">
       <select id="rune-stat"></select>
       <div id="rune-tiers" class="tiers"></div>
-      <div class="spacer"></div>
-      <span id="rune-odds" class="odds"></span>
     </div>
-    <div class="row">
-      <span class="muted small">Résultat dans le jeu :</span>
-      <button class="sc" data-outcome="SC">Succès critique</button>
-      <button class="sn" data-outcome="SN">Succès neutre</button>
-      <button class="ec" data-outcome="EC">Échec critique</button>
-      <div class="spacer"></div>
-      <button id="simulate" class="secondary" title="Tire le résultat et les pertes avec le moteur (pour tester sans le jeu)">Simuler</button>
+    <div class="outcomes">
+      <button class="sc" data-outcome="SC">SC</button>
+      <button class="sn" data-outcome="SN">SN</button>
+      <button class="ec" data-outcome="EC">EC</button>
+      <button id="simulate" class="secondary small" title="Tire le résultat et les pertes avec le moteur (test sans le jeu)">Simuler</button>
     </div>
     <div id="loss-panel" class="hidden"></div>
   </section>
 
-  <section id="history" class="card hidden">
-    <div class="row"><h2>Historique</h2><div class="spacer"></div>
-      <span id="history-stats" class="muted small"></span>
-      <button id="undo" class="secondary">Annuler la dernière pose</button>
-      <button id="reset" class="secondary">Recommencer</button>
+  <section id="history" class="card view-fm hidden">
+    <div class="row"><h2>Historique</h2><span id="history-stats" class="muted small"></span><div class="spacer"></div>
+      <button id="undo" class="secondary small">Annuler</button>
+      <button id="reset" class="secondary small">Recommencer</button>
     </div>
     <ol id="history-list"></ol>
   </section>
 </main>
 
 <footer class="muted small">
-  Modèle de probabilités et de pertes reconstruit à partir du simulateur DoFocus (lectures du 2 nov. 2026). Données d'objets : DofusDB.
-  Ni Ankama ni DoFocus n'ont publié la formule officielle : les chances affichées sont une estimation.
+  Modèle reconstruit à partir du simulateur DoFocus ; objets DofusDB. Formule officielle non publiée : les chances sont une estimation.
 </footer>
 
 <script type="module" src="src/ui.js"></script>
