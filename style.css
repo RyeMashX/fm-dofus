@@ -49,14 +49,15 @@ button:disabled { opacity: .4; cursor: default; }
 
 .item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .item-head img { width: 40px; height: 40px; }
-.legend { display: flex; gap: 12px; margin: 4px 0 8px; align-items: center; }
+.legend { display: flex; gap: 12px; margin: 4px 0 8px; align-items: center; flex-wrap: wrap; }
+.legend .recsw { display: inline-block; width: 14px; height: 9px; border: 1px solid var(--accent); border-radius: 2px; vertical-align: middle; margin-right: 4px; background: #1f1a10; }
 .legend b { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
 .cur-dot { background: var(--text); } .tgt-dot { background: var(--tgt); }
 .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; margin: 0 3px 0 6px; }
 .sw.sc { background: var(--sc); } .sw.sn { background: var(--sn); } .sw.ec { background: var(--ec); }
 
 /* Lignes de l'objet (vue Objet) */
-.line { border-top: 1px solid #22252c; padding: 5px 0; display: flex; align-items: center; gap: 12px; }
+.line { border-top: 1px solid #22252c; padding: 4px 0; display: flex; align-items: center; gap: 12px; }
 .line .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 390px; }
 .line .l2 { flex: 1; min-width: 0; margin-top: 0; }
 .line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -68,10 +69,12 @@ button:disabled { opacity: .4; cursor: default; }
 .line .tgt { color: var(--tgt); border-color: #6b5520; background: #1f1a10; }
 .line .tgt::placeholder { color: #6b5520; }
 .line .arrow { color: var(--muted); }
-.line .l2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.rune { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; font-size: 12px; }
+.line .l2 { display: flex; flex-direction: column; gap: 3px; }
+.rune { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 12px; padding: 1px 4px; border-radius: 4px; border: 1px solid transparent; }
+.rune.rec { border-color: var(--accent); background: #1f1a10; }
+.rune.rec .rn { color: var(--accent); font-weight: 700; }
 .rune .rn { color: var(--muted); width: 22px; text-align: right; }
-.rune .bar { flex: 1; height: 7px; border-radius: 4px; overflow: hidden; display: flex; background: #2a2d35; }
+.rune .bar { flex: 1; height: 6px; border-radius: 4px; overflow: hidden; display: flex; background: #2a2d35; }
 .rune .bar i { display: block; height: 100%; }
 .rune .pc { width: 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--sc); font-weight: 600; }
 .rune.max .pc { color: var(--muted); font-weight: 400; }

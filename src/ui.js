@@ -94,16 +94,21 @@ function renderItem() {
   $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
   $('#item-level-text').textContent = S.item.level;
   $('#item-level').value = S.item.level;
+  // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
+  let tables = null;
+  try { if (Object.keys(S.target).length) tables = Search.buildTables(state(), S.target).tables; } catch {}
   $('#lines').innerHTML = S.item.lines.map((l, i) => {
     const st = STAT_BY_KEY[l.stat];
     const exo = l.min == null;
     const tgt = S.target[l.stat];
     const done = tgt != null && l.value >= tgt;
+    const best = !done && tables?.[l.stat]?.choice.get(l.value) || null;
     const runes = st.tiers.map(([name], k) => {
       const o = FM.odds(S.item, runeOf(l.stat, k));
       const rn = k === 0 ? 'R' : k === 1 ? 'Pa' : 'Ra';
+      const rec = best && best.tier === k;
       return o.blocked ? `<div class="rune max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}"><span class="rn">${rn}</span><div class="bar"></div><span class="pc">MAX</span></div>`
-        : `<div class="rune" title="${esc(name)} : SC ${pct(o.sc)} % · SN ${pct(o.sn)} % · EC ${pct(o.ec)} %"><span class="rn">${rn}</span><div class="bar">${bar(o)}</div><span class="pc">${pct(o.sc)}</span></div>`;
+        : `<div class="rune ${rec ? 'rec' : ''}" title="${esc(name)} : SC ${pct(o.sc)} % · SN ${pct(o.sn)} % · EC ${pct(o.ec)} %${rec ? ' · rune conseillée' : ''}"><span class="rn">${rn}</span><div class="bar">${bar(o)}</div><span class="pc">${pct(o.sc)}</span></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
       <div class="l1"><span class="name" title="${esc(st.label)}">${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
