@@ -57,7 +57,7 @@ button:disabled { opacity: .4; cursor: default; }
 .sw.sc { background: var(--sc); } .sw.sn { background: var(--sn); } .sw.ec { background: var(--ec); }
 
 /* Lignes de l'objet (vue Objet) */
-.line { border-top: 1px solid #22252c; padding: 4px 0; display: flex; align-items: center; gap: 12px; }
+.line { border-top: 1px solid #22252c; padding: 5px 0; display: flex; align-items: center; gap: 12px; }
 .line .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 390px; }
 .line .l2 { flex: 1; min-width: 0; margin-top: 0; }
 .line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -69,7 +69,18 @@ button:disabled { opacity: .4; cursor: default; }
 .line .tgt { color: var(--tgt); border-color: #6b5520; background: #1f1a10; }
 .line .tgt::placeholder { color: #6b5520; }
 .line .arrow { color: var(--muted); }
-.line .l2 { display: flex; flex-direction: column; gap: 3px; }
+.line .l2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.ricon { width: 22px; height: 22px; vertical-align: middle; margin-right: 5px; image-rendering: auto; }
+.ricon.sm { width: 18px; height: 18px; margin-right: 4px; }
+.chip { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--card2); font-size: 12px; cursor: default; }
+.chip .ricon { margin-right: 2px; }
+.chip .pc { color: var(--sc); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 2px; }
+.chip.max { opacity: .45; } .chip.max .pc { color: var(--muted); font-weight: 400; }
+.chip.rec { border-color: var(--accent); background: #1f1a10; } .chip.rec .cn { color: var(--accent); font-weight: 700; }
+.chip .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; width: 200px; padding: 8px; background: #0f1013; border: 1px solid #3a3e4a; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+.chip:hover .pop { display: block; }
+.chip .pop .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+.chip .pop .bar i { display: block; height: 100%; }
 .rune { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 12px; padding: 1px 4px; border-radius: 4px; border: 1px solid transparent; }
 .rune.rec { border-color: var(--accent); background: #1f1a10; }
 .rune.rec .rn { color: var(--accent); font-weight: 700; }

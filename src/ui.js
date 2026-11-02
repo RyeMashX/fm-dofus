@@ -16,6 +16,7 @@ const pct = x => FM.fmt(x).toString().replace('.', ',');
 const w1 = x => Math.round(x * 100) / 100;
 const bar = o => `<i class="sc" style="width:${o.sc}%"></i><i class="sn" style="width:${o.sn}%"></i><i class="ec" style="width:${o.ec}%"></i>`;
 const oddsText = o => `<span class="odds"><b>SC ${pct(o.sc)}</b> · <i>SN ${pct(o.sn)}</i> · <s>EC ${pct(o.ec)}</s></span>`;
+const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
 // ---- État --------------------------------------------------------------------
 let S = load() || blank();
@@ -122,11 +123,12 @@ function renderItem() {
     const done = tgt != null && l.value >= tgt;
     const best = !done && tables?.[l.stat]?.choice.get(l.value) || null;
     const runes = st.tiers.map(([name], k) => {
-      const o = FM.odds(S.item, runeOf(l.stat, k));
-      const rn = k === 0 ? 'R' : k === 1 ? 'Pa' : 'Ra';
+      const r = runeOf(l.stat, k);
+      const o = FM.odds(S.item, r);
       const rec = best && best.tier === k;
-      return o.blocked ? `<div class="rune max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}"><span class="rn">${rn}</span><div class="bar"></div><span class="pc">MAX</span></div>`
-        : `<div class="rune ${rec ? 'rec' : ''}" title="${esc(name)} : SC ${pct(o.sc)} % · SN ${pct(o.sn)} % · EC ${pct(o.ec)} %${rec ? ' · rune conseillée' : ''}"><span class="rn">${rn}</span><div class="bar">${bar(o)}</div><span class="pc">${pct(o.sc)}</span></div>`;
+      if (o.blocked) return `<div class="chip max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">MAX</span></div>`;
+      return `<div class="chip ${rec ? 'rec' : ''}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">${pct(o.sc)}</span>
+        <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)}${rec ? '<div class="warn small">rune conseillée</div>' : ''}</div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
       <div class="l1"><span class="name" title="${esc(st.label)}">${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
@@ -190,7 +192,7 @@ function renderAdvice() {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
     const tie = k > 0 && m.score - best < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
-      <div class="h"><strong>${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
+      <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
       <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ' · <span class="warn">nettoyage d\'over</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span>≈ <b>${m.score.toFixed(1)}</b> poses restantes</span><span class="risk">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span></div>
@@ -204,8 +206,8 @@ function renderPose() {
   if (!pending) pending = runeOf(S.item.lines[0]?.stat ?? 'vita', 0);
   const o = FM.odds(S.item, pending);
   $('#pose-rune').innerHTML = o.blocked
-    ? `<strong>${esc(pending.name)}</strong> <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
-    : `<strong>${esc(pending.name)}</strong> <span class="muted small">+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)}`;
+    ? `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
+    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)}`;
   $$('#pose button[data-outcome]').forEach(b => b.disabled = !!o.blocked);
   $('#simulate').disabled = !!o.blocked;
   // sélecteur manuel
@@ -214,7 +216,7 @@ function renderPose() {
   const opt = k => `<option value="${k}" ${k === pending.stat ? 'selected' : ''}>${esc(labelOf(k))}</option>`;
   $('#rune-stat').innerHTML = `<optgroup label="Sur l'objet">${present.map(opt).join('')}</optgroup><optgroup label="Exo">${others.map(opt).join('')}</optgroup>`;
   const st = STAT_BY_KEY[pending.stat];
-  $('#rune-tiers').innerHTML = st.tiers.map(([name, bonus], k) => `<button class="small ${k === pending.tier ? 'on' : ''}" data-tier="${k}">${esc(name)} +${bonus}</button>`).join('');
+  $('#rune-tiers').innerHTML = st.tiers.map(([name, bonus], k) => `<button class="small ${k === pending.tier ? 'on' : ''}" data-tier="${k}">${runeImg(runeOf(pending.stat, k), 'ricon sm')}${esc(name)} +${bonus}</button>`).join('');
   $$('#rune-tiers button').forEach(b => b.onclick = () => { pending = runeOf(pending.stat, +b.dataset.tier); renderAdvice(); renderPose(); });
 }
 $('#other-rune').onclick = () => $('#rune-picker').classList.toggle('hidden');
@@ -401,7 +403,7 @@ function renderPoseRead(r) {
   for (const it of entry) if (it.delta > 0) { const cand = RUNES.find(x => x.stat === it.stat && x.bonus === it.delta); if (cand) { rune = cand; break; } }
   const info = interpretEntry(entry, rune);
   const txt = entry.map(it => it.reliquat ? (it.reliquat > 0 ? '+ reliquat' : '− reliquat') : `${it.delta > 0 ? '+' : ''}${it.delta} ${esc(labelOf(it.stat))}`).join(', ');
-  out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${esc(rune.name)} en ${info.outcome}</strong></div>
+  out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${runeImg(rune)}${esc(rune.name)} en ${info.outcome}</strong></div>
     <div class="small">${txt}${r.reliquat != null ? ` · reliquat affiché ${r.reliquat}` : ' · <span class="warn">reliquat non lu</span>'}</div>
     ${dup ? '<p class="warn small">Identique à la dernière pose appliquée : as-tu bien posé une nouvelle rune ?</p>' : ''}
     <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
@@ -439,7 +441,7 @@ function renderHistory() {
   $('#history-list').innerHTML = [...h].reverse().slice(0, 12).map(e => {
     const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(labelOf(c.stat))}`).join(', ');
     const rel = e.reliquatDelta ? ` · reliquat ${e.reliquatDelta > 0 ? '+' : ''}${e.reliquatDelta}` : '';
-    return `<li><span class="tag ${e.outcome}">${e.outcome}</span>${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span></li>`;
+    return `<li><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span></li>`;
   }).join('');
 }
 $('#undo').onclick = () => {
