@@ -50,10 +50,25 @@ $('#search-input').addEventListener('input', e => {
 });
 $('#manual-item').onclick = () => useTemplate({ id: null, name: 'Objet manuel', level: 200, type: '', lines: [], unknown: [], manual: true });
 
+// Cible par défaut : vita/fo/ine/cha/age → max − bonus de la Pa + 1 ; dommages, résistances %, cri → max ;
+// le reste → 1 (pas de ligne à 0). Lignes négatives ou à max nul : pas de cible.
+function autoTarget(lines) {
+  const target = {};
+  for (const l of lines) {
+    if (l.min == null || !(l.max > 0)) continue;
+    const st = STAT_BY_KEY[l.stat];
+    if (['vita', 'fo', 'ine', 'cha', 'age'].includes(l.stat)) target[l.stat] = Math.max(1, l.max - (st.tiers[1]?.[1] ?? 1) + 1);
+    else if (/^do|^re_per_|^cri$/.test(l.stat)) target[l.stat] = l.max;
+    else target[l.stat] = 1;
+  }
+  return target;
+}
+
 function useTemplate(t) {
   S = blank();
   S.template = t;
   S.item = { level: t.level, lines: t.lines.map(l => ({ stat: l.stat, value: 0, min: l.min, max: l.max })) };
+  S.target = autoTarget(S.item.lines);
   S.settings.view = 'item';
   pending = null; lastAdvice = null;
   $('#search-results').innerHTML = ''; $('#search-input').value = '';
@@ -77,8 +92,9 @@ function renderAll() {
   $$('#view-switch button').forEach(b => b.classList.toggle('on', b.dataset.view === S.settings.view));
   $('#reliquat').value = S.reliquat;
   $('#item-chip').textContent = `${S.template.name} · niv. ${S.item.level}`;
-  if (fm) { renderPose(); renderHistory(); renderAdvice(); renderCaptureButtons(); }
+  if (fm) { renderPose(); renderHistory(); renderAdvice(); }
   else renderItem();
+  renderCaptureButtons();
   $('#top-select').value = String(S.settings.top);
   const ss = $('#samples-select'); ss.value = String(S.settings.samples); if (!ss.value) { ss.value = '1500'; S.settings.samples = 1500; }
 }
@@ -143,6 +159,7 @@ $('#exo-select').onchange = e => {
   S.target[e.target.value] = S.target[e.target.value] ?? 1;
   save(); renderAll();
 };
+$('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
 $('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu.')) { S = blank(); save(); renderAll(); } };
 
 // ---- Vue FM : conseil ---------------------------------------------------------
@@ -314,28 +331,29 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
 
 // ---- Lecture d'écran (capture de fenêtre + OCR) --------------------------------
 let lastEntryKey = null;
-const screenStatus = msg => { const el = $('#screen-status'); if (el) el.textContent = msg; };
+const screenStatus = msg => { for (const id of ['#screen-status', '#screen-status-item']) { const el = $(id); if (el) el.textContent = msg; } };
+const screenOut = () => $(S.settings.view === 'fm' ? '#screen-out' : '#screen-out-item');
 function renderCaptureButtons() {
   const on = Cap.isCapturing();
-  const start = $('#cap-start'); if (!start) return;
-  start.textContent = on ? 'Arrêter la capture' : 'Capturer le jeu';
-  start.classList.toggle('hidden', !Cap.isSupported());
-  $('#cap-table').classList.toggle('hidden', !on);
-  $('#cap-pose').classList.toggle('hidden', !on);
+  for (const id of ['#cap-start', '#cap-start-item']) { const b = $(id); if (b) { b.textContent = on ? 'Arrêter la capture' : 'Capturer le jeu'; b.classList.toggle('hidden', !Cap.isSupported()); } }
+  for (const id of ['#cap-table', '#cap-pose', '#cap-table-item']) { const b = $(id); if (b) b.classList.toggle('hidden', !on); }
   if (!Cap.isSupported()) screenStatus('Capture de fenêtre non disponible dans ce navigateur (Chrome ou Edge conseillés).');
 }
-document.querySelector('#cap-start').onclick = async () => {
+async function toggleCapture() {
   if (Cap.isCapturing()) { Cap.stopCapture(); renderCaptureButtons(); screenStatus(''); return; }
   try {
     const { width, height } = await Cap.startCapture(() => { renderCaptureButtons(); screenStatus('Capture terminée.'); });
-    screenStatus(`Fenêtre capturée (${width}×${height}). Ouvre le Cordomager avec l'historique visible.`);
+    screenStatus(`Fenêtre capturée (${width}×${height}). Ouvre la fenêtre de forgemagie avec l'historique visible.`);
   } catch (e) { screenStatus('Capture refusée : ' + e.message); }
   renderCaptureButtons();
-};
+}
+document.querySelector('#cap-start').onclick = toggleCapture;
+document.querySelector('#cap-start-item').onclick = toggleCapture;
+document.querySelector('#cap-table-item').onclick = () => readAndRender('table');
 const progress = m => { if (m?.status === 'loading tesseract core' || m?.status?.includes('loading language')) screenStatus(`Chargement de l'OCR… ${Math.round((m.progress || 0) * 100)} %`); };
 
 async function readAndRender(kind) {
-  const out = $('#screen-out');
+  const out = screenOut();
   out.innerHTML = '<p class="muted small">Lecture…</p>';
   let r;
   try { r = await Cap.readGame(progress); }
@@ -349,7 +367,7 @@ document.querySelector('#cap-pose').onclick = () => readAndRender('pose');
 
 // Lecture du tableau : propose les valeurs lues, ligne par ligne, puis les applique.
 function renderTableRead(r) {
-  const out = $('#screen-out');
+  const out = screenOut();
   const rows = [], used = new Set();
   for (const l of S.item.lines) {
     const cands = r.table.map((t, i) => ({ t, i })).filter(({ t, i }) => !used.has(i) && t.stat === l.stat && (t.min == null || l.min == null || (t.min === l.min && t.max === l.max)));
@@ -373,7 +391,7 @@ function renderTableRead(r) {
 
 // Lecture de la dernière pose : déduit la rune, le résultat et les pertes, puis ouvre le panneau de vérification.
 function renderPoseRead(r) {
-  const out = $('#screen-out');
+  const out = screenOut();
   const entry = r.history.at(-1);
   if (!entry) { out.innerHTML = '<p class="warn small">Aucune entrée d\'historique lue. L\'historique (colonne de gauche) est-il visible ?</p>'; return; }
   const key = JSON.stringify(entry) + '|' + r.reliquat;
