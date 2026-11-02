@@ -1,0 +1,3098 @@
+{
+ "version": 1,
+ "exported": "2026-11-02T20:25:23.989Z",
+ "entries": [
+  {
+   "t": "2026-11-02T19:55:42.205Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 52,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 24,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "do_neutre",
+    "tier": 1,
+    "name": "Pa Do Neutre",
+    "bonus": 3,
+    "weight": 15
+   },
+   "odds": {
+    "sc": 43.00061021468493,
+    "sn": 50,
+    "ec": 6.999389785315067,
+    "regime": "normal",
+    "difficulty": 13.998779570630132,
+    "quality": 0.8537604456824512
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "do_neutre",
+     "delta": 3
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:55:51.220Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 52,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 24,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "do_eau",
+    "tier": 1,
+    "name": "Pa Do Eau",
+    "bonus": 3,
+    "weight": 15
+   },
+   "odds": {
+    "sc": 41.48627383442661,
+    "sn": 50,
+    "ec": 8.513726165573388,
+    "regime": "normal",
+    "difficulty": 17.027452331146772,
+    "quality": 0.8746518105849582
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "do_eau",
+     "delta": 3
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:56:06.555Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 52,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 24,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "do_terre",
+    "tier": 1,
+    "name": "Pa Do Terre",
+    "bonus": 3,
+    "weight": 15
+   },
+   "odds": {
+    "sc": 39.51712003730323,
+    "sn": 50,
+    "ec": 10.48287996269677,
+    "regime": "normal",
+    "difficulty": 20.965759925393535,
+    "quality": 0.8955431754874652
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_terre",
+     "delta": 3
+    },
+    {
+     "stat": "do_eau",
+     "delta": -3
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:56:12.753Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 52,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 24,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "do_eau",
+    "tier": 1,
+    "name": "Pa Do Eau",
+    "bonus": 3,
+    "weight": 15
+   },
+   "odds": {
+    "sc": 39.51712003730323,
+    "sn": 50,
+    "ec": 10.48287996269677,
+    "regime": "normal",
+    "difficulty": 20.965759925393535,
+    "quality": 0.8955431754874652
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "do_eau",
+     "delta": 3
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:56:29.470Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 52,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 24,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 25.424768805561943,
+    "ec": 72.57523119443806,
+    "regime": "step",
+    "difficulty": 165.53394985183482,
+    "quality": 0.8934993084370678
+   },
+   "outcome": "EC",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": -1
+    },
+    {
+     "stat": "re_cri",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:56:42.338Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 51,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 32,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 23,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 25.741230185086632,
+    "ec": 72.25876981491336,
+    "regime": "step",
+    "difficulty": 164.69005283976898,
+    "quality": 0.8893499308437067
+   },
+   "outcome": "EC",
+   "changes": [
+    {
+     "stat": "sa",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:57:14.372Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 310,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 51,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 31,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 23,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 2,
+    "name": "Ra Cha",
+    "bonus": 10,
+    "weight": 10
+   },
+   "odds": {
+    "sc": 38.16084120802091,
+    "sn": 50,
+    "ec": 11.839158791979088,
+    "regime": "normal",
+    "difficulty": 23.67831758395817,
+    "quality": 0.9073305670816044
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": 10
+    },
+    {
+     "stat": "vita",
+     "delta": -3
+    },
+    {
+     "stat": "sa",
+     "delta": -1
+    },
+    {
+     "stat": "prospe",
+     "delta": -3
+    }
+   ],
+   "after": {
+    "reliquat": 2.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:58:40.190Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 30,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 12,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 23,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 2.6
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 26.290160074635608,
+    "ec": 71.70983992536439,
+    "regime": "step",
+    "difficulty": 163.2262398009717,
+    "quality": 0.8816044260027662
+   },
+   "outcome": "EC",
+   "changes": [
+    {
+     "stat": "re_cri",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 1.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T19:58:55.274Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 30,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 12,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 22,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 1.6
+   },
+   "rune": {
+    "stat": "do_terre",
+    "tier": 0,
+    "name": "Do Terre",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 18.460715099188256,
+    "sn": 50,
+    "ec": 31.539284900811737,
+    "regime": "step",
+    "difficulty": 63.07856980162349,
+    "quality": 0.8807799442896935
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_terre",
+     "delta": 1
+    },
+    {
+     "stat": "fo",
+     "delta": -1
+    },
+    {
+     "stat": "sa",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 1.6
+   },
+   "gap": -1
+  },
+  {
+   "t": "2026-11-02T19:59:12.172Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 66,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 12,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 22,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0.6
+   },
+   "rune": {
+    "stat": "do_eau",
+    "tier": 0,
+    "name": "Do Eau",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 18.335545116672876,
+    "sn": 50,
+    "ec": 31.664454883327124,
+    "regime": "step",
+    "difficulty": 63.32890976665425,
+    "quality": 0.8821727019498606
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "do_eau",
+     "delta": 1
+    }
+   ],
+   "after": {
+    "reliquat": 0.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:00:22.039Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 66,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 12,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 22,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0.6
+   },
+   "rune": {
+    "stat": "do_neutre",
+    "tier": 0,
+    "name": "Do Neutre",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 17.676099020554823,
+    "sn": 50,
+    "ec": 32.32390097944517,
+    "regime": "step",
+    "difficulty": 64.64780195889035,
+    "quality": 0.8891364902506963
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_neutre",
+     "delta": 1
+    },
+    {
+     "stat": "do_eau",
+     "delta": -1
+    },
+    {
+     "stat": "re_cri",
+     "delta": -2
+    }
+   ],
+   "after": {
+    "reliquat": 4.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:00:43.290Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 66,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 12,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4.6
+   },
+   "rune": {
+    "stat": "do_eau",
+    "tier": 0,
+    "name": "Do Eau",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 18.208182376864638,
+    "sn": 50,
+    "ec": 31.79181762313536,
+    "regime": "step",
+    "difficulty": 63.583635246270724,
+    "quality": 0.8835654596100279
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_eau",
+     "delta": 1
+    },
+    {
+     "stat": "prospe",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 2.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:00:57.590Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 66,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 2.6
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 27.502664537698408,
+    "ec": 70.49733546230159,
+    "regime": "step",
+    "difficulty": 159.99289456613758,
+    "quality": 0.8857538035961272
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "fo",
+     "delta": 3
+    },
+    {
+     "stat": "do_neutre",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 4.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:01:02.307Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4.6
+   },
+   "rune": {
+    "stat": "do_neutre",
+    "tier": 0,
+    "name": "Do Neutre",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 18.208182376864638,
+    "sn": 50,
+    "ec": 31.79181762313536,
+    "regime": "step",
+    "difficulty": 63.583635246270724,
+    "quality": 0.8835654596100279
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "do_neutre",
+     "delta": 1
+    }
+   ],
+   "after": {
+    "reliquat": 4.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:03:25.548Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 307,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 61,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4.6
+   },
+   "rune": {
+    "stat": "vita",
+    "tier": 2,
+    "name": "Ra Vi",
+    "bonus": 50,
+    "weight": 10
+   },
+   "odds": {
+    "sc": 4.139504170095698,
+    "sn": 43.10462812757177,
+    "ec": 52.75586770233252,
+    "regime": "over",
+    "difficulty": 91.7209916598086,
+    "quality": 0.8962655601659751
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "vita",
+     "delta": 50
+    },
+    {
+     "stat": "cha",
+     "delta": -5
+    },
+    {
+     "stat": "do_terre",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 4.6
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:11:15.322Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 357,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 56,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4.6
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 0,
+    "name": "Cha",
+    "bonus": 1,
+    "weight": 1
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 15,
+    "ec": 83,
+    "regime": "normal",
+    "difficulty": 526.3565271357703,
+    "quality": 0.9017980636237898
+   },
+   "outcome": "EC",
+   "changes": [
+    {
+     "stat": "vita",
+     "delta": -6
+    }
+   ],
+   "after": {
+    "reliquat": 4.8
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:11:41.771Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 351,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 56,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4.8
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 1,
+    "name": "Pa Cha",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 10.821736432114847,
+    "sn": 50,
+    "ec": 39.17826356788515,
+    "regime": "normal",
+    "difficulty": 78.3565271357703,
+    "quality": 0.9017980636237898
+   },
+   "outcome": "EC",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": -3
+    }
+   ],
+   "after": {
+    "reliquat": 5.2
+   },
+   "gap": -0.4
+  },
+  {
+   "t": "2026-11-02T20:12:52.419Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 349,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 56,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 5.2
+   },
+   "rune": {
+    "stat": "do_terre",
+    "tier": 0,
+    "name": "Do Terre",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 17.758273766675146,
+    "sn": 50,
+    "ec": 32.241726233324854,
+    "regime": "step",
+    "difficulty": 64.48345246664971,
+    "quality": 0.888300835654596
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_terre",
+     "delta": 1
+    },
+    {
+     "stat": "vita",
+     "delta": -14
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 3
+  },
+  {
+   "t": "2026-11-02T20:13:06.937Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 335,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 56,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 1,
+    "name": "Pa Cha",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 10.4968462443995,
+    "sn": 50,
+    "ec": 39.50315375560049,
+    "regime": "normal",
+    "difficulty": 79.006307511201,
+    "quality": 0.9045643153526971
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": 3
+    },
+    {
+     "stat": "do_eau",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 2
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:13:17.800Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 335,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 69,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 59,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 2
+   },
+   "rune": {
+    "stat": "do_eau",
+    "tier": 0,
+    "name": "Do Eau",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 17.730976574021867,
+    "sn": 50,
+    "ec": 32.26902342597813,
+    "regime": "step",
+    "difficulty": 64.53804685195627,
+    "quality": 0.8885793871866295
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_eau",
+     "delta": 1
+    },
+    {
+     "stat": "fo",
+     "delta": -1
+    },
+    {
+     "stat": "cha",
+     "delta": -2
+    }
+   ],
+   "after": {
+    "reliquat": 0
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:13:31.500Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 335,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 68,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 57,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 1,
+    "name": "Pa Cha",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 8.660659524042828,
+    "sn": 50,
+    "ec": 41.33934047595717,
+    "regime": "normal",
+    "difficulty": 82.67868095191434,
+    "quality": 0.9031811894882434
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": 3
+    },
+    {
+     "stat": "fo",
+     "delta": -1
+    },
+    {
+     "stat": "re_per_terre",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 4
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:13:38.967Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 335,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 60,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 6,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 4
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 26.138677914822985,
+    "ec": 71.86132208517702,
+    "regime": "step",
+    "difficulty": 163.6301922271387,
+    "quality": 0.8838174273858921
+   },
+   "outcome": "EC",
+   "changes": [],
+   "after": {
+    "reliquat": 1
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:14:00.649Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 335,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 60,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 6,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 1
+   },
+   "rune": {
+    "stat": "cha",
+    "tier": 2,
+    "name": "Ra Cha",
+    "bonus": 10,
+    "weight": 10
+   },
+   "odds": {
+    "sc": 17.233025074082583,
+    "sn": 50,
+    "ec": 32.766974925917424,
+    "regime": "step",
+    "difficulty": 65.53394985183483,
+    "quality": 0.8934993084370678
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "cha",
+     "delta": 10
+    },
+    {
+     "stat": "vita",
+     "delta": -24
+    },
+    {
+     "stat": "do_terre",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 0.8
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:14:10.933Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 311,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 67,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 11,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 6,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0.8
+   },
+   "rune": {
+    "stat": "fo",
+    "tier": 1,
+    "name": "Pa Fo",
+    "bonus": 3,
+    "weight": 3
+   },
+   "odds": {
+    "sc": 2,
+    "sn": 26.119447379219416,
+    "ec": 71.88055262078058,
+    "regime": "step",
+    "difficulty": 163.6814736554149,
+    "quality": 0.8840940525587829
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "fo",
+     "delta": 3
+    },
+    {
+     "stat": "prospe",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 0.8
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:14:23.949Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 311,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 29,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 14,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 10,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 6,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 0.8
+   },
+   "rune": {
+    "stat": "do_terre",
+    "tier": 0,
+    "name": "Do Terre",
+    "bonus": 1,
+    "weight": 5
+   },
+   "odds": {
+    "sc": 17.973292087670146,
+    "sn": 50,
+    "ec": 32.026707912329854,
+    "regime": "step",
+    "difficulty": 64.05341582465971,
+    "quality": 0.8860724233983287
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "do_terre",
+     "delta": 1
+    },
+    {
+     "stat": "sa",
+     "delta": -1
+    },
+    {
+     "stat": "prospe",
+     "delta": -1
+    }
+   ],
+   "after": {
+    "reliquat": 1.8
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:14:30.766Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 311,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 28,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 9,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 6,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 1.8
+   },
+   "rune": {
+    "stat": "re_per_terre",
+    "tier": 0,
+    "name": "Ré Per Terre",
+    "bonus": 1,
+    "weight": 6
+   },
+   "odds": {
+    "sc": 17.4818117115682,
+    "sn": 50,
+    "ec": 32.5181882884318,
+    "regime": "step",
+    "difficulty": 65.0363765768636,
+    "quality": 0.8910785619174435
+   },
+   "outcome": "SC",
+   "changes": [
+    {
+     "stat": "re_per_terre",
+     "delta": 1
+    }
+   ],
+   "after": {
+    "reliquat": 1.8
+   },
+   "gap": 0
+  },
+  {
+   "t": "2026-11-02T20:24:26.104Z",
+   "item": {
+    "id": 15434,
+    "name": "Ceinture de la Reine des Voleurs",
+    "level": 200
+   },
+   "before": {
+    "lines": [
+     {
+      "stat": "vita",
+      "value": 311,
+      "min": 301,
+      "max": 350
+     },
+     {
+      "stat": "fo",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "cha",
+      "value": 70,
+      "min": 51,
+      "max": 70
+     },
+     {
+      "stat": "sa",
+      "value": 28,
+      "min": 31,
+      "max": 40
+     },
+     {
+      "stat": "cri",
+      "value": 4,
+      "min": 3,
+      "max": 4
+     },
+     {
+      "stat": "po",
+      "value": 1,
+      "min": 1,
+      "max": 1
+     },
+     {
+      "stat": "do_neutre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_terre",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "do_eau",
+      "value": 15,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "prospe",
+      "value": 9,
+      "min": 11,
+      "max": 15
+     },
+     {
+      "stat": "re_per_terre",
+      "value": 7,
+      "min": 5,
+      "max": 7
+     },
+     {
+      "stat": "re_cri",
+      "value": 20,
+      "min": 21,
+      "max": 30
+     }
+    ],
+    "reliquat": 1.8
+   },
+   "rune": {
+    "stat": "vita",
+    "tier": 2,
+    "name": "Ra Vi",
+    "bonus": 50,
+    "weight": 10
+   },
+   "odds": {
+    "sc": 2.3889622500098113,
+    "sn": 41.79172168750736,
+    "ec": 55.81931606248283,
+    "regime": "over",
+    "difficulty": 95.22207549998038,
+    "quality": 0.8976486860304288
+   },
+   "outcome": "SN",
+   "changes": [
+    {
+     "stat": "vita",
+     "delta": 50
+    },
+    {
+     "stat": "prospe",
+     "delta": -3
+    }
+   ],
+   "after": {
+    "reliquat": 0.8
+   },
+   "gap": 0
+  }
+ ]
+}
