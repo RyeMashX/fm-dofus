@@ -94,7 +94,6 @@ function renderItem() {
   $('#item-meta').textContent = [t.type || 'objet', t.unknown?.length ? `${t.unknown.length} effet(s) non gérés` : ''].filter(Boolean).join(' · ');
   $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
   $('#item-level-text').textContent = S.item.level;
-  $('#item-level').value = S.item.level;
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
   let tables = null;
   try { if (Object.keys(S.target).length) tables = Search.buildTables(state(), S.target).tables; } catch {}
@@ -136,8 +135,6 @@ function onLineEdit(e) {
   else { if (v == null) delete S.target[l.stat]; else S.target[l.stat] = v; }
   save(); renderItem();
 }
-$('#item-level-edit').onclick = () => { $('#item-level').classList.toggle('hidden'); };
-$('#item-level').onchange = e => { S.item.level = Number(e.target.value) || 200; save(); renderItem(); };
 $('#exo-select').onchange = e => {
   if (!e.target.value) return;
   S.item.lines.push({ stat: e.target.value, value: 0, min: null, max: null });
