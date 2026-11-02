@@ -46,13 +46,15 @@
       <button id="change-item" class="secondary small">Changer</button>
     </div>
     <div class="row">
-      <button id="cap-start-item" class="secondary small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">Capturer le jeu</button>
+      <button id="cap-start-item" class="cta-cap small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">Capturer le jeu</button>
       <button id="cap-table-item" class="primary small hidden" title="Lit Min/Max/valeur de chaque ligne et le reliquat">Lire le tableau</button>
       <span id="screen-status-item" class="muted small grow"></span>
-      <button id="auto-target" class="secondary small" title="vita/fo/ine/cha/age : max − pa + 1 ; do, ré %, cri : max ; le reste : 1">Cible auto</button>
+      <button id="auto-target" class="cta-auto small" title="vita/fo/ine/cha/age : max − pa + 1 ; do, ré %, cri : max ; le reste : 1">Cible auto</button>
     </div>
     <div id="screen-out-item"></div>
-    <div class="legend small muted"><span><b class="cur-dot"></b> actuel</span><span><b class="tgt-dot"></b> cible</span><span><i class="sw sc"></i>SC <i class="sw sn"></i>SN <i class="sw ec"></i>EC</span><span><i class="recsw"></i> rune conseillée</span></div>
+    <div class="legend small muted"><span><b class="cur-dot"></b> actuel</span><span><b class="tgt-dot"></b> cible</span>
+      <span class="showsel" title="Pourcentage affiché sur les runes : somme des cases cochées"><label><input type="checkbox" id="show-sc" checked><i class="sw sc"></i>SC</label><label><input type="checkbox" id="show-sn"><i class="sw sn"></i>SN</label><label><input type="checkbox" id="show-ec"><i class="sw ec"></i>EC</label></span>
+      <span><i class="recsw"></i> rune conseillée</span></div>
     <div id="lines"></div>
     <div class="row">
       <select id="exo-select"><option value="">+ Ajouter un exo…</option></select>

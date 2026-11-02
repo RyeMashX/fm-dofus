@@ -15,7 +15,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const pct = x => FM.fmt(x).toString().replace('.', ',');
 const w1 = x => Math.round(x * 100) / 100;
 const bar = o => `<i class="sc" style="width:${o.sc}%"></i><i class="sn" style="width:${o.sn}%"></i><i class="ec" style="width:${o.ec}%"></i>`;
-const oddsText = o => `<span class="odds"><b>SC ${pct(o.sc)}</b> · <i>SN ${pct(o.sn)}</i> · <s>EC ${pct(o.ec)}</s></span>`;
+const oddsText = o => `<span class="odds"><b>SC ${pct(o.sc)} %</b> · <i>SN ${pct(o.sn)} %</i> · <s>EC ${pct(o.ec)} %</s></span>`;
 const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
 // ---- État --------------------------------------------------------------------
@@ -25,9 +25,9 @@ let lossDraft = null;    // saisie des pertes en cours
 let lastAdvice = null;
 
 function blank() {
-  return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item' } };
+  return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item', show: { sc: true, sn: false, ec: false } } };
 }
-function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; if (s && s.reliquatBefore == null) s.reliquatBefore = s.reliquat; return s; } catch { return null; } }
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; if (s && s.reliquatBefore == null) s.reliquatBefore = s.reliquat; if (s && !s.settings.show) s.settings.show = { sc: true, sn: false, ec: false }; return s; } catch { return null; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 const state = () => ({ item: S.item, reliquat: S.reliquat });
 const runeOf = (stat, tier) => RUNES.find(r => r.stat === stat && r.tier === tier);
@@ -113,6 +113,10 @@ function renderItem() {
   $('#item-meta').textContent = [t.type || 'objet', t.unknown?.length ? `${t.unknown.length} effet(s) non gérés` : ''].filter(Boolean).join(' · ');
   $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
   $('#item-level-text').textContent = S.item.level;
+  const show = S.settings.show;
+  for (const k of ['sc', 'sn', 'ec']) { const cb = $('#show-' + k); if (cb) cb.checked = !!show[k]; }
+  const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
+  const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
   let tables = null;
   try { if (Object.keys(S.target).length) tables = Search.buildTables(state(), S.target).tables; } catch {}
@@ -127,7 +131,7 @@ function renderItem() {
       const o = FM.odds(S.item, r);
       const rec = best && best.tier === k;
       if (o.blocked) return `<div class="chip max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">MAX</span></div>`;
-      return `<div class="chip ${rec ? 'rec' : ''}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">${pct(o.sc)}</span>
+      return `<div class="chip ${rec ? 'rec' : ''}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc ${pcClass}">${shown(o)}</span>
         <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)}${rec ? '<div class="warn small">rune conseillée</div>' : ''}</div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
@@ -161,6 +165,7 @@ $('#exo-select').onchange = e => {
   S.target[e.target.value] = S.target[e.target.value] ?? 1;
   save(); renderAll();
 };
+for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onchange = e => { S.settings.show[k] = e.target.checked; save(); renderItem(); };
 $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
 $('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu.')) { S = blank(); save(); renderAll(); } };
 
