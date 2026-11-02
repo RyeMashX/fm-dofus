@@ -51,14 +51,16 @@ $('#search-input').addEventListener('input', e => {
 });
 $('#manual-item').onclick = () => useTemplate({ id: null, name: 'Objet manuel', level: 200, type: '', lines: [], unknown: [], manual: true });
 
-// Cible par défaut : vita/fo/ine/cha/age → max − bonus de la Pa + 1 ; dommages, résistances %, cri → max ;
-// le reste → 1 (pas de ligne à 0). Lignes négatives ou à max nul : pas de cible.
+// Cible par défaut : vita/fo/ine/cha/age/pui → max − bonus de la Pa + 1 ; dommages, résistances %, cri → max ;
+// le reste → 1 (pas de ligne à 0). Ligne négative à fourchette (−20 à −16) → le moins négatif sans over (−16) ;
+// ligne négative fixe ou à max nul : pas de cible.
 function autoTarget(lines) {
   const target = {};
   for (const l of lines) {
-    if (l.min == null || !(l.max > 0)) continue;
+    if (l.min == null) continue;
+    if (!(l.max > 0)) { if (l.max < 0 && l.min !== l.max) target[l.stat] = l.max; continue; }
     const st = STAT_BY_KEY[l.stat];
-    if (['vita', 'fo', 'ine', 'cha', 'age'].includes(l.stat)) target[l.stat] = Math.max(1, l.max - (st.tiers[1]?.[1] ?? 1) + 1);
+    if (['vita', 'fo', 'ine', 'cha', 'age', 'pui'].includes(l.stat)) target[l.stat] = Math.max(1, l.max - (st.tiers[1]?.[1] ?? 1) + 1);
     else if (/^do|^re_per_|^cri$/.test(l.stat)) target[l.stat] = l.max;
     else target[l.stat] = 1;
   }
