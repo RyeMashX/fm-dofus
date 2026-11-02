@@ -10,7 +10,8 @@ Page : `index.html` (modules ES, aucun build nécessaire). Hébergée sur GitHub
 2. Saisir le jet actuel de chaque ligne, le reliquat affiché par le jeu, et la **cible** (valeur minimale) sur les lignes qui comptent. Ajouter les exos voulus.
 3. « Calculer » : l'outil simule chaque rune candidate et propose celle qui minimise le nombre de poses restantes attendu.
 4. Poser la rune dans le jeu, puis cliquer SC / SN / EC. En SN et EC, saisir le nouveau reliquat et décrémenter les lignes tombées ; l'outil vérifie que le poids perdu est cohérent.
-5. Onglet **Bilan** (surligné quand la cible est atteinte) : runes posées et attendues au départ, coût total (prix des runes à renseigner dans ⚙, en kamas, exportables en JSON), répartition SC/SN/EC, poids détruit, durée, et un **indice de chance** : écart en écarts-types entre les résultats obtenus (SC +1, SN 0, EC −1) et leur espérance selon le modèle à chaque pose.
+5. Vue Objet : sous l'en-tête, une **estimation** du chemin restant (300 sessions simulées avec la politique gloutonne) : poses attendues (moyenne, médiane, 9 fois sur 10 sous X) et coût en kamas d'après les prix des runes.
+6. Onglet **Bilan** (surligné quand la cible est atteinte) : runes posées et attendues au départ, coût total (prix des runes à renseigner dans ⚙, en kamas, exportables en JSON), répartition SC/SN/EC, poids détruit, durée, et un **indice de chance** : écart en écarts-types entre les résultats obtenus (SC +1, SN 0, EC −1) et leur espérance selon le modèle à chaque pose. « Archiver la session » (automatique en changeant d'objet ou en recommençant) conserve un historique des sessions, exportable en JSON.
 
 ## Modèle
 

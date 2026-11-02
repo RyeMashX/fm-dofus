@@ -207,3 +207,35 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 8, seed 
   results.sort((a, b) => a.score - b.score);
   return { reached: false, h0, heavyFirst: !!heavy, moves: results.slice(0, top), all: results };
 }
+
+// Sessions complètes simulées avec la politique gloutonne (exo lourd d'abord, puis la meilleure rune par
+// ligne) jusqu'à la cible : distribution du nombre de poses et runes consommées, pour estimer le coût.
+export function simulateSessions(state, target, { runs = 200, maxPoses = 400, seed = 1 } = {}) {
+  const T = buildTables(state, target);
+  const poses = [], runeCounts = new Map();
+  let unfinished = 0;
+  for (let k = 0; k < runs; k++) {
+    const rng = rngFrom(seed * 104729 + k);
+    let s = state, n = 0;
+    while (n < maxPoses && !targetReached(s.item, target)) {
+      const heavy = pendingHeavy(s, target, T);
+      const moves = heavy ? [{ rune: heavy.rune }] : policyMoves(s, target, T).slice(0, 3);
+      let done = false;
+      for (const m of moves) {
+        const q = FM.applyMove(s, m.rune, rng);
+        if (!q.outcome) continue;
+        s = { item: q.item, reliquat: q.reliquat }; n++; done = true;
+        runeCounts.set(m.rune.id, (runeCounts.get(m.rune.id) || 0) + 1);
+        break;
+      }
+      if (!done) break;
+    }
+    if (!targetReached(s.item, target)) unfinished++;
+    poses.push(n);
+  }
+  poses.sort((a, b) => a - b);
+  const q = p => poses[Math.min(poses.length - 1, Math.floor(p * poses.length))];
+  const mean = poses.reduce((a, b) => a + b, 0) / poses.length;
+  const perRun = [...runeCounts.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n: n / runs })).sort((a, b) => b.n - a.n);
+  return { runs, mean, median: q(0.5), p10: q(0.1), p90: q(0.9), unfinished: unfinished / runs, runes: perRun };
+}

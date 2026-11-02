@@ -67,6 +67,7 @@ function autoTarget(lines) {
 
 function useTemplate(t) {
   S = blank();
+  S.sessionId = Date.now();
   S.template = t;
   S.item = { level: t.level, lines: t.lines.map(l => ({ stat: l.stat, value: 0, min: l.min, max: l.max })) };
   S.target = autoTarget(S.item.lines);
@@ -155,10 +156,40 @@ function renderItem() {
     const i = +b.closest('.line').dataset.i; const stat = S.item.lines[i].stat;
     S.item.lines.splice(i, 1); delete S.target[stat]; save(); renderAll();
   });
+  renderEstimate();
   const present = new Set(S.item.lines.map(l => l.stat));
   $('#exo-select').innerHTML = '<option value="">+ Ajouter un exo…</option>' +
     STATS.filter(s => !present.has(s.key)).map(s => `<option value="${s.key}">${esc(s.label)}</option>`).join('');
 }
+// Estimation du chemin restant : sessions simulées (politique gloutonne) → poses et coût attendus.
+let estimateKey = null, estimateCache = null;
+function renderEstimate() {
+  const box = $('#estimate'); if (!box) return;
+  const hasTarget = Object.keys(S.target).length > 0;
+  if (!hasTarget || Search.targetReached(S.item, S.target)) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  const key = JSON.stringify([S.item.lines, S.target, S.reliquat]);
+  if (key !== estimateKey) {
+    box.innerHTML = '<span class="muted small">Estimation…</span>';
+    estimateKey = key;
+    setTimeout(() => { if (estimateKey !== key) return; try { estimateCache = Search.simulateSessions(state(), S.target, { runs: 300, seed: 7 }); } catch (e) { estimateCache = null; } paintEstimate(); }, 20);
+    return;
+  }
+  paintEstimate();
+}
+function paintEstimate() {
+  const box = $('#estimate'); const r = estimateCache; const p = prices();
+  if (!r) { box.innerHTML = '<span class="muted small">Estimation indisponible.</span>'; return; }
+  let cost = 0, costP90 = 0, missing = 0;
+  const parts = r.runes.filter(x => x.n >= 0.05).map(x => { const u = p[x.id]; if (u > 0) cost += u * x.n; else missing++; return `${x.rune.name} × ${x.n.toFixed(1).replace('.', ',')}${u > 0 ? ` (${kShort(u * x.n)})` : ''}`; });
+  if (r.mean > 0) costP90 = cost * r.p90 / r.mean;
+  const f1 = x => x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
+  box.innerHTML = `<div class="est-main"><span class="muted small">Pour atteindre la cible :</span><span class="est-k"><b>≈ ${f1(r.mean)}</b> poses</span><span class="muted small">médiane ${r.median} · 9 fois sur 10 sous ${r.p90}</span>
+    <span class="est-k">${cost ? `<b>≈ ${kamas(cost)}</b>` : '<b class="muted">prix ?</b>'}</span>${cost ? `<span class="muted small">jusqu'à ${kamas(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : `<span class="muted small">renseigne les prix des runes (⚙) pour le coût</span>`}
+    ${r.unfinished > 0.02 ? `<span class="warn small">${Math.round(r.unfinished * 100)} % des sessions simulées n'aboutissent pas</span>` : ''}</div>
+    <div class="est-detail muted small">${esc(parts.join(' · '))}</div>`;
+}
+
 function onLineEdit(e) {
   const i = +e.target.closest('.line').dataset.i; const l = S.item.lines[i];
   const v = e.target.value === '' ? null : Number(e.target.value);
@@ -174,7 +205,7 @@ $('#exo-select').onchange = e => {
 };
 for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onclick = () => { S.settings.show[k] = !S.settings.show[k]; save(); renderItem(); };
 $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
-$('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu.')) { S = blank(); save(); renderAll(); } };
+$('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu' + (S.history.length ? ' (la session est archivée dans le bilan).' : '.'))) { archiveSession(); S = blank(); save(); renderAll(); } };
 
 // ---- Vue FM : conseil ---------------------------------------------------------
 $('#top-select').onchange = e => { S.settings.top = Number(e.target.value); save(); };
@@ -457,7 +488,8 @@ function renderPoseRead(r) {
 const PKEY = 'fm-dofus:prices';
 function prices() { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch { return {}; } }
 function setPrice(id, v) { const p = prices(); if (v > 0) p[id] = v; else delete p[id]; try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch {} }
-const kamas = n => Math.round(n).toLocaleString('fr-FR') + ' k';
+const kamas = n => Math.round(n).toLocaleString('fr-FR') + ' kamas';
+const kShort = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',').replace(/,?0+$/, '') + ' M' : n >= 1e4 ? Math.round(n / 1e3) + ' k' : Math.round(n).toLocaleString('fr-FR');
 function renderSettings() {
   const p = prices(); const q = ($('#prices-filter').value || '').trim().toLowerCase();
   const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -511,10 +543,60 @@ function bilanData() {
   return { h, n, byRune: [...byRune.values()].sort((a, b) => b.cost - a.cost || b.n - a.n), cost, missing: [...missing], lostWeight: w1(lostWeight), simulated,
            luck: { z, expSC, expEC, rated }, expectedAtStart, ms };
 }
+// ---- Historique des sessions --------------------------------------------------
+const SKEY = 'fm-dofus:sessions';
+function sessions() { try { return JSON.parse(localStorage.getItem(SKEY)) || []; } catch { return []; } }
+function saveSessions(list) { try { localStorage.setItem(SKEY, JSON.stringify(list)); } catch {} }
+function archiveSession() {
+  if (!S.item || !S.history.length) return null;
+  const d = bilanData(); const list = sessions();
+  if (!S.sessionId) S.sessionId = Date.now();
+  const snap = { id: S.sessionId, t: new Date().toISOString(), start: new Date(S.history[0].id).toISOString(),
+    item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level }, target: { ...S.target },
+    reached: Object.keys(S.target).length > 0 && Search.targetReached(S.item, S.target),
+    lines: S.item.lines.map(l => ({ stat: l.stat, value: l.value })), reliquat: S.reliquat,
+    poses: d.h.length, n: d.n, cost: d.cost, missingPrices: d.missing.length, z: w1(d.luck.z), expSC: w1(d.luck.expSC), expEC: w1(d.luck.expEC),
+    lostWeight: d.lostWeight, ms: d.ms, simulated: d.simulated, expectedAtStart: d.expectedAtStart == null ? null : w1(d.expectedAtStart),
+    byRune: d.byRune.map(b => ({ id: b.rune?.id, name: b.name, n: b.n, SC: b.SC, SN: b.SN, EC: b.EC, cost: b.cost, unit: b.unit ?? null })) };
+  const i = list.findIndex(x => x.id === snap.id);
+  if (i >= 0) list[i] = snap; else list.push(snap);
+  saveSessions(list); save();
+  return snap;
+}
+function renderSessions() {
+  const list = sessions().slice().reverse();
+  const out = $('#sessions-out');
+  if (!list.length) { out.innerHTML = '<p class="muted small">Aucune session archivée. Les sessions sont aussi archivées automatiquement quand tu changes d\'objet ou recommences.</p>'; $('#sessions-stats').textContent = ''; $('#sessions-export').disabled = true; return; }
+  $('#sessions-export').disabled = false;
+  const tot = list.reduce((a, s) => ({ poses: a.poses + s.poses, cost: a.cost + (s.cost || 0), z: a.z + (s.z || 0) }), { poses: 0, cost: 0, z: 0 });
+  $('#sessions-stats').textContent = `${list.length} session${list.length > 1 ? 's' : ''} · ${tot.poses} poses · ${tot.cost ? kamas(tot.cost) : 'coût inconnu'} · chance moyenne ${tot.z / list.length >= 0 ? '+' : '−'}${Math.abs(tot.z / list.length).toFixed(1).replace('.', ',')} σ`;
+  const date = iso => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  out.innerHTML = list.map(s => `<details class="sess ${s.id === S.sessionId ? 'cur' : ''}"><summary>
+      <span class="d">${date(s.t)}</span><span class="cn">${esc(s.item.name || 'objet')}${s.id === S.sessionId ? ' <span class="muted small">(en cours)</span>' : ''}</span>
+      <span class="st ${s.reached ? 'ok' : 'muted'}">${s.reached ? '✓' : '…'}</span><span class="cnt">${s.poses} poses</span>
+      <span class="z ${s.z >= 1 ? 'ok' : s.z <= -1 ? 'bad' : 'muted'}">${s.z >= 0 ? '+' : '−'}${Math.abs(s.z).toFixed(1).replace('.', ',')} σ</span>
+      <span class="cost">${s.cost ? kShort(s.cost) : '<span class="muted">—</span>'}</span></summary>
+    <div class="small sessbody">
+      <div>SC ${s.n.SC} · SN ${s.n.SN} · EC ${s.n.EC}${s.expectedAtStart != null ? ` · ≈ ${Math.round(s.expectedAtStart)} poses attendues au départ` : ''} · poids détruit ${String(s.lostWeight).replace('.', ',')}${s.ms ? ` · ${Math.round(s.ms / 60e3)} min` : ''}${s.simulated ? ` · <span class="warn">${s.simulated} simulée${s.simulated > 1 ? 's' : ''}</span>` : ''}</div>
+      <div class="muted">Cible : ${Object.entries(s.target).map(([k, v]) => `${esc(labelOf(k))} ${v}`).join(', ') || '—'}</div>
+      <div class="muted">Final : ${s.lines.filter(l => l.value).map(l => `${esc(labelOf(l.stat))} ${l.value}`).join(', ')}</div>
+      <div class="muted">${s.byRune.map(b => `${esc(b.name)} × ${b.n}`).join(' · ')}</div>
+      <div class="row"><div class="spacer"></div><button class="link small" data-del-session="${s.id}">supprimer</button></div>
+    </div></details>`).join('');
+  $$('#sessions-out [data-del-session]').forEach(b => b.onclick = () => { if (confirm('Supprimer cette session de l\'historique ?')) { saveSessions(sessions().filter(x => x.id !== +b.dataset.delSession)); renderSessions(); } });
+}
+document.querySelector('#session-archive').onclick = () => { if (archiveSession()) { renderSessions(); setStatus('Session archivée.'); setTimeout(() => setStatus(''), 2000); } };
+document.querySelector('#sessions-export').onclick = () => {
+  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), sessions: sessions() }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fm-dofus-sessions-${new Date().toISOString().slice(0, 10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+};
+
 const luckLabel = z => z >= 2 ? 'très chanceux' : z >= 1 ? 'chanceux' : z > -1 ? 'dans la norme' : z > -2 ? 'malchanceux' : 'très malchanceux';
 function renderBilan(reached) {
   const d = bilanData(); const out = $('#bilan-out');
   const miss = Object.keys(S.target).length ? Search.missing(S.item, S.target) : [];
+  renderSessions();
+  $('#session-archive').disabled = !d.h.length;
   $('#bilan-state').innerHTML = reached ? '<span class="ok">✓ cible atteinte</span>' : Object.keys(S.target).length ? `<span class="muted">en cours · ${miss.length} ligne${miss.length > 1 ? 's' : ''} à finir</span>` : '<span class="muted">pas de cible</span>';
   if (!d.h.length) { out.innerHTML = '<p class="muted small">Aucune pose pour l\'instant.</p>'; return; }
   const N = d.h.length, L = d.luck;
@@ -536,7 +618,7 @@ function renderBilan(reached) {
     <h3>Par rune</h3>
     <div class="rtable">${d.byRune.map(b => `<div class="rrow">${runeImg(b.rune, 'ricon sm')}<span class="cn">${esc(b.name)}</span><span class="cnt">× ${b.n}</span>
       <span class="tags"><span class="tag SC">${b.SC}</span><span class="tag SN">${b.SN}</span><span class="tag EC">${b.EC}</span></span>
-      <span class="cost">${b.unit > 0 ? `<span class="muted small">${kamas(b.unit)} ×</span> ${kamas(b.cost)}` : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>
+      <span class="cost">${b.unit > 0 ? `<span class="muted small">${kShort(b.unit)} ×</span> ${kamas(b.cost)}` : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>
     <p class="muted small">Indice de chance : écart entre les résultats obtenus (SC = +1, SN = 0, EC = −1) et leur espérance d'après le modèle au moment de chaque pose, en écarts-types. Au-delà de ±1 σ, la session sort de la zone habituelle ; ±2 σ est rare (environ 1 session sur 20).</p>`;
 }
 
@@ -560,7 +642,8 @@ $('#undo').onclick = () => {
   S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat; lastAdvice = null; save(); renderAll();
 };
 $('#reset').onclick = () => {
-  if (!confirm('Remettre toutes les lignes à zéro et vider l\'historique ?')) return;
+  if (!confirm('Remettre toutes les lignes à zéro et vider l\'historique ?' + (S.history.length ? ' (la session est archivée dans le bilan)' : ''))) return;
+  archiveSession(); S.sessionId = Date.now();
   S.item.lines = S.item.lines.filter(l => l.min != null).map(l => ({ ...l, value: 0 }));
   S.reliquat = 0; S.reliquatBefore = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };
