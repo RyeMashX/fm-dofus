@@ -74,7 +74,10 @@ export function buildTables(state, target) {
         if (pass < 0.005) continue;
         // casse collatérale par tentative, en poses ; pour les runes lourdes (≥ 25) elle dépend de l'état
         // courant et se calcule dans estimateRemaining
-        const c = (1 - o.sc / 100) * Math.max(0, r.weight - reliquat) * share / wpp;
+        // casse collatérale par tentative, en poses ; pour une grosse ligne du template tombée (PM, PO…)
+        // elle dépend de ce qui est posé au moment de l'évaluation : voir estimateRemaining
+        const c = (line && line.min != null && r.weight >= HEAVY) ? 0
+                : (1 - o.sc / 100) * Math.max(0, r.weight - reliquat) * share / wpp;
         const val = (1 + c + pass * Eof(Math.min(v + r.bonus, t))) / pass;
         if (val < best) { best = val; bestRune = r; }
       }
@@ -83,16 +86,32 @@ export function buildTables(state, target) {
     // "lourd" = exo hors template dont la rune pèse ≥ 25 (PA, PM, PO, invo à 1 %) ; une ligne du template
     // qui est tombée se repasse normalement et ne relève pas de cette règle.
     const isExo = !line || line.min == null;
-    const heavy = isExo && (choice.get(t - 1)?.weight ?? 0) >= HEAVY ? choice.get(t - 1) : null;
-    tables[stat] = { t, lo, E, choice, heavy, Eof: v => v >= t ? 0 : E.get(Math.max(v, lo)) ?? BIG };
+    const big = (choice.get(t - 1)?.weight ?? 0) >= HEAVY ? choice.get(t - 1) : null;
+    const heavy = isExo ? big : null;      // exo lourd : règle « d'abord »
+    const heavyRepass = !isExo ? big : null; // grosse ligne du template à repasser : casse dynamique
+    tables[stat] = { t, lo, E, choice, heavy, heavyRepass, Eof: v => v >= t ? 0 : E.get(Math.max(v, lo)) ?? BIG };
   }
   return { tables, share, wpp };
 }
 
-// Estimation du reste à faire : somme des espérances par ligne cible.
+// Estimation du reste à faire : somme des espérances par ligne cible. Pour une grosse ligne du template
+// encore à repasser (PM, PO tombées), chaque tentative ratée détruit jusqu'au poids de la rune sur ce qui
+// est posé : plus l'objet est rempli au moment de l'évaluation, plus repasser coûte. C'est ce qui fait
+// préférer de repasser tôt, une fois le reliquat consommé.
 export function estimateRemaining(state, target, T = buildTables(state, target)) {
-  let h = 0;
-  for (const stat of Object.keys(target)) h += T.tables[stat].Eof(valueOf(state.item, stat));
+  let h = 0, pw = null;
+  for (const stat of Object.keys(target)) {
+    const tb = T.tables[stat]; const v = valueOf(state.item, stat);
+    const e = tb.Eof(v);
+    h += e;
+    if (tb.heavyRepass && e > 0 && e < BIG) {
+      pw = pw || presentWeights(state.item, target);
+      const share = pw.total > 0 ? pw.onTarget / pw.total : 0;
+      const o = FM.odds(state.item, tb.heavyRepass);
+      const pFail = o.blocked ? 1 : 1 - o.sc / 100;
+      h += e * pFail * Math.min(Math.max(0, tb.heavyRepass.weight - state.reliquat), pw.onTarget) * share / T.wpp;
+    }
+  }
   return h;
 }
 
