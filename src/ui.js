@@ -179,13 +179,28 @@ function renderEstimate() {
   }
   paintEstimate();
 }
-function paintEstimate() {
-  const box = $('#estimate'); const r = estimateCache; const p = prices();
-  if (!r) { box.innerHTML = '<span class="muted small">Estimation indisponible.</span>'; return; }
-  let cost = 0, missing = 0;
+// Coût d'une estimation d'après les prix du moment.
+function estimateCost(r) {
+  const p = prices(); let cost = 0, missing = 0;
   const rows = r.runes.filter(x => x.n >= 0.05).map(x => { const u = p[x.id]; const c = u > 0 ? u * x.n : 0; if (u > 0) cost += c; else missing++; return { x, u, c }; });
-  const costP90 = r.mean > 0 ? cost * r.p90 / r.mean : 0;
-  const f1 = x => x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
+  return { rows, cost, missing, costP90: r.mean > 0 ? cost * r.p90 / r.mean : 0 };
+}
+// Estimation figée au départ (poses et coût attendus), pour la comparer au réel dans le bilan et les archives.
+function freezeBaseline(r = estimateCache) {
+  if (!r) { try { r = Search.simulateSessions(state(), S.target, { runs: 300, seed: 7 }); } catch { return null; } }
+  const c = estimateCost(r);
+  S.baseline = { t: new Date().toISOString(), poses: w1(r.mean), median: r.median, p90: r.p90, cost: Math.round(c.cost), costP90: Math.round(c.costP90), missing: c.missing,
+                 runes: c.rows.map(({ x, u }) => ({ id: x.id, name: x.rune.name, n: w1(x.n), unit: u ?? null })), target: { ...S.target },
+                 lines: S.item.lines.map(l => ({ stat: l.stat, value: l.value })), reliquat: S.reliquat, after: S.history.length };
+  save(); return S.baseline;
+}
+const f1 = x => x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
+const pctDiff = (real, est) => { if (!(est > 0)) return ''; const d = Math.round((real / est - 1) * 100); return `<span class="${d > 25 ? 'bad' : d < -25 ? 'ok' : 'muted'}">${d >= 0 ? '+' : '−'}${Math.abs(d)} %</span>`; };
+function paintEstimate() {
+  const box = $('#estimate'); const r = estimateCache;
+  if (!r) { box.innerHTML = '<span class="muted small">Estimation indisponible.</span>'; return; }
+  const { rows, cost, missing, costP90 } = estimateCost(r);
+  const b = S.baseline;
   const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${x.n.toFixed(1).replace('.', ',')}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
   box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}</div>
     <div class="kpis est-kpis">
@@ -193,7 +208,9 @@ function paintEstimate() {
       <div class="kpi haspop"><div class="v">${cost ? `≈ ${kShort(cost)}` : '<span class="muted">—</span>'}</div><div class="l">kamas${cost ? `<br><span class="muted">jusqu'à ${kShort(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : '<br><span class="muted">renseigne les prix (⚙)</span>'}</div>
         <div class="pop">${detail}</div></div>
     </div>
-    <details class="est-more"><summary class="small muted">détail des runes</summary>${detail}</details>`;
+    <details class="est-more"><summary class="small muted">détail des runes</summary>${detail}</details>
+    <div class="row small baseline">${b ? `<span>Figée ${b.after ? `après ${b.after} pose${b.after > 1 ? 's' : ''}` : 'au départ'} : ≈ ${f1(b.poses)} poses · ${b.cost ? `≈ ${kShort(b.cost)}` : 'coût ?'}</span><button id="freeze" class="link small">refiger</button>` : `<span class="muted">Fige l'estimation pour la comparer au résultat dans le bilan (sinon, figée automatiquement à la première pose).</span><button id="freeze" class="secondary small">Figer l'estimation</button>`}</div>`;
+  $('#freeze').onclick = () => { if (S.baseline && !confirm('Remplacer l\'estimation figée ?')) return; freezeBaseline(); paintEstimate(); };
 }
 
 function onLineEdit(e) {
@@ -363,6 +380,7 @@ function journalExport() {
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
   const keepStatus = $('#screen-status')?.textContent;
+  if (!S.baseline && Object.keys(S.target).length && !Search.targetReached(S.item, S.target)) freezeBaseline(null);
   if (!simulated) {
     let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked } : { sc: o.sc, sn: o.sn, ec: o.ec, regime: o.regime, difficulty: o.difficulty, quality: o.quality }; } catch {}
     journalAdd({ t: new Date().toISOString(), item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level },
@@ -495,7 +513,7 @@ const PKEY = 'fm-dofus:prices';
 function prices() { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch { return {}; } }
 function setPrice(id, v) { const p = prices(); if (v > 0) p[id] = v; else delete p[id]; try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch {} }
 const kamas = n => Math.round(n).toLocaleString('fr-FR') + ' kamas';
-const kShort = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',').replace(/,?0+$/, '') + ' M' : n >= 1e4 ? Math.round(n / 1e3) + ' k' : Math.round(n).toLocaleString('fr-FR');
+const kShort = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',').replace(/,?0+$/, '') + ' M' : n >= 1e5 ? Math.round(n / 1e3) + ' k' : n >= 1e4 ? (n / 1e3).toFixed(1).replace('.', ',').replace(/,0$/, '') + ' k' : Math.round(n).toLocaleString('fr-FR');
 function renderSettings() {
   const p = prices(); const q = ($('#prices-filter').value || '').trim().toLowerCase();
   const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -552,7 +570,7 @@ function bilanData() {
   try { if (h.length && Object.keys(S.target).length) expectedAtStart = Search.estimateRemaining({ item: { level: S.item.level, lines: h[0].before.lines }, reliquat: h[0].before.reliquat }, S.target); } catch {}
   const ms = h.length > 1 ? h.at(-1).id - h[0].id : 0;
   return { h, n, byRune: [...byRune.values()].sort((a, b) => b.cost - a.cost || b.n - a.n), cost, missing: [...missing], lostWeight: w1(lostWeight), simulated,
-           luck: { z, expSC, expEC, rated }, expectedAtStart, ms };
+           luck: { z, expSC, expEC, rated }, expectedAtStart, ms, baseline: S.baseline || null };
 }
 // ---- Historique des sessions --------------------------------------------------
 const SKEY = 'fm-dofus:sessions';
@@ -568,6 +586,7 @@ function archiveSession() {
     lines: S.item.lines.map(l => ({ stat: l.stat, value: l.value })), reliquat: S.reliquat,
     poses: d.h.length, n: d.n, cost: d.cost, missingPrices: d.missing.length, z: w1(d.luck.z), expSC: w1(d.luck.expSC), expEC: w1(d.luck.expEC),
     lostWeight: d.lostWeight, ms: d.ms, simulated: d.simulated, expectedAtStart: d.expectedAtStart == null ? null : w1(d.expectedAtStart),
+    baseline: d.baseline ? { t: d.baseline.t, after: d.baseline.after, poses: d.baseline.poses, median: d.baseline.median, p90: d.baseline.p90, cost: d.baseline.cost, costP90: d.baseline.costP90 } : null,
     byRune: d.byRune.map(b => ({ id: b.rune?.id, name: b.name, n: b.n, SC: b.SC, SN: b.SN, EC: b.EC, cost: b.cost, unit: b.unit ?? null })) };
   const i = list.findIndex(x => x.id === snap.id);
   if (i >= 0) list[i] = snap; else list.push(snap);
@@ -580,7 +599,10 @@ function renderSessions() {
   if (!list.length) { out.innerHTML = '<p class="muted small">Aucune session archivée. Les sessions sont aussi archivées automatiquement quand tu changes d\'objet ou recommences.</p>'; $('#sessions-stats').textContent = ''; $('#sessions-export').disabled = true; return; }
   $('#sessions-export').disabled = false;
   const tot = list.reduce((a, s) => ({ poses: a.poses + s.poses, cost: a.cost + (s.cost || 0), z: a.z + (s.z || 0) }), { poses: 0, cost: 0, z: 0 });
-  $('#sessions-stats').textContent = `${list.length} session${list.length > 1 ? 's' : ''} · ${tot.poses} poses · ${tot.cost ? kamas(tot.cost) : 'coût inconnu'} · chance moyenne ${tot.z / list.length >= 0 ? '+' : '−'}${Math.abs(tot.z / list.length).toFixed(1).replace('.', ',')} σ`;
+  // écart systématique réel / estimé (sessions terminées avec estimation figée) : un biais persistant = modèle à revoir
+  const cmp = list.filter(s => s.reached && s.baseline?.poses > 0);
+  const ratio = cmp.length ? cmp.reduce((a, s) => a + s.poses / s.baseline.poses, 0) / cmp.length : null;
+  $('#sessions-stats').innerHTML = `${list.length} session${list.length > 1 ? 's' : ''} · ${tot.poses} poses · ${tot.cost ? kamas(tot.cost) : 'coût inconnu'} · chance moyenne ${tot.z / list.length >= 0 ? '+' : '−'}${Math.abs(tot.z / list.length).toFixed(1).replace('.', ',')} σ${ratio != null ? ` · réel / estimé ×${ratio.toFixed(2).replace('.', ',')} sur ${cmp.length} session${cmp.length > 1 ? 's' : ''} terminée${cmp.length > 1 ? 's' : ''}` : ''}`;
   const date = iso => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   out.innerHTML = list.map(s => `<details class="sess ${s.id === S.sessionId ? 'cur' : ''}"><summary>
       <span class="d">${date(s.t)}</span><span class="cn">${esc(s.item.name || 'objet')}${s.id === S.sessionId ? ' <span class="muted small">(en cours)</span>' : ''}</span>
@@ -588,7 +610,8 @@ function renderSessions() {
       <span class="z ${s.z >= 1 ? 'ok' : s.z <= -1 ? 'bad' : 'muted'}">${s.z >= 0 ? '+' : '−'}${Math.abs(s.z).toFixed(1).replace('.', ',')} σ</span>
       <span class="cost">${s.cost ? kShort(s.cost) : '<span class="muted">—</span>'}</span></summary>
     <div class="small sessbody">
-      <div>SC ${s.n.SC} · SN ${s.n.SN} · EC ${s.n.EC}${s.expectedAtStart != null ? ` · ≈ ${Math.round(s.expectedAtStart)} poses attendues au départ` : ''} · poids détruit ${String(s.lostWeight).replace('.', ',')}${s.ms ? ` · ${Math.round(s.ms / 60e3)} min` : ''}${s.simulated ? ` · <span class="warn">${s.simulated} simulée${s.simulated > 1 ? 's' : ''}</span>` : ''}</div>
+      ${s.baseline ? `<div>Estimé ${s.baseline.after ? `après ${s.baseline.after} pose${s.baseline.after > 1 ? 's' : ''}` : 'au départ'} : ≈ ${f1(s.baseline.poses)} poses${s.baseline.cost ? ` · ≈ ${kShort(s.baseline.cost)}` : ''} → réel ${s.poses} poses ${pctDiff(s.poses, s.baseline.poses)}${s.cost && s.baseline.cost ? ` · ${kShort(s.cost)} ${pctDiff(s.cost, s.baseline.cost)}` : ''}</div>` : ''}
+      <div>SC ${s.n.SC} · SN ${s.n.SN} · EC ${s.n.EC}${!s.baseline && s.expectedAtStart != null ? ` · ≈ ${Math.round(s.expectedAtStart)} poses attendues au départ` : ''} · poids détruit ${String(s.lostWeight).replace('.', ',')}${s.ms ? ` · ${Math.round(s.ms / 60e3)} min` : ''}${s.simulated ? ` · <span class="warn">${s.simulated} simulée${s.simulated > 1 ? 's' : ''}</span>` : ''}</div>
       <div class="muted">Cible : ${Object.entries(s.target).map(([k, v]) => `${esc(labelOf(k))} ${v}`).join(', ') || '—'}</div>
       <div class="muted">Final : ${s.lines.filter(l => l.value).map(l => `${esc(labelOf(l.stat))} ${l.value}`).join(', ')}</div>
       <div class="muted">${s.byRune.map(b => `${esc(b.name)} × ${b.n}`).join(' · ')}</div>
@@ -616,8 +639,8 @@ function renderBilan(reached) {
   const zc = Math.max(-3, Math.min(3, L.z));
   out.innerHTML = `
     <div class="kpis">
-      <div class="kpi"><div class="v">${N}</div><div class="l">runes posées${d.expectedAtStart != null ? `<br><span class="muted">≈ ${d.expectedAtStart.toFixed(0)} attendues au départ</span>` : ''}</div></div>
-      <div class="kpi"><div class="v">${d.cost ? kamas(d.cost) : '—'}</div><div class="l">coût total${d.missing.length ? `<br><span class="warn">${d.missing.length} rune${d.missing.length > 1 ? 's' : ''} sans prix</span>` : d.cost ? `<br><span class="muted">${kamas(d.cost / N)} par pose</span>` : '<br><span class="muted">renseigne les prix</span>'}</div></div>
+      <div class="kpi"><div class="v">${N}</div><div class="l">runes posées${d.baseline ? `<br><span class="muted">≈ ${f1(d.baseline.poses)} estimées au départ</span> ${pctDiff(N, d.baseline.poses)}` : d.expectedAtStart != null ? `<br><span class="muted">≈ ${d.expectedAtStart.toFixed(0)} attendues au départ</span>` : ''}</div></div>
+      <div class="kpi"><div class="v" title="${d.cost ? kamas(d.cost) : ''}">${d.cost ? kShort(d.cost) : '—'}</div><div class="l">kamas dépensés${d.missing.length ? `<br><span class="warn">${d.missing.length} rune${d.missing.length > 1 ? 's' : ''} sans prix</span>` : d.baseline?.cost && d.cost ? `<br><span class="muted">≈ ${kShort(d.baseline.cost)} estimés au départ</span> ${pctDiff(d.cost, d.baseline.cost)}` : d.cost ? `<br><span class="muted">${kamas(d.cost / N)} par pose</span>` : '<br><span class="muted">renseigne les prix</span>'}</div></div>
       <div class="kpi"><div class="v"><span class="odds"><b>${pc('SC')} %</b> <i>${pc('SN')} %</i> <s>${pc('EC')} %</s></span></div><div class="l">SC · SN · EC<div class="bar"><i class="sc" style="width:${pc('SC')}%"></i><i class="sn" style="width:${pc('SN')}%"></i><i class="ec" style="width:${pc('EC')}%"></i></div></div></div>
       <div class="kpi luck"><div class="v ${L.z >= 1 ? 'ok' : L.z <= -1 ? 'bad' : ''}">${L.z >= 0 ? '+' : '−'}${Math.abs(L.z).toFixed(1).replace('.', ',')} σ</div><div class="l">${luckLabel(L.z)}
         <div class="gauge"><i style="left:${((zc + 3) / 6 * 100).toFixed(1)}%"></i></div>
@@ -654,7 +677,7 @@ $('#undo').onclick = () => {
 };
 $('#reset').onclick = () => {
   if (!confirm('Remettre toutes les lignes à zéro et vider l\'historique ?' + (S.history.length ? ' (la session est archivée dans le bilan)' : ''))) return;
-  archiveSession(); S.sessionId = Date.now();
+  archiveSession(); S.sessionId = Date.now(); S.baseline = null;
   S.item.lines = S.item.lines.filter(l => l.min != null).map(l => ({ ...l, value: 0 }));
   S.reliquat = 0; S.reliquatBefore = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };

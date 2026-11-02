@@ -25,6 +25,8 @@ body.view-settings { --w: 700px; }
 .est-more summary::-webkit-details-marker { display: none; }
 .est-more summary::before { content: '▸ '; } .est-more[open] summary::before { content: '▾ '; }
 .est-more .rtable { max-width: 420px; }
+.baseline { margin-top: 6px; } .baseline .bad { color: var(--ec); }
+.kpi .l .bad { color: var(--ec); font-weight: 600; } .kpi .l .ok { font-weight: 600; }
 .rtable { display: flex; flex-direction: column; }
 /* Sessions */
 .sess { border-top: 1px solid #22252c; }
