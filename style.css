@@ -14,10 +14,18 @@ body.view-settings { --w: 700px; }
 .seg button.glow.on { background: var(--sc); color: #fff; animation: none; }
 @keyframes glow { from { background: transparent; } to { background: #17382a; } }
 /* Estimation (vue Objet) */
-.estimate { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin: 4px 0 6px; }
-.est-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.est-k { font-size: 15px; } .est-k b { font-size: 18px; color: var(--accent); }
-.est-detail { margin-top: 2px; }
+.estimate { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.est-head { margin-bottom: 2px; }
+.est-kpis { grid-template-columns: repeat(2, minmax(0, 260px)); margin: 4px 0 4px; }
+.est-kpis .kpi .v { color: var(--accent); }
+.kpi.haspop { position: relative; }
+.kpi.haspop .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; width: 300px; max-height: 320px; overflow: auto; background: #202329; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; box-shadow: 0 8px 24px #0009; }
+.kpi.haspop:hover .pop { display: block; }
+.est-more summary { cursor: pointer; list-style: none; }
+.est-more summary::-webkit-details-marker { display: none; }
+.est-more summary::before { content: '▸ '; } .est-more[open] summary::before { content: '▾ '; }
+.est-more .rtable { max-width: 420px; }
+.rtable { display: flex; flex-direction: column; }
 /* Sessions */
 .sess { border-top: 1px solid #22252c; }
 .sess summary { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; list-style: none; }
@@ -41,7 +49,6 @@ body.view-settings { --w: 700px; }
 .gauge { position: relative; height: 6px; margin: 6px 0 4px; border-radius: 3px; background: linear-gradient(90deg, var(--ec), #3a3d45 50%, var(--sc)); }
 .gauge i { position: absolute; top: -4px; width: 4px; height: 14px; margin-left: -2px; background: #fff; border-radius: 2px; box-shadow: 0 0 0 1px #000; }
 #bilan h3 { font-size: 13px; margin: 10px 0 4px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-.rtable { display: flex; flex-direction: column; }
 .rrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid #22252c; }
 .rrow .cn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rrow .cnt { font-weight: 600; font-variant-numeric: tabular-nums; width: 40px; text-align: right; }

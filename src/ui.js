@@ -182,14 +182,18 @@ function renderEstimate() {
 function paintEstimate() {
   const box = $('#estimate'); const r = estimateCache; const p = prices();
   if (!r) { box.innerHTML = '<span class="muted small">Estimation indisponible.</span>'; return; }
-  let cost = 0, costP90 = 0, missing = 0;
-  const parts = r.runes.filter(x => x.n >= 0.05).map(x => { const u = p[x.id]; if (u > 0) cost += u * x.n; else missing++; return `${x.rune.name} × ${x.n.toFixed(1).replace('.', ',')}${u > 0 ? ` (${kShort(u * x.n)})` : ''}`; });
-  if (r.mean > 0) costP90 = cost * r.p90 / r.mean;
+  let cost = 0, missing = 0;
+  const rows = r.runes.filter(x => x.n >= 0.05).map(x => { const u = p[x.id]; const c = u > 0 ? u * x.n : 0; if (u > 0) cost += c; else missing++; return { x, u, c }; });
+  const costP90 = r.mean > 0 ? cost * r.p90 / r.mean : 0;
   const f1 = x => x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
-  box.innerHTML = `<div class="est-main"><span class="muted small">Pour atteindre la cible :</span><span class="est-k"><b>≈ ${f1(r.mean)}</b> poses</span><span class="muted small">médiane ${r.median} · 9 fois sur 10 sous ${r.p90}</span>
-    <span class="est-k">${cost ? `<b>≈ ${kamas(cost)}</b>` : '<b class="muted">prix ?</b>'}</span>${cost ? `<span class="muted small">jusqu'à ${kamas(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : `<span class="muted small">renseigne les prix des runes (⚙) pour le coût</span>`}
-    ${r.unfinished > 0.02 ? `<span class="warn small">${Math.round(r.unfinished * 100)} % des sessions simulées n'aboutissent pas</span>` : ''}</div>
-    <div class="est-detail muted small">${esc(parts.join(' · '))}</div>`;
+  const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${x.n.toFixed(1).replace('.', ',')}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
+  box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}</div>
+    <div class="kpis est-kpis">
+      <div class="kpi"><div class="v">≈ ${f1(r.mean)}</div><div class="l">poses<br><span class="muted">médiane ${r.median} · 9 fois sur 10 sous ${r.p90}</span></div></div>
+      <div class="kpi haspop"><div class="v">${cost ? `≈ ${kShort(cost)}` : '<span class="muted">—</span>'}</div><div class="l">kamas${cost ? `<br><span class="muted">jusqu'à ${kShort(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : '<br><span class="muted">renseigne les prix (⚙)</span>'}</div>
+        <div class="pop">${detail}</div></div>
+    </div>
+    <details class="est-more"><summary class="small muted">détail des runes</summary>${detail}</details>`;
 }
 
 function onLineEdit(e) {
