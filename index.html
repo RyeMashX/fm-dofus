@@ -59,17 +59,6 @@
     </div>
   </section>
 
-  <!-- Vue FM : lecture d'écran -->
-  <section id="screen" class="card view-fm hidden">
-    <div class="row">
-      <h2>Lecture d'écran</h2><span id="screen-status" class="muted small grow"></span>
-      <button id="cap-start" class="secondary small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">Capturer le jeu</button>
-      <button id="cap-table" class="secondary small hidden" title="Lit le tableau Min/Max/valeurs pour initialiser les jets">Lire le tableau</button>
-      <button id="cap-pose" class="primary small hidden" title="Lit la dernière entrée de l'historique et le reliquat">Lire la dernière pose</button>
-    </div>
-    <div id="screen-out"></div>
-  </section>
-
   <section id="advice" class="card view-fm hidden">
     <div class="row">
       <h2>Prochain coup</h2>
@@ -85,17 +74,21 @@
     <div class="row">
       <div id="pose-rune" class="grow"></div>
       <button class="link small" id="other-rune">autre rune</button>
+      <button id="cap-start" class="link small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">capturer le jeu</button>
     </div>
     <div id="rune-picker" class="row hidden">
       <select id="rune-stat"></select>
       <div id="rune-tiers" class="tiers"></div>
     </div>
     <div class="outcomes">
+      <button id="cap-pose" class="primary hidden" title="Lit la dernière pose dans l'historique du jeu et l'applique">Lire l'écran</button>
       <button class="sc" data-outcome="SC">SC</button>
       <button class="sn" data-outcome="SN">SN</button>
       <button class="ec" data-outcome="EC">EC</button>
       <button id="simulate" class="secondary small" title="Tire le résultat et les pertes avec le moteur (test sans le jeu)">Simuler</button>
     </div>
+    <div id="screen-status" class="muted small"></div>
+    <div id="screen-out"></div>
     <div id="loss-panel" class="hidden"></div>
   </section>
 

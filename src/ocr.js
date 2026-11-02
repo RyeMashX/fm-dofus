@@ -131,6 +131,33 @@ export function preprocess(frame, rect, scale = 3, threshold = null) {
   return { width: W, height: H, data: out, scale, x0, y0 };
 }
 
+// Bord gauche du panneau d'historique : depuis la gauche du tableau, on recule tant que la couleur reste celle du
+// fond du panneau (la fenêtre de forgemagie peut être capturée avec tout le jeu autour).
+function findPanelLeft(frame, tableX, y0, y1) {
+  // plusieurs points de départ (il peut y avoir une marge entre le panneau et le tableau) et plusieurs
+  // hauteurs ; on garde, par hauteur, le bord le plus à gauche atteint, puis la médiane.
+  const lefts = [];
+  for (let k = 0; k < 7; k++) {
+    const y = Math.round(y0 + (y1 - y0) * (k + 1) / 8);
+    let best = tableX;
+    for (const off of [8, 30, 60, 100, 150]) {
+      const xs = Math.round(tableX - off); if (xs <= 0) break;
+      const i0 = (y * frame.width + xs) * 4, bg = [frame.data[i0], frame.data[i0 + 1], frame.data[i0 + 2]];
+      let x = xs, miss = 0, last = xs;
+      while (x > 0) {
+        const i = (y * frame.width + x) * 4;
+        const d = Math.abs(frame.data[i] - bg[0]) + Math.abs(frame.data[i + 1] - bg[1]) + Math.abs(frame.data[i + 2] - bg[2]);
+        if (d < 45) { miss = 0; last = x; } else if (++miss > 12) break;
+        x--;
+      }
+      if (xs - last > 60 && last < best) best = last;
+    }
+    lefts.push(best);
+  }
+  lefts.sort((a, b) => a - b);
+  return lefts[lefts.length >> 1];
+}
+
 // Couleur de fond d'une zone : médiane par canal.
 function background(frame, x0, y0, x1, y1) {
   x0 |= 0; y0 |= 0; x1 |= 0; y1 |= 0;
@@ -175,7 +202,8 @@ export async function readScreen(frame, ocr, hints = null) {
     const modif = words.find(w => /^modif/.test(w.t.trim()) && Math.abs(w.bbox.y0 - min.bbox.y0) < rowH);
     const tableRight = modif ? modif.bbox.x1 + rowH : W;
     tableRect = { x: tableX, y: headerY, w: tableRight - tableX, h: H - headerY };
-    historyRect = { x: 0, y: headerY, w: Math.max(0, tableX - 4), h: H - headerY };
+    const panelLeft = findPanelLeft(frame, tableX, headerY, Math.min(H, headerY + rowH * 20));
+    historyRect = { x: panelLeft, y: headerY, w: Math.max(0, tableX - 4 - panelLeft), h: H - headerY };
   }
 
   // 2. tableau
@@ -192,8 +220,9 @@ export async function readScreen(frame, ocr, hints = null) {
     const iconX0 = historyRect.x + panelW * 0.02, iconX1 = historyRect.x + panelW * 0.12;
     const bg = background(frame, iconX0, historyRect.y, iconX1, historyRect.y + historyRect.h);
     // l'OCR ignore la colonne des icônes de rune (elles produisent des caractères parasites)
-    const textRect = { x: historyRect.x + panelW * 0.14, y: historyRect.y, w: panelW * 0.86, h: historyRect.h };
+    const textRect = { x: historyRect.x + panelW * 0.15, y: historyRect.y, w: panelW * 0.85, h: historyRect.h };
     const lines = (await ocr(textRect, 6, 3, null)).filter(l => l.text.trim()).sort((a, b) => a.bbox.y0 - b.bbox.y0);
+    if (globalThis.FM_OCR_DEBUG) console.log('historyRect', historyRect, 'textRect', textRect, '\n' + lines.map(l => `  [y ${l.bbox.y0 | 0} x ${l.bbox.x0 | 0}] ${l.text}`).join('\n'));
     let current = null;
     for (const l of lines) {
       const h = l.bbox.y1 - l.bbox.y0;

@@ -6,6 +6,7 @@ import { readScreen, interpretEntry, preprocess } from '../src/ocr.js';
 import { PNG as PNGW } from 'pngjs';
 import { STAT_BY_KEY } from '../src/stats.js';
 
+globalThis.FM_OCR_DEBUG = !!process.env.FM_OCR_DEBUG;
 const files = process.argv[2] ? [process.argv[2]] : readdirSync('ocr-samples').filter(f => f.endsWith('.png')).map(f => 'ocr-samples/' + f);
 const worker = await createWorker('fra', 1, { langPath: '/usr/share/tesseract-ocr/5/tessdata', gzip: false, cachePath: '/tmp/tess-cache' });
 

@@ -69,11 +69,13 @@ button:disabled { opacity: .4; cursor: default; }
 .line .tgt { color: var(--tgt); border-color: #6b5520; background: #1f1a10; }
 .line .tgt::placeholder { color: #6b5520; }
 .line .arrow { color: var(--muted); }
-.line .l2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.line .l2 { display: grid; grid-template-columns: repeat(3, 160px); gap: 6px; }
+.chip { width: 100%; }
 .ricon { width: 22px; height: 22px; vertical-align: middle; margin-right: 5px; image-rendering: auto; }
 .ricon.sm { width: 18px; height: 18px; margin-right: 4px; }
-.chip { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--card2); font-size: 12px; cursor: default; }
+.chip { position: relative; display: flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--card2); font-size: 12px; cursor: default; }
 .chip .ricon { margin-right: 2px; }
+.chip .cn { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip .pc { color: var(--sc); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 2px; }
 .chip.max { opacity: .45; } .chip.max .pc { color: var(--muted); font-weight: 400; }
 .chip.rec { border-color: var(--accent); background: #1f1a10; } .chip.rec .cn { color: var(--accent); font-weight: 700; }
@@ -136,6 +138,7 @@ ol#history-list li { padding: 2px 0; font-size: 13px; }
 @media (max-width: 700px) {
   .line { flex-direction: column; align-items: stretch; gap: 4px; }
   .line .l1 { width: auto; }
+  .line .l2 { grid-template-columns: repeat(3, 1fr); }
 }
 /* Vue FM compacte */
 body.view-fm .card { padding: 8px 10px; }

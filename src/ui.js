@@ -313,6 +313,7 @@ function journalExport() {
 }
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
+  const keepStatus = $('#screen-status')?.textContent;
   if (!simulated) {
     let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked } : { sc: o.sc, sn: o.sn, ec: o.ec, regime: o.regime, difficulty: o.difficulty, quality: o.quality }; } catch {}
     journalAdd({ t: new Date().toISOString(), item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level },
@@ -327,6 +328,7 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
   S.reliquat = reliquat;
   S.reliquatBefore = reliquat;
   save(); renderLossPanel(); renderAll();
+  if (keepStatus) screenStatus(keepStatus);
   if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice(true);
   else if (S.settings.view === 'fm') $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -337,8 +339,8 @@ const screenStatus = msg => { for (const id of ['#screen-status', '#screen-statu
 const screenOut = () => $(S.settings.view === 'fm' ? '#screen-out' : '#screen-out-item');
 function renderCaptureButtons() {
   const on = Cap.isCapturing();
-  for (const id of ['#cap-start', '#cap-start-item']) { const b = $(id); if (b) { b.textContent = on ? 'Arrêter la capture' : 'Capturer le jeu'; b.classList.toggle('hidden', !Cap.isSupported()); } }
-  for (const id of ['#cap-table', '#cap-pose', '#cap-table-item']) { const b = $(id); if (b) b.classList.toggle('hidden', !on); }
+  for (const id of ['#cap-start', '#cap-start-item']) { const b = $(id); if (b) { b.textContent = on ? (id === '#cap-start' ? 'arrêter la capture' : 'Arrêter la capture') : (id === '#cap-start' ? 'capturer le jeu' : 'Capturer le jeu'); b.classList.toggle('hidden', !Cap.isSupported()); } }
+  for (const id of ['#cap-pose', '#cap-table-item']) { const b = $(id); if (b) b.classList.toggle('hidden', !on); }
   if (!Cap.isSupported()) screenStatus('Capture de fenêtre non disponible dans ce navigateur (Chrome ou Edge conseillés).');
 }
 async function toggleCapture() {
@@ -364,7 +366,6 @@ async function readAndRender(kind) {
   if (r.error) { out.innerHTML = `<p class="warn small">${esc(r.error)}</p>`; return; }
   if (kind === 'table') renderTableRead(r); else renderPoseRead(r);
 }
-document.querySelector('#cap-table').onclick = () => readAndRender('table');
 document.querySelector('#cap-pose').onclick = () => readAndRender('pose');
 
 // Lecture du tableau : propose les valeurs lues, ligne par ligne, puis les applique.
@@ -403,18 +404,13 @@ function renderPoseRead(r) {
   for (const it of entry) if (it.delta > 0) { const cand = RUNES.find(x => x.stat === it.stat && x.bonus === it.delta); if (cand) { rune = cand; break; } }
   const info = interpretEntry(entry, rune);
   const txt = entry.map(it => it.reliquat ? (it.reliquat > 0 ? '+ reliquat' : '− reliquat') : `${it.delta > 0 ? '+' : ''}${it.delta} ${esc(labelOf(it.stat))}`).join(', ');
-  out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${runeImg(rune)}${esc(rune.name)} en ${info.outcome}</strong></div>
-    <div class="small">${txt}${r.reliquat != null ? ` · reliquat affiché ${r.reliquat}` : ' · <span class="warn">reliquat non lu</span>'}</div>
-    ${dup ? '<p class="warn small">Identique à la dernière pose appliquée : as-tu bien posé une nouvelle rune ?</p>' : ''}
-    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
-  $('#read-cancel').onclick = () => { out.innerHTML = ''; };
-  $('#read-apply').onclick = () => {
+  const apply = () => {
     lastEntryKey = key; out.innerHTML = '';
     pending = rune; renderPose();
     if (info.outcome === 'SC') {
       const res = FM.applyMove(state(), rune, Math.random, 'SC');
       commit({ rune, outcome: 'SC', lines: res.item.lines, reliquat: r.reliquat ?? S.reliquat, changes: res.changes });
-      return;
+      return true;
     }
     startOutcome(info.outcome);
     const d = lossDraft;
@@ -426,7 +422,23 @@ function renderPoseRead(r) {
     }
     if (r.reliquat != null) d.newReliquat = r.reliquat;
     renderLossPanel();
+    // cohérent (poids perdu = rune + variation de reliquat) : on valide sans attendre
+    const lost = Object.entries(d.deltas).reduce((a, [stat, n]) => a + n * STAT_BY_KEY[stat].weight, 0);
+    const expected = d.lossWeight + (d.newReliquat - d.before);
+    if (r.reliquat != null && Math.abs(lost - expected) < 0.01) { $('#loss-ok').click(); return true; }
+    return false;
   };
+  if (!dup && r.reliquat != null) {
+    const ok = apply();
+    screenStatus(`Lu : ${rune.name} en ${info.outcome} (${txt.replace(/<[^>]+>/g, '')})${ok ? ' · appliqué' : ' · à vérifier ci-dessous'}`);
+    return;
+  }
+  out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${runeImg(rune)}${esc(rune.name)} en ${info.outcome}</strong></div>
+    <div class="small">${txt}${r.reliquat != null ? ` · reliquat affiché ${r.reliquat}` : ' · <span class="warn">reliquat non lu</span>'}</div>
+    ${dup ? '<p class="warn small">Identique à la dernière pose appliquée : as-tu bien posé une nouvelle rune ?</p>' : ''}
+    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
+  $('#read-cancel').onclick = () => { out.innerHTML = ''; };
+  $('#read-apply').onclick = apply;
 }
 
 // ---- Historique ---------------------------------------------------------------
