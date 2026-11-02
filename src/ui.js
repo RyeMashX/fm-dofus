@@ -4,8 +4,9 @@ import * as Search from './search.js';
 import { STATS, STAT_BY_KEY, RUNES } from './stats.js';
 import { searchItems, iconUrl, labelOf } from './dofusdb.js';
 
-const $ = sel => document.querySelector(sel);
-const $$ = sel => [...document.querySelectorAll(sel)];
+let root = document;   // document courant : la page, ou la fenêtre flottante (PiP)
+const $ = sel => root.querySelector(sel);
+const $$ = sel => [...root.querySelectorAll(sel)];
 const KEY = 'fm-dofus:state';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pct = x => FM.fmt(x).toString().replace('.', ',');
@@ -67,7 +68,7 @@ function renderAll() {
   $('#reliquat-bar').classList.toggle('hidden', !has);
   if (!has) { $$('.view-item, .view-fm').forEach(s => s.classList.add('hidden')); return; }
   const fm = S.settings.view === 'fm';
-  document.body.className = fm ? 'view-fm' : 'view-item';
+  root.body.className = (fm ? 'view-fm' : 'view-item') + (root !== document ? ' pip' : '');
   $$('.view-item').forEach(s => s.classList.toggle('hidden', fm));
   $$('.view-fm').forEach(s => s.classList.toggle('hidden', !fm));
   $$('#view-switch button').forEach(b => b.classList.toggle('on', b.dataset.view === S.settings.view));
@@ -302,6 +303,36 @@ $('#reset').onclick = () => {
   S.reliquat = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };
 
-function setStatus(msg) { $('#status').textContent = msg; }
+function setStatus(msg) { const el = $('#status'); if (el) el.textContent = msg; }
+
+// ---- Fenêtre flottante (Document Picture-in-Picture, Chrome/Edge) ----------------
+const pipBtn = document.querySelector('#pip');
+if ('documentPictureInPicture' in window) pipBtn.classList.remove('hidden');
+pipBtn.onclick = async () => {
+  if (root !== document) { window.documentPictureInPicture.window?.close(); return; }
+  let pip;
+  try { pip = await window.documentPictureInPicture.requestWindow({ width: 380, height: 760 }); }
+  catch (e) { alert('Fenêtre flottante indisponible : ' + e.message); return; }
+  for (const ss of document.styleSheets) {
+    try { const st = pip.document.createElement('style'); st.textContent = [...ss.cssRules].map(r => r.cssText).join('\n'); pip.document.head.appendChild(st); }
+    catch { const link = pip.document.createElement('link'); link.rel = 'stylesheet'; link.href = ss.href; pip.document.head.appendChild(link); }
+  }
+  pip.document.title = 'FM Dofus';
+  const parts = ['header.top', '#reliquat-bar', 'main'].map(sel => document.querySelector(sel));
+  const placeholder = document.createElement('div');
+  placeholder.className = 'card pip-placeholder';
+  placeholder.innerHTML = '<p>L\'outil est ouvert dans la fenêtre flottante.</p><p class="muted small">Ferme-la pour le ramener ici.</p>';
+  document.body.insertBefore(placeholder, document.querySelector('footer'));
+  parts.forEach(el => pip.document.body.appendChild(el));
+  root = pip.document;
+  if (S.item) S.settings.view = 'fm';
+  renderAll();
+  pip.addEventListener('pagehide', () => {
+    parts.forEach(el => document.body.insertBefore(el, placeholder));
+    placeholder.remove();
+    root = document;
+    renderAll();
+  });
+};
 
 renderAll();
