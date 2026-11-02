@@ -242,7 +242,7 @@ function renderAdvice() {
     const tie = k > 0 && m.score - best < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ' · <span class="warn">nettoyage d\'over</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
+      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span>≈ <b>${m.score.toFixed(1)}</b> poses restantes</span><span class="risk">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span></div>
     </div>`;

@@ -172,16 +172,33 @@ function rollout(state, target, T, first, H, rng, stats) {
   return poses + estimateRemaining(s, target, T);
 }
 
-// Runes candidates : tout ce qui se pose sur une ligne cible incomplète, plus des coups de « nettoyage » :
-// la plus petite rune de chaque ligne en over (une ligne en over absorbe les pertes avant le reliquat,
-// la vider d'un point avec une rune légère protège les grosses poses suivantes).
+// Runes candidates : tout ce qui se pose sur une ligne cible incomplète, plus des coups de « nettoyage »
+// d'une ligne en over (poids d'over = excès × poids du point). Trois façons de la vider sans dépasser
+// son poids d'over : la petite rune de la ligne elle-même ; une rune exo légère (cha, ini, pui, sa…), dont
+// l'échec ou le SN retire son poids sur les lignes over/exo d'abord ; une rune d'une ligne existante
+// hors cible qui ne risque pas de créer un over. Les rollouts départagent.
+const EXO_CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pui', 'pod', 'sa', 'prospe'];
 export function candidates(state, target) {
-  const need = new Set(missing(state.item, target).map(m => m.stat));
-  const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(state.item, rune), onTarget: true }));
-  for (const l of state.item.lines) {
+  const { item } = state;
+  const need = new Set(missing(item, target).map(m => m.stat));
+  const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(item, rune), onTarget: true }));
+  const present = new Set(item.lines.map(l => l.stat));
+  const seen = new Set(list.map(c => c.rune.id));
+  const push = (rune, cleans) => { if (!rune || seen.has(rune.id)) return; seen.add(rune.id); list.push({ rune, odds: FM.odds(item, rune), onTarget: false, purpose: 'nettoyage', cleans }); };
+  for (const l of item.lines) {
     if (l.min == null || !(l.value > Math.max(l.min, l.max)) || need.has(l.stat)) continue;
-    const rune = RUNES.find(r => r.stat === l.stat && r.tier === 0);
-    if (rune) list.push({ rune, odds: FM.odds(state.item, rune), onTarget: false, purpose: 'nettoyage' });
+    const ow = (l.value - Math.max(l.min, l.max)) * STAT_BY_KEY[l.stat].weight;
+    push(RUNES.find(r => r.stat === l.stat && r.tier === 0), l.stat);
+    // exo légers : une rune par poids distinct, du plus proche de l'over au plus léger (3 au plus)
+    const exos = EXO_CLEAN_ORDER.filter(k => !present.has(k) && STAT_BY_KEY[k]).map(k => RUNES.find(r => r.stat === k && r.tier === 0))
+      .filter(r => r && r.weight <= ow + 1e-9).sort((a, b) => b.weight - a.weight);
+    const weights = new Set();
+    for (const r of exos) { if (weights.has(r.weight)) continue; weights.add(r.weight); push(r, l.stat); if (weights.size >= 3) break; }
+    // runes des lignes existantes hors cible, sans risque d'over, de poids ≤ over
+    for (const o of item.lines) {
+      if (o === l || o.min == null || need.has(o.stat) || o.min < 0 || o.max <= 0) continue;
+      for (const r of RUNES.filter(r => r.stat === o.stat && r.weight <= ow + 1e-9 && o.value + r.bonus <= o.max)) push(r, l.stat);
+    }
   }
   return list.filter(c => !c.odds.blocked);
 }
@@ -192,7 +209,7 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 8, seed 
   const h0 = estimateRemaining(state, target, T);
   const heavy = pendingHeavy(state, target, T);
   const pool = heavy ? [heavy] : candidates(state, target);
-  const results = pool.map(({ rune, odds, purpose }) => {
+  const results = pool.map(({ rune, odds, purpose, cleans }) => {
     const stats = { hurt: 0, lost: 0, outcomes: { SC: 0, SN: 0, EC: 0 } };
     let sum = 0, n = 0;
     for (let k = 0; k < samples; k++) {
@@ -202,7 +219,7 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 8, seed 
       sum += c; n++;
     }
     const score = n ? sum / n : Infinity;
-    return { rune, odds, purpose, score, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
+    return { rune, odds, purpose, cleans, score, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
   });
   results.sort((a, b) => a.score - b.score);
   return { reached: false, h0, heavyFirst: !!heavy, moves: results.slice(0, top), all: results };
