@@ -49,6 +49,10 @@ Ne dépend que du poids final de la ligne `w` : S = 57 (w ≤ 2), 57 − (w − 
 
 Poids à perdre = poids de la rune (÷2 si la ligne reste négative). Dans l'ordre : lignes en over et exos (hors cible), chacune touchée avec probabilité min(1, 0,75·(P/poids)^0,85) ; puis le reliquat ; puis la ligne cible si elle est en over (EC seulement, ×1/3) ; puis tirage pondéré de lignes normales (poids min(1, poids_rune/poids_ligne), cible ×1/60 en EC) jusqu'à épuisement ; l'excédent devient reliquat.
 
+### Calibration sur les poses réelles
+
+Le journal (vue FM → « Exporter le journal ») enregistre chaque pose réelle avec l'état avant, la rune, les chances annoncées et le résultat. `node scripts/fit-journal.mjs journal.json` compare les résultats aux chances sous différents paramètres. Calibration du 2026-11-02 (156 poses, Ceinture de la Reine des Voleurs et Bottes du Strigide) : le palier des 80 % pèse +25 (DoFocus : +45) et la pénalité de ratio jet/bonus au-delà de 14 vaut 24 par point (DoFocus : 12). Avec ces valeurs, SC/SN/EC observés et attendus coïncident par tranche de difficulté ; avec les valeurs DoFocus, Pa Pui à 60/75 était annoncée à 58 % de passage pour 24 % observés (21 poses). Le modèle « Calibré » est celui par défaut dans l'outil ; « DoFocus brut » reste disponible dans ⚙. Les tests unitaires vérifient les valeurs DoFocus.
+
 ## Développement
 
 ```

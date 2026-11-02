@@ -18,16 +18,27 @@ const bar = o => `<i class="sc" style="width:${o.sc}%"></i><i class="sn" style="
 const oddsText = o => `<span class="odds"><b>SC ${pct(o.sc)} %</b> · <i>SN ${pct(o.sn)} %</i> · <s>EC ${pct(o.ec)} %</s></span>`;
 const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
+// ---- Modèle : DoFocus brut ou calibré sur le journal --------------------------
+// Calibration du 2026-11-02 sur 156 poses réelles (2 objets) : le palier des 80 % pèse moins que dans
+// DoFocus (+25 au lieu de +45) et la pénalité de ratio jet/bonus au-delà de 14 est doublée (24 par point
+// au lieu de 12). Les tests unitaires gardent les valeurs DoFocus.
+const MODELS = {
+  dofocus: { label: 'DoFocus brut', P: { STEP: FM.P.STEP, RATIO_SLOPE: FM.P.RATIO_SLOPE } },
+  calibre: { label: 'Calibré sur le journal (2026-11)', P: { STEP: 25, RATIO_SLOPE: 24 } },
+};
+function applyModel(key) { Object.assign(FM.P, (MODELS[key] || MODELS.calibre).P); }
+
 // ---- État --------------------------------------------------------------------
 let S = load() || blank();
+applyModel(S.settings.model);
 let pending = null;      // rune sélectionnée pour la pose
 let lossDraft = null;    // saisie des pertes en cours
 let lastAdvice = null;
 
 function blank() {
-  return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item', show: { sc: true, sn: false, ec: false } } };
+  return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item', show: { sc: true, sn: false, ec: false }, model: 'calibre' } };
 }
-function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; if (s && s.reliquatBefore == null) s.reliquatBefore = s.reliquat; if (s && !s.settings.show) s.settings.show = { sc: true, sn: false, ec: false }; return s; } catch { return null; } }
+function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && !s.settings.view) s.settings.view = 'item'; if (s && s.reliquatBefore == null) s.reliquatBefore = s.reliquat; if (s && !s.settings.show) s.settings.show = { sc: true, sn: false, ec: false }; if (s && !s.settings.model) s.settings.model = 'calibre'; return s; } catch { return null; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
 const state = () => ({ item: S.item, reliquat: S.reliquat });
 const runeOf = (stat, tier) => RUNES.find(r => r.stat === stat && r.tier === tier);
@@ -515,6 +526,9 @@ function setPrice(id, v) { const p = prices(); if (v > 0) p[id] = v; else delete
 const kamas = n => Math.round(n).toLocaleString('fr-FR') + ' kamas';
 const kShort = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',').replace(/,?0+$/, '') + ' M' : n >= 1e5 ? Math.round(n / 1e3) + ' k' : n >= 1e4 ? (n / 1e3).toFixed(1).replace('.', ',').replace(/,0$/, '') + ' k' : Math.round(n).toLocaleString('fr-FR');
 function renderSettings() {
+  const sel = $('#model-select');
+  sel.innerHTML = Object.entries(MODELS).map(([k, m]) => `<option value="${k}" ${k === (S.settings.model || 'calibre') ? 'selected' : ''}>${esc(m.label)}</option>`).join('');
+  sel.onchange = e => { S.settings.model = e.target.value; applyModel(S.settings.model); estimateKey = null; lastAdvice = null; save(); };
   const p = prices(); const q = ($('#prices-filter').value || '').trim().toLowerCase();
   const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const list = STATS.filter(st => !q || norm(st.label).includes(norm(q)) || st.tiers.some(([n]) => norm(n).includes(norm(q))));
