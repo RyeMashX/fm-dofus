@@ -151,7 +151,7 @@ $('#top-select').onchange = e => { S.settings.top = Number(e.target.value); save
 $('#samples-select').onchange = e => { S.settings.samples = Number(e.target.value); save(); };
 $('#advise').onclick = () => computeAdvice();
 
-function computeAdvice() {
+function computeAdvice(scroll = false) {
   const out = $('#advice-out');
   if (!Object.keys(S.target).length) { out.innerHTML = '<p class="muted small">Renseigne au moins une cible dans la vue Objet.</p>'; return; }
   out.innerHTML = '<p class="muted small">Calcul…</p>';
@@ -159,6 +159,7 @@ function computeAdvice() {
     lastAdvice = Search.nextBestMoves(state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff });
     if (!lastAdvice.reached && lastAdvice.moves.length) pending = lastAdvice.moves[0].rune;
     renderAdvice(); renderPose();
+    if (scroll) $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 20);
 }
 
@@ -307,7 +308,8 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
   S.reliquat = reliquat;
   S.reliquatBefore = reliquat;
   save(); renderLossPanel(); renderAll();
-  if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice();
+  if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice(true);
+  else if (S.settings.view === 'fm') $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- Historique ---------------------------------------------------------------
