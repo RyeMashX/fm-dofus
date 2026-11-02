@@ -8,6 +8,7 @@ let root = document;   // document courant : la page, ou la fenêtre flottante (
 const $ = sel => root.querySelector(sel);
 const $$ = sel => [...root.querySelectorAll(sel)];
 const KEY = 'fm-dofus:state';
+const JKEY = 'fm-dofus:journal'; // journal permanent des poses réelles, indépendant de l'objet en cours
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pct = x => FM.fmt(x).toString().replace('.', ',');
 const w1 = x => Math.round(x * 100) / 100;
@@ -279,7 +280,24 @@ function bump(stat, n) {
   renderLossPanel();
 }
 
+function journal() { try { return JSON.parse(localStorage.getItem(JKEY)) || []; } catch { return []; } }
+function journalAdd(entry) { try { const j = journal(); j.push(entry); localStorage.setItem(JKEY, JSON.stringify(j)); } catch {} }
+function journalExport() {
+  const j = journal();
+  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), entries: j }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `fm-dofus-journal-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
+  if (!simulated) {
+    let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked } : { sc: o.sc, sn: o.sn, ec: o.ec, regime: o.regime, difficulty: o.difficulty, quality: o.quality }; } catch {}
+    journalAdd({ t: new Date().toISOString(), item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level },
+                 before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore },
+                 rune: { stat: rune.stat, tier: rune.tier, name: rune.name, bonus: rune.bonus, weight: rune.weight },
+                 odds, outcome, changes, after: { reliquat }, gap });
+  }
   S.history.push({ id: Date.now(), rune: { stat: rune.stat, tier: rune.tier, name: rune.name }, outcome, changes,
                    reliquatDelta: w1(reliquat - reliquatBefore), simulated, gap,
                    before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore, reliquatBefore: S.reliquatBefore } });
@@ -295,6 +313,9 @@ function renderHistory() {
   const h = S.history;
   const n = { SC: 0, SN: 0, EC: 0 }; h.forEach(e => n[e.outcome]++);
   $('#history-stats').textContent = h.length ? `${h.length} · ${n.SC} SC · ${n.SN} SN · ${n.EC} EC` : '';
+  const j = journal();
+  $('#journal-stats').textContent = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} enregistrée${j.length > 1 ? 's' : ''} (tous objets)`;
+  $('#journal-export').disabled = !j.length;
   $('#undo').disabled = !h.length;
   $('#history-list').innerHTML = [...h].reverse().slice(0, 12).map(e => {
     const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(labelOf(c.stat))}`).join(', ');
@@ -311,6 +332,9 @@ $('#reset').onclick = () => {
   S.item.lines = S.item.lines.filter(l => l.min != null).map(l => ({ ...l, value: 0 }));
   S.reliquat = 0; S.reliquatBefore = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };
+
+$('#journal-export').onclick = () => journalExport();
+$('#journal-clear').onclick = () => { if (confirm('Vider le journal des poses réelles ? (export conseillé avant)')) { try { localStorage.removeItem(JKEY); } catch {} renderHistory(); } };
 
 function setStatus(msg) { const el = $('#status'); if (el) el.textContent = msg; }
 
