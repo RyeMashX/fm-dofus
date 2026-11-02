@@ -15,7 +15,7 @@ const STATS = [
   { key: 'pod',      label: 'Pods',                     weight: 0.25, tiers: [['Pod', 10], ['Pa Pod', 30], ['Ra Pod', 100]] },
   { key: 'sa',       label: 'Sagesse',                  weight: 3,    tiers: [['Sa', 1], ['Pa Sa', 3], ['Ra Sa', 10]] },
   { key: 'prospe',   label: 'Prospection',              weight: 3,    tiers: [['Prospe', 1], ['Pa Prospe', 3]] },
-  { key: 'pui',      label: 'Puissance',                weight: 2,    tiers: [['Pui', 1], ['Pa Pui', 3]] },
+  { key: 'pui',      label: 'Puissance',                weight: 2,    tiers: [['Pui', 1], ['Pa Pui', 3], ['Ra Pui', 10]] },
   { key: 'tacle',    label: 'Tacle',                    weight: 4,    tiers: [['Tacle', 1], ['Pa Tacle', 3]] },
   { key: 'fuite',    label: 'Fuite',                    weight: 4,    tiers: [['Fuite', 1], ['Pa Fuite', 3]] },
   { key: 'cri',      label: 'Coups critiques (%)',      weight: 10,   tiers: [['Cri', 1]] },
