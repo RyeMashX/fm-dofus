@@ -9,14 +9,14 @@ const API = 'https://api.dofusdb.fr';
 export const EFFECTS = {
   125: ['vita', 1], 153: ['vita', -1], 118: ['fo', 1], 157: ['fo', -1], 126: ['ine', 1], 155: ['ine', -1],
   123: ['cha', 1], 152: ['cha', -1], 119: ['age', 1], 154: ['age', -1], 124: ['sa', 1], 156: ['sa', -1],
-  174: ['ini', 1], 175: ['ini', -1], 158: ['pod', 1], 176: ['prospe', 1], 177: ['prospe', -1],
-  138: ['pui', 1], 186: ['pui', -1], 753: ['tacle', 1], 752: ['fuite', 1],
+  174: ['ini', 1], 175: ['ini', -1], 158: ['pod', 1], 159: ['pod', -1], 176: ['prospe', 1], 177: ['prospe', -1],
+  138: ['pui', 1], 186: ['pui', -1], 753: ['tacle', 1], 755: ['tacle', -1], 752: ['fuite', 1], 754: ['fuite', -1],
   115: ['cri', 1], 171: ['cri', -1], 178: ['so', 1], 179: ['so', -1],
-  112: ['do', 1], 145: ['do', -1],
+  112: ['do', 1], 121: ['do', 1], 145: ['do', -1],
   430: ['do_neutre', 1], 431: ['do_neutre', -1], 422: ['do_terre', 1], 423: ['do_terre', -1],
   424: ['do_feu', 1], 425: ['do_feu', -1], 426: ['do_eau', 1], 427: ['do_eau', -1], 428: ['do_air', 1], 429: ['do_air', -1],
   414: ['do_pou', 1], 415: ['do_pou', -1], 418: ['do_cri', 1], 419: ['do_cri', -1],
-  220: ['do_ren', 1], 225: ['do_pi', 1], 226: ['pui_pi', 1],
+  220: ['do_ren', 1], 107: ['do_ren', 1], 225: ['do_pi', 1], 226: ['pui_pi', 1],
   240: ['re_terre', 1], 245: ['re_terre', -1], 241: ['re_eau', 1], 246: ['re_eau', -1], 242: ['re_air', 1], 247: ['re_air', -1],
   243: ['re_feu', 1], 248: ['re_feu', -1], 244: ['re_neutre', 1], 249: ['re_neutre', -1],
   420: ['re_cri', 1], 421: ['re_cri', -1], 416: ['re_pou', 1], 417: ['re_pou', -1],
@@ -28,8 +28,8 @@ export const EFFECTS = {
   2808: ['do_per_ar', 1], 2809: ['do_per_ar', -1], 2812: ['do_per_so', 1], 2813: ['do_per_so', -1],
   410: ['ret_pa', 1], 411: ['ret_pa', -1], 412: ['ret_pme', 1], 413: ['ret_pme', -1],
   160: ['re_pa', 1], 162: ['re_pa', -1], 161: ['re_pme', 1], 163: ['re_pme', -1],
-  182: ['invo', 1], 117: ['po', 1], 116: ['po', -1], 128: ['pm', 1], 127: ['pm', -1], 169: ['pm', -1], 1080: ['pm', -1],
-  111: ['pa', 1], 168: ['pa', -1], 1079: ['pa', -1],
+  182: ['invo', 1], 2990: ['invo', -1], 117: ['po', 1], 116: ['po', -1], 128: ['pm', 1], 127: ['pm', -1], 169: ['pm', -1], 1080: ['pm', -1],
+  111: ['pa', 1], 101: ['pa', -1], 168: ['pa', -1], 1079: ['pa', -1],
 };
 
 // Types d'objets équipables (typeId DofusDB, super-types amulette/arme/anneau/ceinture/bottes/bouclier/chapeau/cape/dofus) :
