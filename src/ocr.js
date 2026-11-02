@@ -219,8 +219,11 @@ export function interpretEntry(entry, rune) {
     if (it.reliquat) relDir = it.reliquat;
     else deltas[it.stat] = (deltas[it.stat] || 0) + it.delta;
   }
-  const gained = rune && deltas[rune.stat] >= rune.bonus;
+  // la rune est passée si sa ligne a gagné ; un gain inférieur au bonus (ra vi → +48) est un SN qui a aussi
+  // pris sur la ligne posée
+  const gained = !!rune && (deltas[rune.stat] || 0) > 0;
+  const ownLoss = gained ? Math.max(0, rune.bonus - deltas[rune.stat]) : 0;
   const losses = Object.entries(deltas).filter(([s, d]) => d < 0 || (s !== rune?.stat && d !== 0));
-  const outcome = gained ? (losses.length || relDir ? 'SN' : 'SC') : 'EC';
-  return { outcome, deltas, relDir, gained };
+  const outcome = gained ? (losses.length || relDir || ownLoss ? 'SN' : 'SC') : 'EC';
+  return { outcome, deltas, relDir, gained, ownLoss };
 }

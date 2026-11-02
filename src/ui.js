@@ -242,9 +242,10 @@ function renderLossPanel() {
   const rows = d.lines.map((l, i) => {
     const n = d.deltas[l.stat] || 0;
     const floor = l.min != null && l.min < 0 ? l.min : 0;
-    const locked = i === d.t && d.outcome === 'SN'; // en SN la ligne posée ne perd jamais
-    if (l.value - n <= floor && !n && !locked) return '';   // rien à retirer
-    const canDrop = !locked && l.value - n > floor;
+    // la ligne posée peut aussi perdre (observé en jeu : ra vi en SN donnant +48 au lieu de +50)
+    const locked = false;
+    if (l.value - n <= floor && !n) return '';   // rien à retirer
+    const canDrop = l.value - n > floor;
     const big = STAT_BY_KEY[l.stat].weight <= 0.25;
     return `<div class="lrow ${locked ? 'locked' : ''}"><span class="name">${esc(labelOf(l.stat))}${i === d.t ? ' <span class="muted small">(posée)</span>' : ''}</span>
       <span class="val">${l.value - n}</span>
@@ -398,9 +399,10 @@ function renderPoseRead(r) {
     startOutcome(info.outcome);
     const d = lossDraft;
     for (const [stat, delta] of Object.entries(info.deltas)) {
-      if (delta >= 0 || stat === rune.stat && info.outcome === 'SN') continue;
       const l = d.lines.find(x => x.stat === stat);
-      if (l) d.deltas[stat] = -delta;
+      if (!l) continue;
+      if (stat === rune.stat && info.outcome === 'SN') { if (delta < rune.bonus) d.deltas[stat] = rune.bonus - delta; continue; } // +48 au lieu de +50
+      if (delta < 0) d.deltas[stat] = -delta;
     }
     if (r.reliquat != null) d.newReliquat = r.reliquat;
     renderLossPanel();
