@@ -131,23 +131,51 @@ export function estimateRemaining(state, target, T = buildTables(state, target))
 export function pendingHeavy() { return null; } // ancienne règle « exo lourd d'abord », abandonnée
 
 // Politique par défaut : la rune qui minimise 1 + casse + pass·E[v+b] + (1−pass)·E[v] sur sa ligne.
-// Ligne du template en over (au-dessus de son max) : la prochaine perte tombera dessus en priorité et peut
-// l'emmener bien sous la cible. Pratique en jeu : on la fait retomber tout de suite avec une rune légère et
-// pas chère (exo cha, ini…) : en SN ou EC la perte retire l'over, en SC on recommence. Rune retenue : la plus
-// légère qui ne soit pas sur l'objet (ou déjà en exo), non bloquée.
-const CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pod', 'pui', 'sa', 'prospe'];
-export function overLines(item, target) {
-  return item.lines.filter(l => l.min != null && l.value > Math.max(l.min, l.max));
+// Ligne du template en over (au-dessus de son max) : la prochaine perte tombera dessus, à coup sûr. Marge
+// d'over = ce qu'on peut perdre sur ces lignes sans passer sous leur cible (ou sous leur max si pas de cible).
+export function overLines(item) { return item.lines.filter(l => l.min != null && l.value > Math.max(l.min, l.max)); }
+export function overSlack(item, target) {
+  return overLines(item).reduce((a, l) => a + Math.max(0, l.value - (target[l.stat] ?? Math.max(l.min, l.max))) * STAT_BY_KEY[l.stat].weight, 0);
 }
-export function cleaningMove(state, target) {
+// Nettoyage d'un over, avec bon sens : la perte d'une rune ratée (ou en SN) retire l'over, autant que cette
+// rune serve à quelque chose. Par ordre de préférence, parmi les runes dont le poids tient dans la marge :
+//  1. une rune d'une ligne cible encore à monter (d'une pierre deux coups : Pa Fo à 45/50 pour une vita à 415) ;
+//  2. une rune d'une ligne du template hors cible qui ne créerait pas d'over en SC (Cha à 69/70) ;
+//  3. sinon l'exo le plus léger et le moins cher (cha, ini…).
+// Si même une rune de poids 1 dépasse la marge (cible au max), on ne nettoie pas : l'over sert de tampon.
+const CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pod', 'pui', 'sa', 'prospe'];
+export function cleaningMove(state, target, T) {
   const { item } = state;
-  if (!overLines(item, target).length) return null;
+  const slack = overSlack(item, target);
+  if (!(slack > 0)) return null;
+  const ok = r => r.weight <= slack + 1e-9 && !FM.odds(item, r).blocked;
+  // 1. ligne cible à monter
+  T = T || buildTables(state, target);
+  let best = null;
+  for (const { stat } of missing(item, target)) {
+    const tb = T.tables[stat]; if (!tb) continue;
+    const v = valueOf(item, stat);
+    for (const r of RUNES.filter(r => r.stat === stat && ok(r))) {
+      const o = FM.odds(item, r); const pass = (o.sc + o.sn) / 100;
+      const val = 1 + pass * tb.Eof(v + r.bonus) + (1 - pass) * tb.Eof(v);
+      if (!best || val < best.val) best = { rune: r, val };
+    }
+  }
+  if (best) return best.rune;
+  // 2. ligne du template hors cible, sans risque d'over
+  const need = new Set(missing(item, target).map(m => m.stat));
+  let bonus = null;
+  for (const l of item.lines) {
+    if (l.min == null || need.has(l.stat) || l.max <= 0 || l.value > Math.max(l.min, l.max)) continue;
+    for (const r of RUNES.filter(r => r.stat === l.stat && r.tier === 0 && ok(r) && l.value + r.bonus <= Math.max(l.min, l.max))) if (!bonus || r.weight < bonus.weight) bonus = r;
+  }
+  if (bonus) return bonus;
+  // 3. exo léger
   for (const k of CLEAN_ORDER) {
     const l = item.lines.find(x => x.stat === k);
-    if (l && l.min != null) continue;               // dans le template : pas un exo
+    if (l && l.min != null) continue;
     const r = RUNES.find(r => r.stat === k && r.tier === 0);
-    if (!r || FM.odds(item, r).blocked) continue;
-    return r;
+    if (r && ok(r)) return r;
   }
   return null;
 }
@@ -155,7 +183,7 @@ export function cleaningMove(state, target) {
 function policyMoves(state, target, T) {
   const list = [];
   const miss = missing(state.item, target);
-  if (miss.length) { const c = cleaningMove(state, target); if (c) return [{ rune: c, val: 0, purpose: 'nettoyage' }]; }
+  if (miss.length && overLines(state.item).length) { const c = cleaningMove(state, target, T); if (c) return [{ rune: c, val: 0, purpose: 'nettoyage' }]; }
   for (const { stat } of miss) {
     const tb = T.tables[stat]; if (!tb) continue;
     const v = valueOf(state.item, stat);
@@ -258,8 +286,13 @@ export function candidates(state, target) {
   target = normal;
   const need = new Set(missing(item, target).map(m => m.stat));
   const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(item, rune), onTarget: true }));
-  const clean = cleaningMove(state, target);
-  if (clean) { const over = overLines(item, target)[0]; list.push({ rune: clean, odds: FM.odds(item, clean), onTarget: false, purpose: 'nettoyage', cleans: over.stat }); }
+  const clean = overLines(item).length ? cleaningMove(state, target) : null;
+  if (clean) {
+    const over = overLines(item)[0];
+    const dup = list.find(c => c.rune.id === clean.id);
+    if (dup) dup.cleans = over.stat;   // rune d'une ligne cible qui retire aussi l'over
+    else list.push({ rune: clean, odds: FM.odds(item, clean), onTarget: false, purpose: 'nettoyage', cleans: over.stat });
+  }
   return list.filter(c => !c.odds.blocked);
 }
 
