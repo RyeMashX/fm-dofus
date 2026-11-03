@@ -181,7 +181,7 @@ export function cleaningMove(state, target, T) {
   return null;
 }
 
-function policyMoves(state, target, T) {
+export function policyMoves(state, target, T) {
   const list = [];
   const miss = missing(state.item, target);
   if (miss.length && overLines(state.item).length) { const c = cleaningMove(state, target, T); if (c) return [{ rune: c, val: 0, purpose: 'nettoyage' }]; }
@@ -200,9 +200,9 @@ function policyMoves(state, target, T) {
 }
 
 // Une trajectoire : `first` puis la politique, au plus H poses. Retourne poses jouées + reste estimé.
-function rollout(state, target, T, first, H, rng, stats) {
+function rollout(state, target, T, first, H, rng, stats, forced = null) {
   let s = state, poses = 0;
-  let r = FM.applyMove(s, first, rng);
+  let r = FM.applyMove(s, first, rng, forced);
   if (!r.outcome) return null;
   poses++;
   if (stats) {
@@ -330,15 +330,24 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
     let sum = 0, n = 0; const costs = new Array(samples).fill(null);
     for (let k = 0; k < samples; k++) {
       const rng = rngFrom(seed * 7919 + k); // mêmes aléas pour chaque candidat : comparaison moins bruitée
-      const c = rollout(state, target, T, rune, horizon, rng, stats);
+      // résultat de la première pose stratifié (SC/SN/EC en proportion exacte des chances) : le bruit entre
+      // candidates ne vient plus du tirage de ce premier résultat, seulement de la suite
+      const u = (k + 0.5) / samples * 100;
+      const forced = u < odds.sc ? 'SC' : u < odds.sc + odds.sn ? 'SN' : 'EC';
+      const c = rollout(state, target, T, rune, horizon, rng, stats, forced);
       if (c == null) continue;
       sum += c; n++; costs[k] = c;
     }
     const score = n ? sum / n + extra : Infinity;
     return { rune, odds, purpose, cleans, score, costs, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
   });
+  // valeur déterministe (politique : 1 + casse + reste attendu sur la ligne) pour départager ce que le bruit
+  // des simulations ne sépare pas (écart apparié < 1 σ) : sinon deux runes quasi équivalentes s'inversent
+  // d'un tirage à l'autre, et c'est la plus logique (Pa Cha qui finit la ligne d'un coup) qui doit sortir
+  const dp = new Map(policyMoves(state, normal, T).map(m => [m.rune.id, m.val]));
+  for (const m of results) m.dp = dp.get(m.rune.id) ?? Infinity;
   results.sort((a, b) => a.score - b.score);
-  // écart-type de l'écart apparié avec le meilleur (mêmes tirages) : « ≈ équivalent » si l'écart < 2 σ
+  results.sort((a, b) => { const t = pairedDiff(a, b); if (t.n > 10 && Math.abs(t.diff) < t.se && a.dp !== b.dp) return a.dp - b.dp; return a.score - b.score; });
   return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
 }
 
