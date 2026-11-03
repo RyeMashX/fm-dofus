@@ -341,13 +341,10 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
     const score = n ? sum / n + extra : Infinity;
     return { rune, odds, purpose, cleans, score, costs, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
   });
-  // valeur déterministe (politique : 1 + casse + reste attendu sur la ligne) pour départager ce que le bruit
-  // des simulations ne sépare pas (écart apparié < 1 σ) : sinon deux runes quasi équivalentes s'inversent
-  // d'un tirage à l'autre, et c'est la plus logique (Pa Cha qui finit la ligne d'un coup) qui doit sortir
+  // valeur déterministe de la politique, à titre indicatif (dp)
   const dp = new Map(policyMoves(state, normal, T).map(m => [m.rune.id, m.val]));
   for (const m of results) m.dp = dp.get(m.rune.id) ?? Infinity;
-  results.sort((a, b) => a.score - b.score);
-  results.sort((a, b) => { const t = pairedDiff(a, b); if (t.n > 10 && Math.abs(t.diff) < t.se && a.dp !== b.dp) return a.dp - b.dp; return a.score - b.score; });
+  results.sort((a, b) => a.score - b.score);   // ordre strict par poses restantes (ce qui est affiché)
   return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
 }
 

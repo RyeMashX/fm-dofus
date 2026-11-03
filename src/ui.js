@@ -593,6 +593,7 @@ function renderTableRead(r) {
   out.innerHTML = `<div class="loss"><div class="row"><strong>Tableau lu</strong><span class="muted small">${rows.filter(x => x.nu != null).length}/${rows.length} lignes${r.reliquat != null ? ` · reliquat ${r.reliquat}` : ''}</span></div>
     ${rows.map(x => `<div class="lrow"><span class="name">${esc(labelOf(x.stat))}</span><span class="val">${x.nu == null ? '<span class="muted">non lue</span>' : x.nu !== x.old ? `<span class="muted">${x.old} →</span> <b class="warn">${x.nu}</b>` : x.nu}</span></div>`).join('')}
     ${unknown.length ? `<p class="muted small">Lignes lues sans correspondance : ${unknown.map(t => esc(t.label)).join(', ')}</p>` : ''}
+    ${r.tableUnparsed?.length ? `<p class="muted small">Texte lu non reconnu : ${r.tableUnparsed.map(t => `« ${esc(t)} »`).join(' · ')}</p>` : ''}
     <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary" ${changes.length || r.reliquat != null ? '' : 'disabled'}>Appliquer</button></div></div>`;
   $('#read-cancel').onclick = () => { out.innerHTML = ''; };
   $('#read-apply').onclick = () => {
