@@ -23,8 +23,6 @@ const P = {
   NEGATIVE_HALF: 0.5,       // rune posée sur une ligne qui reste négative : demi-poids
   // pertes
   HIT_COEF: 0.75, HIT_EXP: 0.85,
-  HEAVY_EXO_HIT: 0.5,       // exo lourd (PA, PM, PO) déjà posé : chance de tomber à chaque pose ratée (observé en jeu : 2-3 runes ; DoFocus donnait ~6 %)
-  HEAVY_LINE: 25,
   TARGET_HIT_FACTOR: 1 / 3, // ligne cible en over, touchable seulement en EC
   TARGET_PICK_FACTOR: 1 / 60,
 };
@@ -151,8 +149,7 @@ function applyLoss(lines, t, loss, reliquat, rng, { failure = false } = {}) {
   let f = loss;
   const hitOver = (i, factor) => {
     const l = lines[i], g = weightOf(l) * (l.value < 0 ? P.NEGATIVE_HALF : 1);
-    const heavyExo = STAT_BY_KEY[l.stat].heavyExo && !hasTemplate(l);
-    if (rng() >= (heavyExo ? P.HEAVY_EXO_HIT : hitProb(loss / g)) * factor) return;
+    if (rng() >= hitProb(loss / g) * factor) return;
     const avail = l.value > 0 ? l.value : l.value - range(l)[0];
     const n = Math.min(avail, Math.max(1, Math.ceil(f / g - EPS)));
     dec(i, n); f -= n * g;
