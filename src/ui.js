@@ -185,11 +185,11 @@ function renderItem() {
         <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}<div class="advice-note"></div></div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
-      <div class="l1"><span class="name" title="${esc(st.label)}">${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
+      <div class="l1"><span class="name" title="${esc(st.label)}">${exo ? '<button class="del" data-del="1" title="Retirer cet exo">×</button>' : ''}${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
         <input class="num small cur" type="number" data-field="value" value="${l.value}" title="jet actuel">
         <span class="arrow">→</span>
         <input class="num small tgt" type="number" data-field="target" value="${tgt ?? ''}" placeholder="cible" title="cible (minimum visé)">
-        ${exo ? '<button class="link small del" data-del="1">×</button>' : ''}</div>
+        </div>
       <div class="l2">${runes}</div>
     </div>`;
   }).join('');
