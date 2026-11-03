@@ -16,6 +16,17 @@ const pct = x => FM.fmt(x).toString().replace('.', ',');
 const w1 = x => Math.round(x * 100) / 100;
 const bar = o => `<i class="sc" style="width:${o.sc}%"></i><i class="sn" style="width:${o.sn}%"></i><i class="ec" style="width:${o.ec}%"></i>`;
 const oddsText = o => `<span class="odds"><b>SC ${pct(o.sc)} %</b> · <i>SN ${pct(o.sn)} %</i> · <s>EC ${pct(o.ec)} %</s></span>`;
+// Difficulté D et sa décomposition (mêmes constantes que le moteur), pour l'infobulle.
+function diffText(o) {
+  if (!o || o.blocked || o.regime === 'exo' || o.difficulty == null) return '';
+  const P = FM.P, q = o.quality ?? 0, parts = [`base ${P.BASE}`];
+  const ratio = P.RATIO_SLOPE * Math.max(0, (o.ratio ?? 0) - P.RATIO_START); if (ratio > 0) parts.push(`ratio ${(o.ratio).toFixed(1).replace('.', ',')} → +${Math.round(ratio)}`);
+  if (o.regime === 'over') parts.push(`over +${Math.round(P.OVER_BASE + P.OVER_PER_WEIGHT * (o.overWeight ?? 0))}`);
+  else if (o.regime === 'step') parts.push(`palier 80 % +${P.STEP}`);
+  parts.push(`qualité ${q.toFixed(2).replace('.', ',')} → +${Math.round(P.QUALITY_COEF * q ** P.QUALITY_EXP)}`);
+  if ((S.item?.level ?? 200) < P.LEVEL_BONUS_BELOW) parts.push(`niveau < 170 → −${Math.round(20 * Math.max(0, 1.1 - q))}`);
+  return `<span class="diff" title="Difficulté D : ${parts.join(' · ')}. SC = max(2, (100 − D) / 2)">D ${Math.round(o.difficulty)}</span>`;
+}
 const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
 // ---- Modèle : DoFocus brut ou calibré sur le journal --------------------------
@@ -156,7 +167,7 @@ function renderItem() {
       const rec = best && best.tier === k;
       if (o.blocked) return `<div class="chip max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">MAX</span></div>`;
       return `<div class="chip ${rec ? 'rec' : ''}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc ${pcClass}">${shown(o)}</span>
-        <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)}${rec ? '<div class="warn small">rune conseillée</div>' : ''}</div></div>`;
+        <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}${rec ? '<div class="warn small">rune conseillée</div>' : ''}</div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
       <div class="l1"><span class="name" title="${esc(st.label)}">${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
@@ -275,7 +286,7 @@ function renderAdvice() {
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
       <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
-      <div class="meta"><span>≈ <b>${m.score.toFixed(1)}</b> poses restantes</span><span class="risk">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span></div>
+      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${m.score.toFixed(1).replace('.', ',')}</b> poses pour finir</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;
   }).join('')}</div>`;
   $$('.move').forEach(d => d.onclick = () => { const [stat, tier] = d.dataset.rune.split(':'); pending = runeOf(stat, +tier); renderAdvice(); renderPose(); });
@@ -287,7 +298,7 @@ function renderPose() {
   const o = FM.odds(S.item, pending);
   $('#pose-rune').innerHTML = o.blocked
     ? `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
-    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)}`;
+    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)} ${diffText(o)}`;
   $$('#pose button[data-outcome]').forEach(b => b.disabled = !!o.blocked);
   $('#simulate').disabled = !!o.blocked;
   // sélecteur manuel
