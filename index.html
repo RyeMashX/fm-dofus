@@ -43,7 +43,7 @@
   <section id="item" class="card view-item hidden">
     <div class="row">
       <h2>Jets</h2>
-      <span id="screen-status-item" class="muted small grow"></span>
+      <div class="spacer"></div>
       <span class="relgrp" title="Reliquat affiché par le jeu"><span class="lbl">Reliquat</span><button id="rel-minus" class="step small">−1</button><input id="reliquat" type="number" step="1" min="0" class="num" inputmode="decimal"><button id="rel-plus" class="step small">+1</button></span>
       <span class="showsel" title="Chance affichée sur chaque rune : somme des pastilles actives">Affiché :
         <button type="button" id="show-sc" class="tog sc" aria-pressed="true">SC</button><button type="button" id="show-sn" class="tog sn" aria-pressed="false">SN</button><button type="button" id="show-ec" class="tog ec" aria-pressed="false">EC</button>
@@ -78,7 +78,6 @@
   <section id="pose" class="card view-fm hidden">
     <div class="row">
       <div id="pose-rune" class="grow"></div>
-      <span class="relgrp" title="Reliquat affiché par le jeu"><span class="lbl small">Reliquat</span><button id="rel-minus-fm" class="step small">−1</button><input id="reliquat-fm" type="number" step="1" min="0" class="num" inputmode="decimal"><button id="rel-plus-fm" class="step small">+1</button></span>
     </div>
     <div class="row">
       <button class="link small" id="other-rune">autre rune</button>
@@ -101,6 +100,8 @@
 
   <section id="history" class="card view-fm hidden">
     <div class="row"><h2>Historique</h2><span id="history-stats" class="muted small"></span><div class="spacer"></div>
+      <span class="relgrp" title="Reliquat affiché par le jeu"><span class="lbl small">Reliquat</span><button id="rel-minus-fm" class="step small">−1</button><input id="reliquat-fm" type="number" step="1" min="0" class="num" inputmode="decimal"><button id="rel-plus-fm" class="step small">+1</button></span></div>
+    <div class="row">
       <button id="undo" class="secondary small">Annuler</button>
       <button id="reset" class="secondary small">Recommencer</button>
     </div>

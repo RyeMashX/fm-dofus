@@ -132,6 +132,14 @@ button:disabled { opacity: .4; cursor: default; }
   .line .range, .lhead .hr { display: none; }   /* la fourchette reste en infobulle du jet actuel */
 }
 body.pip .line .range, body.pip .lhead .hr { display: none; }
+/* largeur réduite, vue complète : les runes passent sous la ligne, la colonne de gauche prend toute la largeur */
+@media (max-width: 560px) { .line { flex-wrap: wrap; } .line .l1, .lhead .l1 { width: 100%; flex: 1 1 100%; } .line .l2 { flex-basis: 100%; } .lhead .l2 { display: none; } }
+body.pip .line { flex-wrap: wrap; } body.pip .line .l1, body.pip .lhead .l1 { width: 100%; flex: 1 1 100%; } body.pip .line .l2 { flex-basis: 100%; } body.pip .lhead .l2 { display: none; }
+/* lecture d'écran en cours */
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+button.busy { position: relative; color: transparent !important; }
+button.busy::after { content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 2px solid #0006; border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
 .relgrp { display: inline-flex; align-items: center; gap: 4px; }
 .relgrp .lbl { font-weight: 600; margin-right: 2px; }
 .relgrp input { width: 64px; font-weight: 700; text-align: center; }

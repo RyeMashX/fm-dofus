@@ -72,7 +72,8 @@ export function parseTableLine(text) {
   const t = clean(text);
   if (/arme de chasse/i.test(strip(t))) return { min: 0, max: 0, value: 0, pct: false, label: 'Arme de chasse', stat: 'chasse' };
   const toks = t.split(/\s+/);
-  const labelAt = toks.findIndex(k => /^[A-Za-zÀ-ÿ'’]{3,}$/.test(k) && !/^\d/.test(k));
+  // libellé : premier mot d'au moins 3 lettres, ou PA / PM / PO (2 lettres)
+  const labelAt = toks.findIndex(k => (/^[A-Za-zÀ-ÿ'’]{3,}$/.test(k) || /^(PA|PM|PO)$/i.test(k)) && !/^\d/.test(k));
   if (labelAt < 2) return null;
   // « 18 à 25 dommages Feu », « 3 à 5 vol Eau » : lignes d'arme, non forgemageables (libellé en minuscule,
   // ou « à » entre deux nombres avec quatre nombres au total)

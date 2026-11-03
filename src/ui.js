@@ -540,7 +540,7 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
 
 // ---- Lecture d'écran (capture de fenêtre + OCR) --------------------------------
 let lastEntryKey = null;
-const screenStatus = msg => { for (const id of ['#screen-status', '#screen-status-item']) { const el = $(id); if (el) el.textContent = msg; } };
+const screenStatus = msg => { const el = $('#screen-status'); if (el) el.textContent = msg; setStatus(msg ? msg.replace(/\..*$/, '') : ''); };
 const screenOut = () => $(S.settings.view === 'fm' ? '#screen-out' : '#screen-out-item');
 function renderCaptureButtons() {
   const on = Cap.isCapturing();
@@ -560,12 +560,18 @@ document.querySelector('#cap-start').onclick = toggleCapture;
 document.querySelector('#cap-table-item').onclick = () => readAndRender('table');
 const progress = m => { if (m?.status === 'loading tesseract core' || m?.status?.includes('loading language')) screenStatus(`Chargement de l'OCR… ${Math.round((m.progress || 0) * 100)} %`); };
 
+let reading = false;
 async function readAndRender(kind) {
+  if (reading) return;                       // un clic de plus pendant la lecture ne relance rien
+  reading = true;
+  const btns = ['#cap-pose', '#cap-table-item'].map(id => $(id)).filter(Boolean);
+  for (const b of btns) { b.disabled = true; b.classList.add('busy'); }
   const out = screenOut();
-  out.innerHTML = '<p class="muted small">Lecture…</p>';
+  out.innerHTML = '<p class="muted small"><span class="spin"></span> Lecture de l\'écran…</p>';
   let r;
   try { r = await Cap.readGame(progress); }
   catch (e) { out.innerHTML = `<p class="warn small">Lecture impossible : ${esc(e.message)}</p>`; return; }
+  finally { reading = false; for (const b of btns) { b.disabled = false; b.classList.remove('busy'); } }
   screenStatus('');
   if (r.error) { out.innerHTML = `<p class="warn small">${esc(r.error)}</p>`; return; }
   if (kind === 'table') renderTableRead(r); else renderPoseRead(r);
