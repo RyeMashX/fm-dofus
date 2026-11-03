@@ -35,6 +35,8 @@ applyModel(S.settings.model);
 let pending = null;      // rune sélectionnée pour la pose
 let lossDraft = null;    // saisie des pertes en cours
 let lastAdvice = null;
+let poseSource = 'manuel', ocrEntry = null;   // provenance de la prochaine pose enregistrée au journal
+const VERSION = document.querySelector('meta[name="fm-version"]')?.content || 'dev';
 
 function blank() {
   return { template: null, item: null, reliquat: 0, reliquatBefore: 0, target: {}, history: [], settings: { top: 3, samples: 1500, view: 'item', show: { sc: true, sn: false, ec: false }, model: 'dofocus' } };
@@ -363,7 +365,7 @@ function renderLossPanel() {
   $('#lr-minus').onclick = () => setRel(d.newReliquat - 1);
   $('#lr-plus').onclick = () => setRel(d.newReliquat + 1);
   $$('#loss-panel button[data-minus]').forEach(b => b.onclick = () => bump(b.dataset.minus, +b.dataset.n));
-  $('#loss-cancel').onclick = () => { lossDraft = null; renderLossPanel(); };
+  $('#loss-cancel').onclick = () => { lossDraft = null; poseSource = 'manuel'; ocrEntry = null; renderLossPanel(); };
   $('#loss-ok').onclick = () => {
     const changes = [];
     if (d.outcome === 'SN') changes.push({ stat: d.rune.stat, delta: d.rune.bonus });
@@ -382,23 +384,33 @@ function bump(stat, n) {
 
 function journal() { try { return JSON.parse(localStorage.getItem(JKEY)) || []; } catch { return []; } }
 function journalAdd(entry) { try { const j = journal(); j.push(entry); localStorage.setItem(JKEY, JSON.stringify(j)); } catch {} }
+const XKEY = 'fm-dofus:journal-exported';
 function journalExport() {
   const j = journal();
-  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), entries: j }, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), tool: VERSION, model: S.settings.model || 'dofocus', entries: j, sessions: sessions(), prices: prices() }, null, 1)], { type: 'application/json' });
+  try { localStorage.setItem(XKEY, String(j.length)); } catch {}
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `fm-dofus-journal-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
+  renderHistory();
 }
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
   const keepStatus = $('#screen-status')?.textContent;
   if (!S.baseline && Object.keys(S.target).length && !Search.targetReached(S.item, S.target)) freezeBaseline(null);
   if (!simulated) {
-    let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked } : { sc: o.sc, sn: o.sn, ec: o.ec, regime: o.regime, difficulty: o.difficulty, quality: o.quality }; } catch {}
-    journalAdd({ t: new Date().toISOString(), item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level },
+    // Tout ce qu'il faut pour réanalyser la pose plus tard : état avant/après, rune, chances et facteurs
+    // du modèle (régime, difficulté, qualité, position, ratio, over…), modèle et paramètres actifs, cible,
+    // provenance (saisie, lecture d'écran), version de l'outil.
+    let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked, limit: o.limit } : { ...o }; } catch {}
+    journalAdd({ v: 2, t: new Date().toISOString(), version: VERSION, session: S.sessionId ?? null,
+                 item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level, type: S.template?.type },
+                 model: { key: S.settings.model || 'dofocus', P: { ...FM.P } }, target: { ...S.target },
                  before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore },
-                 rune: { stat: rune.stat, tier: rune.tier, name: rune.name, bonus: rune.bonus, weight: rune.weight },
-                 odds, outcome, changes, after: { reliquat }, gap });
+                 rune: { id: rune.id, stat: rune.stat, tier: rune.tier, name: rune.name, bonus: rune.bonus, weight: rune.weight },
+                 odds, outcome, changes, after: { lines: lines.map(l => ({ stat: l.stat, value: l.value })), reliquat }, gap,
+                 source: poseSource, ocr: ocrEntry });
+    poseSource = 'manuel'; ocrEntry = null;
   }
   S.history.push({ id: Date.now(), rune: { stat: rune.stat, tier: rune.tier, name: rune.name }, outcome, changes,
                    reliquatDelta: w1(reliquat - reliquatBefore), simulated, gap,
@@ -485,8 +497,10 @@ function renderPoseRead(r) {
   const txt = entry.map(it => it.reliquat ? (it.reliquat > 0 ? '+ reliquat' : '− reliquat') : `${it.delta > 0 ? '+' : ''}${it.delta} ${esc(labelOf(it.stat))}`).join(', ');
   const apply = () => {
     lastEntryKey = key; out.innerHTML = '';
+    poseSource = 'ocr-vérifié'; ocrEntry = { entry, reliquat: r.reliquat ?? null, raw: r.historyRaw?.at(-1)?.text ?? null };
     pending = rune; renderPose();
     if (info.outcome === 'SC') {
+      poseSource = 'ocr';
       const res = FM.applyMove(state(), rune, Math.random, 'SC');
       commit({ rune, outcome: 'SC', lines: res.item.lines, reliquat: r.reliquat ?? S.reliquat, changes: res.changes });
       return true;
@@ -504,7 +518,7 @@ function renderPoseRead(r) {
     // cohérent (poids perdu = rune + variation de reliquat) : on valide sans attendre
     const lost = Object.entries(d.deltas).reduce((a, [stat, n]) => a + n * STAT_BY_KEY[stat].weight, 0);
     const expected = d.lossWeight + (d.newReliquat - d.before);
-    if (r.reliquat != null && Math.abs(lost - expected) < 0.01) { $('#loss-ok').click(); return true; }
+    if (r.reliquat != null && Math.abs(lost - expected) < 0.01) { poseSource = 'ocr'; $('#loss-ok').click(); return true; }
     return false;
   };
   if (!dup && r.reliquat != null) {
@@ -677,7 +691,9 @@ function renderHistory() {
   const n = { SC: 0, SN: 0, EC: 0 }; h.forEach(e => n[e.outcome]++);
   $('#history-stats').textContent = h.length ? `${h.length} · ${n.SC} SC · ${n.SN} SN · ${n.EC} EC` : '';
   const j = journal();
-  $('#journal-stats').textContent = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} enregistrée${j.length > 1 ? 's' : ''} (tous objets)`;
+  let exported = 0; try { exported = Number(localStorage.getItem(XKEY)) || 0; } catch {}
+  const fresh = Math.max(0, j.length - Math.min(exported, j.length));
+  $('#journal-stats').innerHTML = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} (tous objets)${fresh ? ` · <span class="${fresh >= 30 ? 'warn' : 'muted'}">${fresh} non exportée${fresh > 1 ? 's' : ''}</span>` : ' · <span class="ok">tout exporté</span>'}`;
   $('#journal-export').disabled = !j.length;
   $('#undo').disabled = !h.length;
   $('#history-list').innerHTML = [...h].reverse().slice(0, 12).map(e => {
@@ -698,7 +714,7 @@ $('#reset').onclick = () => {
 };
 
 $('#journal-export').onclick = () => journalExport();
-$('#journal-clear').onclick = () => { if (confirm('Vider le journal des poses réelles ? (export conseillé avant)')) { try { localStorage.removeItem(JKEY); } catch {} renderHistory(); } };
+$('#journal-clear').onclick = () => { if (confirm('Vider le journal des poses réelles ? (export conseillé avant)')) { try { localStorage.removeItem(JKEY); localStorage.removeItem(XKEY); } catch {} renderHistory(); } };
 
 function setStatus(msg) { const el = $('#status'); if (el) el.textContent = msg; }
 
