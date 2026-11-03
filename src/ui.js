@@ -30,6 +30,20 @@ function diffText(o) {
 const statImg = (stat, cls = 'sicon') => { const u = STAT_BY_KEY[stat]?.icon; return u ? `<img class="${cls}" src="${esc(u)}" alt="" loading="lazy">` : ''; };
 const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
+// ---- Solveur en arrière-plan ---------------------------------------------------
+// Les simulations tournent dans un Web Worker (module) ; sans worker (fichier unique, vieux navigateur),
+// elles tournent dans la page. Les paramètres du modèle sont envoyés à chaque appel.
+let worker = null; const jobs = new Map(); let jobSeq = 0;
+try {
+  worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+  worker.onmessage = e => { const j = jobs.get(e.data.id); jobs.delete(e.data.id); if (!j) return; e.data.error ? j.rej(new Error(e.data.error)) : j.res(e.data.result); };
+  worker.onerror = () => { worker = null; for (const [id, j] of jobs) { jobs.delete(id); try { j.res(Search[j.fn](...j.args)); } catch (err) { j.rej(err); } } };
+} catch { worker = null; }
+function solve(fn, ...args) {
+  if (!worker) return new Promise((res, rej) => setTimeout(() => { try { res(Search[fn](...args)); } catch (err) { rej(err); } }, 10));
+  return new Promise((res, rej) => { const id = ++jobSeq; jobs.set(id, { res, rej, fn, args }); worker.postMessage({ id, fn, args, P: { ...FM.P } }); });
+}
+
 // ---- Modèle : DoFocus brut ou calibré sur le journal --------------------------
 // Calibration du 2026-11-02 sur 156 poses réelles (2 objets) : le palier des 80 % pèse moins que dans
 // DoFocus (+25 au lieu de +45) et la pénalité de ratio jet/bonus au-delà de 14 est doublée (24 par point
@@ -218,23 +232,25 @@ function lineAdvice() {
   if (key === adviceKey) { paintLineAdvice(); return; }
   adviceKey = key; adviceCache = null;
   if (!Object.keys(S.target).length || Search.targetReached(S.item, S.target)) return;
-  setTimeout(() => { if (adviceKey !== key) return; try { adviceCache = Search.nextBestMoves(state(), S.target, { samples: 120, top: 50, seed: 5 }); } catch { adviceCache = null; } paintLineAdvice(); }, 30);
+  solve('nextBestMoves', state(), S.target, { samples: 300, top: 50, seed: 5 }).then(r => { if (adviceKey !== key) return; adviceCache = r; paintLineAdvice(); }).catch(() => { adviceCache = null; });
 }
 function paintLineAdvice() {
   const r = adviceCache; if (!r || !$('#lines')) return;
-  $$('#lines .chip').forEach(c => { c.classList.remove('rec'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
+  $$('#lines .chip').forEach(c => { c.classList.remove('rec', 'tie'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
   $$('#lines .recbadge').forEach(b => { b.classList.add('hidden'); b.innerHTML = ''; });
-  const bestByStat = new Map();
-  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
-  const top = r.moves?.[0];
-  for (const m of bestByStat.values()) {
-    const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (!c) continue;
-    const isTop = top && top.rune.id === m.rune.id;
-    c.classList.add('rec');
-    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = '';
+  const byStat = new Map();
+  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; (byStat.get(m.rune.stat) || byStat.set(m.rune.stat, []).get(m.rune.stat)).push(m); }
+  for (const list of byStat.values()) {
+    list.sort((a, b) => a.score - b.score);
+    const best = list[0];
+    // ex æquo : écart inférieur au bruit des simulations (≈ 3 % du score, au moins 0,5 pose)
+    const ties = list.slice(1).filter(m => { const t = Search.pairedDiff(best, m); return t.n > 10 && t.diff < 2 * t.se; });
+    const cb = $(`#lines .chip[data-rune="${best.rune.id}"]`); if (cb) cb.classList.add('rec');
+    for (const m of ties) { const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (c) { c.classList.add('rec', 'tie'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">≈ équivalent à ${esc(best.rune.name)}</div>`; } }
+    if (ties.length && cb) { const n = cb.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">≈ équivalent : ${ties.map(m => esc(m.rune.name)).join(', ')}</div>`; }
     // vue allégée : badge après le nom de la caractéristique, bulle avec la rune
-    const bd = $(`#lines .recbadge[data-stat="${m.rune.stat}"]`);
-    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(m.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(m.rune, 'ricon sm')}<b>${esc(m.rune.name)}</b> <span class="muted small">+${m.rune.bonus}</span><span class="spacer"></span>${diffText(m.odds)}</div><div class="bar">${bar(m.odds)}</div>${oddsText(m.odds)}</div>`; }
+    const bd = $(`#lines .recbadge[data-stat="${best.rune.stat}"]`);
+    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(best.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(best.rune, 'ricon sm')}<b>${esc(best.rune.name)}</b> <span class="muted small">+${best.rune.bonus}</span><span class="spacer"></span>${diffText(best.odds)}</div><div class="bar">${bar(best.odds)}</div>${oddsText(best.odds)}${ties.length ? `<div class="rec-note small">≈ équivalent : ${ties.map(m => esc(m.rune.name)).join(', ')}</div>` : ''}</div>`; }
   }
 }
 
@@ -250,7 +266,7 @@ function renderEstimate() {
   if (key !== estimateKey) {
     box.innerHTML = '<span class="muted small">Estimation…</span>';
     estimateKey = key;
-    setTimeout(() => { if (estimateKey !== key) return; try { estimateCache = Search.simulateSessions(state(), S.target, { runs: 300, seed: 7 }); } catch (e) { estimateCache = null; } paintEstimate(); }, 20);
+    solve('simulateSessions', state(), S.target, { runs: 300, seed: 7 }).then(r => { if (estimateKey !== key) return; estimateCache = r; paintEstimate(); }).catch(() => { if (estimateKey === key) { estimateCache = null; paintEstimate(); } });
     return;
   }
   paintEstimate();
@@ -351,12 +367,14 @@ function computeAdvice(scroll = false) {
   const out = $('#advice-out');
   if (!Object.keys(S.target).length) { out.innerHTML = '<p class="muted small">Renseigne au moins une cible dans la vue Objet.</p>'; return; }
   out.innerHTML = '<p class="muted small">Calcul…</p>';
-  setTimeout(() => {
-    lastAdvice = Search.nextBestMoves(state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff });
+  const key = JSON.stringify([S.item.lines, S.target, S.reliquat]); computeAdvice.key = key;
+  solve('nextBestMoves', state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff }).then(r => {
+    if (computeAdvice.key !== key || S.settings.view !== 'fm') return;
+    lastAdvice = r;
     if (!lastAdvice.reached && lastAdvice.moves.length) pending = lastAdvice.moves[0].rune;
     renderAdvice(); renderPose();
     if (scroll) $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 20);
+  }).catch(err => { out.innerHTML = `<p class="warn small">Calcul impossible : ${esc(err.message)}</p>`; });
 }
 
 function renderAdvice() {
@@ -367,10 +385,10 @@ function renderAdvice() {
   const hv = res.heavy; const ph0 = hv?.phases?.[0];
   const note = res.exo && ph0 ? `<p class="small"><b class="ok">Objet au jet.</b> Il reste l'exo : chaque tentative passe à ${pct(ph0.p * 100)} % ; en EC, jusqu'à ${res.moves[0].rune.weight} de poids tombent, on remonte (≈ ${f1(ph0.recover)} poses) puis on retente. En moyenne ${Math.round(ph0.cycles.mean)} cycles, une fois sur deux moins de ${ph0.cycles.median}, une fois sur dix plus de ${ph0.cycles.p90}.</p>`
     : hv && hv.total < 900 ? `<p class="muted small">Les scores comprennent la phase exo lourd à la fin (≈ ${Math.round(hv.total)} poses : ${hv.phases.map(x => `${esc(x.rune.name)} ≈ ${Math.round(x.cycles?.mean ?? 0)} tentatives`).join(', ')}).</p>` : '';
-  const best = res.moves[0].score;
+  
   out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
-    const tie = k > 0 && m.score - best < 0.3;
+    const tie = !!m.tie;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
       <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>

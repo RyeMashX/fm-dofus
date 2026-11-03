@@ -259,6 +259,15 @@ export function candidates(state, target) {
 // Score d'une rune = nombre moyen de poses (celle-ci comprise) pour atteindre toutes les cibles en la jouant
 // maintenant puis en suivant la politique, sur des sessions simulées jusqu'au bout (même estimateur que
 // simulateSessions, donc même chiffre que l'estimation de la vue Objet).
+// Écart moyen entre deux candidates sur les mêmes tirages, et son erreur-type.
+export function pairedDiff(a, b) {
+  let n = 0, s = 0, s2 = 0;
+  for (let k = 0; k < Math.min(a.costs?.length ?? 0, b.costs?.length ?? 0); k++) { if (a.costs[k] == null || b.costs[k] == null) continue; const d = b.costs[k] - a.costs[k]; n++; s += d; s2 += d * d; }
+  if (!n) return { n: 0, diff: b.score - a.score, se: Infinity };
+  const mean = s / n, v = Math.max(0, s2 / n - mean * mean);
+  return { n, diff: mean, se: Math.sqrt(v / n) };
+}
+
 export function nextBestMoves(state, target, { samples = 300, horizon = 400, seed = 1, top = 3 } = {}) {
   if (targetReached(state.item, target)) return { reached: true, moves: [] };
   const normal = normalTarget(state.item, target);
@@ -277,17 +286,19 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
   const pool = candidates(state, target);
   const results = pool.map(({ rune, odds, purpose, cleans }) => {
     const stats = { hurt: 0, lost: 0, outcomes: { SC: 0, SN: 0, EC: 0 } };
-    let sum = 0, n = 0;
+    let sum = 0, n = 0; const costs = new Array(samples).fill(null);
     for (let k = 0; k < samples; k++) {
       const rng = rngFrom(seed * 7919 + k); // mêmes aléas pour chaque candidat : comparaison moins bruitée
       const c = rollout(state, target, T, rune, horizon, rng, stats);
       if (c == null) continue;
-      sum += c; n++;
+      sum += c; n++; costs[k] = c;
     }
     const score = n ? sum / n + extra : Infinity;
-    return { rune, odds, purpose, cleans, score, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
+    return { rune, odds, purpose, cleans, score, costs, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
   });
   results.sort((a, b) => a.score - b.score);
+  // écart-type de l'écart apparié avec le meilleur (mêmes tirages) : « ≈ équivalent » si l'écart < 2 σ
+  for (const m of results) { const t = pairedDiff(results[0], m); m.diff = t.diff; m.diffSe = t.se; m.tie = m !== results[0] && t.n > 10 && t.diff < 2 * t.se; }
   return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
 }
 

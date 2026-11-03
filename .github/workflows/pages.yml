@@ -25,7 +25,7 @@ jobs:
       - run: |
           V=${GITHUB_SHA::8}
           sed -i "s#style\.css#style.css?v=$V#; s#src/ui\.js#src/ui.js?v=$V#; s#name=\"fm-version\" content=\"dev\"#name=\"fm-version\" content=\"$V\"#" index.html
-          sed -i -E "s#from '(\./[a-z]+\.js)'#from '\1?v=$V'#g" src/*.js
+          sed -i -E "s#from '(\./[a-z]+\.js)'#from '\1?v=$V'#g; s#'\./worker\.js'#'./worker.js?v=$V'#" src/*.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true
