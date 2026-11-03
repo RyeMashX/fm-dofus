@@ -169,7 +169,8 @@ function renderItem() {
   const light = show.runes === false;
   $('#show-runes').setAttribute('aria-pressed', String(!light));
   $('#lines').classList.toggle('light', light);
-  $('#h-runes').textContent = light ? 'Rune conseillée · chance affichée' : 'Runes · chance affichée';
+  $('.lhead').classList.toggle('light', light);
+  root.body.classList.toggle('light', light);
   const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
   const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
@@ -189,7 +190,7 @@ function renderItem() {
         <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}<div class="advice-note"></div></div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
-      <div class="l1"><span class="name" title="${esc(st.label)}">${exo ? '<button class="del" data-del="1" title="Retirer cet exo">×</button>' : ''}${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
+      <div class="l1"><span class="name" title="${esc(st.label)}">${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}${esc(st.label)}<span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
         <input class="num small cur" type="number" data-field="value" value="${l.value}" title="jet actuel">
         <span class="arrow">→</span>
         <input class="num small tgt" type="number" data-field="target" value="${tgt ?? ''}" placeholder="cible" title="cible (minimum visé)">
@@ -221,6 +222,7 @@ function lineAdvice() {
 function paintLineAdvice() {
   const r = adviceCache; if (!r || !$('#lines')) return;
   $$('#lines .chip').forEach(c => { c.classList.remove('rec'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
+  $$('#lines .recbadge').forEach(b => { b.classList.add('hidden'); b.innerHTML = ''; });
   const bestByStat = new Map();
   for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
   const top = r.moves?.[0];
@@ -229,6 +231,9 @@ function paintLineAdvice() {
     const isTop = top && top.rune.id === m.rune.id;
     c.classList.add('rec');
     const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">rune conseillée · ≈ ${f1(m.score)} poses restantes</div>`;
+    // vue allégée : badge après le nom de la caractéristique, bulle avec la rune
+    const bd = $(`#lines .recbadge[data-stat="${m.rune.stat}"]`);
+    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(m.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(m.rune, 'ricon sm')}<b>${esc(m.rune.name)}</b> <span class="muted small">+${m.rune.bonus}</span></div><div class="bar">${bar(m.odds)}</div>${oddsText(m.odds)} ${diffText(m.odds)}<div class="rec-note small">rune conseillée · ≈ ${f1(m.score)} poses restantes</div></div>`; }
   }
 }
 

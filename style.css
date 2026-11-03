@@ -6,7 +6,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
 main, header.top, footer, .itembar { max-width: var(--w, 560px); }
-body.view-item { --w: 1060px; }
+body.view-item { --w: 1060px; } body.view-item.light { --w: 640px; }
 body.view-fm { --w: 460px; }
 body.view-bilan, body.view-search { --w: 560px; }
 body.view-settings { --w: 700px; }
@@ -173,9 +173,17 @@ button:disabled { opacity: .4; cursor: default; }
 .showsel .tog:hover { opacity: 1; }
 .showsel .tog.all { margin-left: 10px; } .showsel .tog.all[aria-pressed="true"] { background: var(--line); border-color: #3a3e4a; color: var(--text); }
 /* vue allégée : seule la rune conseillée de chaque ligne reste visible */
-#lines.light .chip:not(.rec) { display: none; }
-#lines.light .l2 { grid-template-columns: minmax(0, 1fr); }
-#lines.light .line:not(:has(.chip.rec)) .l2::before { content: '—'; color: var(--muted); font-size: 12px; padding-left: 6px; }
+#lines.light .l2, .lhead.light .l2 { display: none; }
+.lhead.light .l1 { width: auto; flex: 1; }
+#lines.light .line .l1 { width: auto; flex: 1; }
+#lines.light .line .name { flex: 1; overflow: visible; }
+.recbadge { display: none; position: relative; vertical-align: middle; margin-left: 8px; padding: 1px 4px; border: 1px solid var(--rec); border-radius: 6px; background: var(--rec-bg); line-height: 0; cursor: default; }
+.recbadge .ricon.sm { margin: 0; }
+#lines.light .recbadge:not(.hidden) { display: inline-flex; }
+.recbadge .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; width: 220px; padding: 8px; background: #0f1013; border: 1px solid #3a3e4a; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.5); line-height: 1.4; }
+.recbadge:hover .pop { display: block; }
+.recbadge .pop .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 5px 0; }
+.recbadge .rec-title { display: flex; align-items: center; gap: 6px; color: var(--rec); }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
 button.cta-cap:hover, button.cta-cap.on { background: var(--sc); color: #fff; }
 button.ico { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 18px; padding: 0; margin-left: 3px; vertical-align: middle; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--sc); }
