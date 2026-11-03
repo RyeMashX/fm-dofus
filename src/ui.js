@@ -251,7 +251,7 @@ const pctDiff = (real, est) => { if (!(est > 0)) return ''; const d = Math.round
 // Courbe de répartition (part des sessions terminées en ≤ x), SVG inline, une série.
 function cdfSvg(values, { fmt = v => String(v), marks = [0.1, 0.5, 0.9] } = {}) {
   const v = values.slice().sort((a, b) => a - b); const n = v.length; if (!n) return '';
-  const W = 300, H = 128, L = 34, R = 8, T = 8, B = 30;
+  const W = 300, H = 160, L = 36, R = 8, T = 10, B = 30;
   const xmax = v[Math.min(n - 1, Math.floor(0.98 * n))] || 1;
   const X = x => L + Math.min(1, x / xmax) * (W - L - R), Y = y => T + (1 - y) * (H - T - B);
   const pts = v.map((x, i) => `${X(x).toFixed(1)},${Y((i + 1) / n).toFixed(1)}`).join(' ');
@@ -259,20 +259,18 @@ function cdfSvg(values, { fmt = v => String(v), marks = [0.1, 0.5, 0.9] } = {}) 
   const mk = marks.map((m, i) => { const x = v[Math.min(n - 1, Math.floor(m * n))]; const ty = i % 2 ? H - 16 : H - 5; return `<line x1="${X(x)}" x2="${X(x)}" y1="${Y(0)}" y2="${Y(m)}" class="m"/><circle cx="${X(x)}" cy="${Y(m)}" r="3" class="d"/><text x="${X(x)}" y="${ty}" class="t" text-anchor="middle">${esc(fmt(x))}</text>`; }).join('');
   return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${grid}<polyline points="${pts}" class="s"/>${mk}</svg>`;
 }
-// Pareto du coût par rune : part de chaque rune et part cumulée, même axe (%).
-function paretoSvg(rows) {
-  const tot = rows.reduce((a, r) => a + r.c, 0); if (!(tot > 0)) return '';
+// Coût par rune : barres pleine hauteur, nombre et coût écrits sur chaque barre.
+function runeBarsSvg(rows) {
   const top = rows.filter(r => r.c > 0).sort((a, b) => b.c - a.c).slice(0, 6);
-  const W = 300, H = 128, L = 34, R = 8, T = 8, B = 30, bw = (W - L - R) / top.length;
+  if (!top.length) return '';
+  const W = 300, H = 160, L = 6, R = 6, T = 26, B = 22, bw = (W - L - R) / top.length, max = top[0].c;
+  const Y = y => T + (1 - y / max) * (H - T - B);
   const short = name => name.replace(/^Pa /, 'P·').replace(/^Ra /, 'R·').replace(/Neutre/, 'Neu').replace(/Terre/, 'Ter');
-  const Y = y => T + (1 - y) * (H - T - B);
-  let cum = 0;
-  const bars = top.map((r, i) => { const sh = r.c / tot; cum += sh; const x = L + i * bw + 2, h = Y(0) - Y(sh);
-    return `<rect x="${x.toFixed(1)}" y="${Y(sh).toFixed(1)}" width="${(bw - 4).toFixed(1)}" height="${h.toFixed(1)}" rx="2" class="b"><title>${esc(r.x.rune.name)} : ${Math.round(sh * 100)} % du coût (${kShort(r.c)})</title></rect><text x="${(x + (bw - 4) / 2).toFixed(1)}" y="${H - 16}" class="t" text-anchor="middle">${esc(short(r.x.rune.name))}</text>`; }).join('');
-  cum = 0;
-  const line = top.map((r, i) => { cum += r.c / tot; return `${(L + i * bw + bw / 2).toFixed(1)},${Y(cum).toFixed(1)}`; }).join(' ');
-  const grid = [0.5, 1].map(g => `<line x1="${L}" x2="${W - R}" y1="${Y(g)}" y2="${Y(g)}" class="g"/><text x="${L - 4}" y="${Y(g) + 3}" class="t" text-anchor="end">${Math.round(g * 100)} %</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${grid}${bars}<polyline points="${line}" class="s2"/></svg>`;
+  const bars = top.map((r, i) => { const x = L + i * bw + 3, w = bw - 6, cx = x + w / 2;
+    return `<rect x="${x.toFixed(1)}" y="${Y(r.c).toFixed(1)}" width="${w.toFixed(1)}" height="${(Y(0) - Y(r.c)).toFixed(1)}" rx="3" class="b"><title>${esc(r.x.rune.name)} × ${f1(r.x.n)} = ${kamas(r.c)}</title></rect>
+      <text x="${cx.toFixed(1)}" y="${(Y(r.c) - 13).toFixed(1)}" class="t2" text-anchor="middle">${kShort(r.c)}</text><text x="${cx.toFixed(1)}" y="${(Y(r.c) - 3).toFixed(1)}" class="t" text-anchor="middle">× ${f1(r.x.n)}</text>
+      <text x="${cx.toFixed(1)}" y="${H - 8}" class="t" text-anchor="middle">${esc(short(r.x.rune.name))}</text>`; }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${bars}</svg>`;
 }
 function paintEstimate() {
   const box = $('#estimate'); const r = estimateCache;
@@ -280,17 +278,20 @@ function paintEstimate() {
   const { rows, cost, missing, costs, costP10, costMedian, costP90 } = estimateCost(r);
   const b = S.baseline;
   const dec = (a, m, z, fmt) => `<div class="dec"><span><i>1er décile</i><b>${fmt(a)}</b></span><span><i>médiane</i><b>${fmt(m)}</b></span><span><i>dernier décile</i><b>${fmt(z)}</b></span></div>`;
-  const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${f1(x.n)}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
+  const tot = rows.reduce((a, r) => a + r.c, 0);
+  const detail = `<table class="rt"><thead><tr><th>Rune</th><th class="r">Nombre</th><th class="r">Prix unitaire</th><th class="r">Coût</th><th class="r">Part</th></tr></thead><tbody>${rows.map(({ x, u, c }) => `<tr><td>${runeImg(x.rune, 'ricon sm')}${esc(x.rune.name)}</td><td class="r">× ${f1(x.n)}</td><td class="r">${u > 0 ? kamas(u) : '<span class="warn">prix ?</span>'}</td><td class="r">${u > 0 ? kamas(c) : '—'}</td><td class="r muted">${u > 0 && tot ? Math.round(c / tot * 100) + ' %' : ''}</td></tr>`).join('')}</tbody></table>`;
+  const top3 = rows.filter(r => r.c > 0).sort((a, b) => b.c - a.c).slice(0, 3);
   box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées, moyenne en grand)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}${r.heavy ? ` · <span class="warn">dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}</span>` : ''}</div>
     <div class="kpis est-kpis">
       <div class="kpi"><div class="v">${f1(r.mean)} <small>poses</small></div>${dec(r.p10, r.median, r.p90, x => f1(Math.round(x)))}</div>
-      <div class="kpi haspop"><div class="v">${cost ? `${kShort(cost)} <small>kamas</small>` : '<span class="muted">—</span>'}</div>${cost ? dec(costP10, costMedian, costP90, kShort) : '<div class="l muted small">renseigne les prix (⚙)</div>'}${missing ? `<div class="warn small">${missing} rune${missing > 1 ? 's' : ''} sans prix</div>` : ''}<div class="pop">${detail}</div></div>
+      <div class="kpi"><div class="v">${cost ? `${kShort(cost)} <small>kamas</small>` : '<span class="muted">—</span>'}</div>${cost ? dec(costP10, costMedian, costP90, kShort) : '<div class="l muted small">renseigne les prix (⚙)</div>'}${missing ? `<div class="warn small">${missing} rune${missing > 1 ? 's' : ''} sans prix</div>` : ''}</div>
+      <div class="kpi top3"><div class="l muted small">Runes à prévoir</div>${top3.length ? `<div class="t3">${top3.map(({ x, c }) => `<div>${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><b>× ${f1(x.n)}</b><span class="muted">${kShort(c)}</span></div>`).join('')}</div>` : `<div class="t3">${rows.slice(0, 3).map(({ x }) => `<div>${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><b>× ${f1(x.n)}</b></div>`).join('')}</div>`}</div>
     </div>
-    <details class="est-more"><summary class="small muted">détail</summary>
+    <details class="est-more"><summary>Détail</summary>
       <div class="charts">
-        <div><div class="small muted">Sessions terminées en moins de … poses</div>${cdfSvg(r.detail.map(d => d.poses), { fmt: f1 })}</div>
-        ${costs.some(c => c > 0) ? `<div><div class="small muted">Sessions coûtant moins de … kamas</div>${cdfSvg(costs, { fmt: kShort })}</div>` : ''}
-        ${cost ? `<div><div class="small muted">Part du coût par rune (cumul en ligne)</div>${paretoSvg(rows)}</div>` : ''}
+        <div><div class="ct">Sessions terminées en moins de … poses</div>${cdfSvg(r.detail.map(d => d.poses), { fmt: f1 })}</div>
+        <div><div class="ct">Sessions coûtant moins de … kamas</div>${costs.some(c => c > 0) ? cdfSvg(costs, { fmt: kShort }) : '<p class="muted small">prix manquants</p>'}</div>
+        <div><div class="ct">Coût par rune</div>${cost ? runeBarsSvg(rows) : '<p class="muted small">prix manquants</p>'}</div>
       </div>${detail}</details>
     <div class="row small baseline">${b ? `<span>Figée ${b.after ? `après ${b.after} pose${b.after > 1 ? 's' : ''}` : 'au départ'} : ${f1(b.poses)} poses · ${b.cost ? kShort(b.cost) : 'coût ?'}</span><button id="freeze" class="link small">refiger</button>` : `<span class="muted">Fige l'estimation pour la comparer au résultat dans le bilan (sinon, figée automatiquement à la première pose).</span><button id="freeze" class="secondary small">Figer l'estimation</button>`}</div>`;
   $('#freeze').onclick = () => { if (S.baseline && !confirm('Remplacer l\'estimation figée ?')) return; freezeBaseline(); paintEstimate(); };
