@@ -23,7 +23,7 @@ const P = {
   NEGATIVE_HALF: 0.5,       // rune posée sur une ligne qui reste négative : demi-poids
   // pertes
   HIT_COEF: 0.75, HIT_EXP: 0.85,
-  OVER_EXTRA: 0.2,          // ligne en over : points retirés en plus, jusqu'à 20 % (observé en jeu)
+  OVER_EXTRA: 0.2,          // ligne en over à poids < 1 par point : points retirés en plus, jusqu'à 20 % (observé en jeu)
   TARGET_HIT_FACTOR: 1 / 3, // ligne cible en over, touchable seulement en EC
   TARGET_PICK_FACTOR: 1 / 60,
 };
@@ -155,11 +155,12 @@ function applyLoss(lines, t, loss, reliquat, rng, { failure = false } = {}) {
     if (!sure && rng() >= hitProb(loss / g) * factor) return;
     const avail = l.value > 0 ? l.value : l.value - range(l)[0];
     const need = Math.max(1, Math.ceil(f / g - EPS));
-    // ligne en over : le jeu retire un peu plus que le poids de la rune (observé : poids 1 → 5 ou 6 vita,
-    // poids 2 → 10 à 12), jusqu'à +20 %. Le surplus est détruit, il ne compte pas comme perte couverte.
-    const extra = sure ? Math.floor(rng() * (P.OVER_EXTRA * need + 1)) : 0;
+    // ligne en over d'une carac à moins de 1 de poids par point (vita, ini, pods) : le jeu retire parfois
+    // quelques points de plus (observé : poids 1 → 5 ou 6 vita, poids 2 → 10 à 12), jusqu'à +20 %.
+    // Le surplus est crédité au reliquat comme tout dépassement (6 vita pour un poids 1 → +0,2).
+    const extra = sure && g < 1 ? Math.floor(rng() * (P.OVER_EXTRA * need + 1)) : 0;
     const n = Math.min(avail, need + extra);
-    dec(i, n); f -= Math.min(n, need) * g;
+    dec(i, n); f -= n * g;
   };
   // 1. over et exos (hors cible), ordre aléatoire
   for (const i of shuffle(lines.map((_, i) => i).filter(i => i !== t && isOver(i)), rng)) {
