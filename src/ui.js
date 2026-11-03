@@ -166,6 +166,10 @@ for (const sfx of ['', '-fm']) {
 function renderItem() {
   const show = S.settings.show;
   for (const k of ['sc', 'sn', 'ec']) { const b = $('#show-' + k); if (b) b.setAttribute('aria-pressed', String(!!show[k])); }
+  const light = show.runes === false;
+  $('#show-runes').setAttribute('aria-pressed', String(!light));
+  $('#lines').classList.toggle('light', light);
+  $('#h-runes').textContent = light ? 'Rune conseillée · chance affichée' : 'Runes · chance affichée';
   const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
   const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
@@ -329,6 +333,7 @@ $('#exo-select').onchange = e => {
   save(); renderAll();
 };
 for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onclick = () => { S.settings.show[k] = !S.settings.show[k]; save(); renderItem(); };
+document.querySelector('#show-runes').onclick = () => { S.settings.show.runes = S.settings.show.runes === false; save(); renderItem(); };
 $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
 
 // ---- Vue FM : conseil ---------------------------------------------------------

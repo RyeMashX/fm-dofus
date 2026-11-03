@@ -171,6 +171,11 @@ button:disabled { opacity: .4; cursor: default; }
 .showsel .tog.sn[aria-pressed="true"] { background: var(--sn); border-color: var(--sn); }
 .showsel .tog.ec[aria-pressed="true"] { background: var(--ec); border-color: var(--ec); }
 .showsel .tog:hover { opacity: 1; }
+.showsel .tog.all { margin-left: 10px; } .showsel .tog.all[aria-pressed="true"] { background: var(--line); border-color: #3a3e4a; color: var(--text); }
+/* vue allégée : seule la rune conseillée de chaque ligne reste visible */
+#lines.light .chip:not(.rec) { display: none; }
+#lines.light .l2 { grid-template-columns: minmax(0, 1fr); }
+#lines.light .line:not(:has(.chip.rec)) .l2::before { content: '—'; color: var(--muted); font-size: 12px; padding-left: 6px; }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
 button.cta-cap:hover, button.cta-cap.on { background: var(--sc); color: #fff; }
 button.ico { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 18px; padding: 0; margin-left: 3px; vertical-align: middle; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--sc); }
