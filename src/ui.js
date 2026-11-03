@@ -519,7 +519,7 @@ const screenStatus = msg => { for (const id of ['#screen-status', '#screen-statu
 const screenOut = () => $(S.settings.view === 'fm' ? '#screen-out' : '#screen-out-item');
 function renderCaptureButtons() {
   const on = Cap.isCapturing();
-  const b = $('#cap-start'); if (b) { b.textContent = on ? 'Jeu connecté · arrêter' : 'Connecter le jeu'; b.classList.toggle('on', on); b.classList.toggle('hidden', !Cap.isSupported()); }
+  const b = $('#cap-start'); if (b) { b.textContent = on ? 'Capture en cours · arrêter' : 'Capturer le jeu'; b.classList.toggle('on', on); b.classList.toggle('hidden', !Cap.isSupported()); }
   for (const id of ['#cap-pose', '#cap-table-item']) { const b = $(id); if (b) b.classList.toggle('hidden', !on); }
   if (!Cap.isSupported()) screenStatus('Lecture de l\'écran non disponible dans ce navigateur (Chrome ou Edge conseillés).');
 }
@@ -527,7 +527,7 @@ async function toggleCapture() {
   if (Cap.isCapturing()) { Cap.stopCapture(); renderCaptureButtons(); screenStatus(''); return; }
   try {
     const { width, height } = await Cap.startCapture(() => { renderCaptureButtons(); screenStatus('Capture terminée.'); });
-    screenStatus(`Jeu connecté (${width}×${height}). Ouvre la fenêtre de forgemagie avec l'historique visible.`);
+    screenStatus(`Fenêtre capturée (${width}×${height}). Ouvre la fenêtre de forgemagie avec l'historique visible.`);
   } catch (e) { screenStatus('Capture refusée : ' + e.message); }
   renderCaptureButtons();
 }
