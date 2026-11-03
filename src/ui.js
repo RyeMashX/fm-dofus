@@ -153,21 +153,20 @@ function renderItem() {
   const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
   const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
-  let tables = null;
-  try { if (Object.keys(S.target).length) tables = Search.buildTables(state(), S.target).tables; } catch {}
+  // rune conseillée : même solveur que la vue FM (simulations), calculé en arrière-plan ; voir lineAdvice()
   $('#lines').innerHTML = S.item.lines.map((l, i) => {
     const st = STAT_BY_KEY[l.stat];
     const exo = l.min == null;
     const tgt = S.target[l.stat];
     const done = tgt != null && l.value >= tgt;
-    const best = !done && tables?.[l.stat]?.choice.get(l.value) || null;
+    const best = null;
     const runes = st.tiers.map(([name], k) => {
       const r = runeOf(l.stat, k);
       const o = FM.odds(S.item, r);
       const rec = best && best.tier === k;
       if (o.blocked) return `<div class="chip max" title="${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo de l\'objet'}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc">MAX</span></div>`;
-      return `<div class="chip ${rec ? 'rec' : ''}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc ${pcClass}">${shown(o)}</span>
-        <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}${rec ? '<div class="warn small">rune conseillée</div>' : ''}</div></div>`;
+      return `<div class="chip" data-rune="${r.id}">${runeImg(r)}<span class="cn">${esc(name)}</span><span class="pc ${pcClass}">${shown(o)}</span>
+        <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}<div class="advice-note"></div></div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
       <div class="l1"><span class="name" title="${esc(st.label)}">${esc(st.label)}</span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
@@ -184,10 +183,35 @@ function renderItem() {
     S.item.lines.splice(i, 1); delete S.target[stat]; save(); renderAll();
   });
   renderEstimate();
+  lineAdvice();
   const present = new Set(S.item.lines.map(l => l.stat));
   $('#exo-select').innerHTML = '<option value="">+ Ajouter un exo…</option>' +
     STATS.filter(s => !present.has(s.key)).map(s => `<option value="${s.key}">${esc(s.label)}</option>`).join('');
 }
+// Runes conseillées de la vue Objet : un passage du solveur (simulations courtes), la meilleure rune de chaque
+// ligne cible d'après son score, et le meilleur coup global.
+let adviceKey = null, adviceCache = null;
+function lineAdvice() {
+  const key = JSON.stringify([S.item.lines, S.target, S.reliquat, S.settings.model]);
+  if (key === adviceKey) { paintLineAdvice(); return; }
+  adviceKey = key; adviceCache = null;
+  if (!Object.keys(S.target).length || Search.targetReached(S.item, S.target)) return;
+  setTimeout(() => { if (adviceKey !== key) return; try { adviceCache = Search.nextBestMoves(state(), S.target, { samples: 120, top: 50, seed: 5 }); } catch { adviceCache = null; } paintLineAdvice(); }, 30);
+}
+function paintLineAdvice() {
+  const r = adviceCache; if (!r || !$('#lines')) return;
+  $$('#lines .chip').forEach(c => { c.classList.remove('rec', 'best'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
+  const bestByStat = new Map();
+  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
+  const top = r.moves?.[0];
+  for (const m of bestByStat.values()) {
+    const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (!c) continue;
+    const isTop = top && top.rune.id === m.rune.id;
+    c.classList.add('rec'); if (isTop) c.classList.add('best');
+    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="warn small">${isTop ? 'meilleur coup' : 'meilleure rune de la ligne'} · ≈ ${f1(m.score)} poses restantes</div>`;
+  }
+}
+
 // Estimation du chemin restant : sessions simulées (politique gloutonne) → poses et coût attendus.
 let estimateKey = null, estimateCache = null;
 function renderEstimate() {

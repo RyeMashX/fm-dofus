@@ -149,6 +149,7 @@ button.cta-auto { background: #1a1630; border-color: #8f7df0; color: #b8aaff; fo
 button.cta-auto:hover { background: #8f7df0; color: #fff; }
 .chip.max { opacity: .45; } .chip.max .pc { color: var(--muted); font-weight: 400; }
 .chip.rec { border-color: var(--accent); background: #1f1a10; } .chip.rec .cn { color: var(--accent); font-weight: 700; }
+.chip.best { box-shadow: 0 0 0 2px var(--accent); }
 .chip .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; width: 200px; padding: 8px; background: #0f1013; border: 1px solid #3a3e4a; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
 .chip:hover .pop { display: block; }
 .chip .pop .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
