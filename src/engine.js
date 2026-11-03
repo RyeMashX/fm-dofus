@@ -149,7 +149,9 @@ function applyLoss(lines, t, loss, reliquat, rng, { failure = false } = {}) {
   let f = loss;
   const hitOver = (i, factor) => {
     const l = lines[i], g = weightOf(l) * (l.value < 0 ? P.NEGATIVE_HALF : 1);
-    if (rng() >= hitProb(loss / g) * factor) return;
+    // ligne du template en over : elle encaisse toujours (observé en jeu, sans exception) ; exo : formule DoFocus
+    const sure = hasTemplate(l) && l.value > range(l)[1];
+    if (!sure && rng() >= hitProb(loss / g) * factor) return;
     const avail = l.value > 0 ? l.value : l.value - range(l)[0];
     const n = Math.min(avail, Math.max(1, Math.ceil(f / g - EPS)));
     dec(i, n); f -= n * g;

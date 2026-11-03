@@ -238,19 +238,13 @@ function paintLineAdvice() {
   const r = adviceCache; if (!r || !$('#lines')) return;
   $$('#lines .chip').forEach(c => { c.classList.remove('rec', 'tie'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
   $$('#lines .recbadge').forEach(b => { b.classList.add('hidden'); b.innerHTML = ''; });
-  const byStat = new Map();
-  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; (byStat.get(m.rune.stat) || byStat.set(m.rune.stat, []).get(m.rune.stat)).push(m); }
-  for (const list of byStat.values()) {
-    list.sort((a, b) => a.score - b.score);
-    const best = list[0];
-    // ex æquo : écart inférieur au bruit des simulations (≈ 3 % du score, au moins 0,5 pose)
-    const ties = list.slice(1).filter(m => { const t = Search.pairedDiff(best, m); return t.n > 10 && t.diff < 2 * t.se; });
-    const cb = $(`#lines .chip[data-rune="${best.rune.id}"]`); if (cb) cb.classList.add('rec');
-    for (const m of ties) { const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (c) { c.classList.add('rec', 'tie'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">≈ équivalent à ${esc(best.rune.name)}</div>`; } }
-    if (ties.length && cb) { const n = cb.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">≈ équivalent : ${ties.map(m => esc(m.rune.name)).join(', ')}</div>`; }
+  const bestByStat = new Map();
+  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
+  for (const m of bestByStat.values()) {
+    const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (c) c.classList.add('rec');
     // vue allégée : badge après le nom de la caractéristique, bulle avec la rune
-    const bd = $(`#lines .recbadge[data-stat="${best.rune.stat}"]`);
-    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(best.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(best.rune, 'ricon sm')}<b>${esc(best.rune.name)}</b> <span class="muted small">+${best.rune.bonus}</span><span class="spacer"></span>${diffText(best.odds)}</div><div class="bar">${bar(best.odds)}</div>${oddsText(best.odds)}${ties.length ? `<div class="rec-note small">≈ équivalent : ${ties.map(m => esc(m.rune.name)).join(', ')}</div>` : ''}</div>`; }
+    const bd = $(`#lines .recbadge[data-stat="${m.rune.stat}"]`);
+    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(m.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(m.rune, 'ricon sm')}<b>${esc(m.rune.name)}</b> <span class="muted small">+${m.rune.bonus}</span><span class="spacer"></span>${diffText(m.odds)}</div><div class="bar">${bar(m.odds)}</div>${oddsText(m.odds)}</div>`; }
   }
 }
 
@@ -388,7 +382,7 @@ function renderAdvice() {
   
   out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
-    const tie = !!m.tie;
+    const tie = k > 0 && m.score - res.moves[0].score < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
       <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>

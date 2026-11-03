@@ -131,9 +131,32 @@ export function estimateRemaining(state, target, T = buildTables(state, target))
 export function pendingHeavy() { return null; } // ancienne règle « exo lourd d'abord », abandonnée
 
 // Politique par défaut : la rune qui minimise 1 + casse + pass·E[v+b] + (1−pass)·E[v] sur sa ligne.
+// Ligne du template en over (au-dessus de son max) : la prochaine perte tombera dessus en priorité et peut
+// l'emmener bien sous la cible. Pratique en jeu : on la fait retomber tout de suite avec une rune légère et
+// pas chère (exo cha, ini…) : en SN ou EC la perte retire l'over, en SC on recommence. Rune retenue : la plus
+// légère qui ne soit pas sur l'objet (ou déjà en exo), non bloquée.
+const CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pod', 'pui', 'sa', 'prospe'];
+export function overLines(item, target) {
+  return item.lines.filter(l => l.min != null && l.value > Math.max(l.min, l.max));
+}
+export function cleaningMove(state, target) {
+  const { item } = state;
+  if (!overLines(item, target).length) return null;
+  for (const k of CLEAN_ORDER) {
+    const l = item.lines.find(x => x.stat === k);
+    if (l && l.min != null) continue;               // dans le template : pas un exo
+    const r = RUNES.find(r => r.stat === k && r.tier === 0);
+    if (!r || FM.odds(item, r).blocked) continue;
+    return r;
+  }
+  return null;
+}
+
 function policyMoves(state, target, T) {
   const list = [];
-  for (const { stat } of missing(state.item, target)) {
+  const miss = missing(state.item, target);
+  if (miss.length) { const c = cleaningMove(state, target); if (c) return [{ rune: c, val: 0, purpose: 'nettoyage' }]; }
+  for (const { stat } of miss) {
     const tb = T.tables[stat]; if (!tb) continue;
     const v = valueOf(state.item, stat);
     for (const r of RUNES.filter(r => r.stat === stat)) {
@@ -235,24 +258,8 @@ export function candidates(state, target) {
   target = normal;
   const need = new Set(missing(item, target).map(m => m.stat));
   const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(item, rune), onTarget: true }));
-  const present = new Set(item.lines.map(l => l.stat));
-  const seen = new Set(list.map(c => c.rune.id));
-  const push = (rune, cleans) => { if (!rune || seen.has(rune.id)) return; seen.add(rune.id); list.push({ rune, odds: FM.odds(item, rune), onTarget: false, purpose: 'nettoyage', cleans }); };
-  for (const l of item.lines) {
-    if (l.min == null || !(l.value > Math.max(l.min, l.max)) || need.has(l.stat)) continue;
-    const ow = (l.value - Math.max(l.min, l.max)) * STAT_BY_KEY[l.stat].weight;
-    push(RUNES.find(r => r.stat === l.stat && r.tier === 0), l.stat);
-    // exo légers : une rune par poids distinct, du plus proche de l'over au plus léger (3 au plus)
-    const exos = EXO_CLEAN_ORDER.filter(k => !present.has(k) && STAT_BY_KEY[k]).map(k => RUNES.find(r => r.stat === k && r.tier === 0))
-      .filter(r => r && r.weight <= ow + 1e-9).sort((a, b) => b.weight - a.weight);
-    const weights = new Set();
-    for (const r of exos) { if (weights.has(r.weight)) continue; weights.add(r.weight); push(r, l.stat); if (weights.size >= 3) break; }
-    // runes des lignes existantes hors cible, sans risque d'over, de poids ≤ over
-    for (const o of item.lines) {
-      if (o === l || o.min == null || need.has(o.stat) || o.min < 0 || o.max <= 0) continue;
-      for (const r of RUNES.filter(r => r.stat === o.stat && r.weight <= ow + 1e-9 && o.value + r.bonus <= o.max)) push(r, l.stat);
-    }
-  }
+  const clean = cleaningMove(state, target);
+  if (clean) { const over = overLines(item, target)[0]; list.push({ rune: clean, odds: FM.odds(item, clean), onTarget: false, purpose: 'nettoyage', cleans: over.stat }); }
   return list.filter(c => !c.odds.blocked);
 }
 
@@ -298,7 +305,6 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
   });
   results.sort((a, b) => a.score - b.score);
   // écart-type de l'écart apparié avec le meilleur (mêmes tirages) : « ≈ équivalent » si l'écart < 2 σ
-  for (const m of results) { const t = pairedDiff(results[0], m); m.diff = t.diff; m.diffSe = t.se; m.tie = m !== results[0] && t.n > 10 && t.diff < 2 * t.se; }
   return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
 }
 
