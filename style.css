@@ -129,7 +129,9 @@ button:disabled { opacity: .4; cursor: default; }
 @media (max-width: 560px) {
   .itembar .grow { flex-basis: calc(100% - 46px); }
   .itembar #cap-start { margin-right: auto; }
+  .line .range, .lhead .hr { display: none; }   /* la fourchette reste en infobulle du jet actuel */
 }
+body.pip .line .range, body.pip .lhead .hr { display: none; }
 .relgrp { display: inline-flex; align-items: center; gap: 4px; }
 .relgrp .lbl { font-weight: 600; margin-right: 2px; }
 .relgrp input { width: 64px; font-weight: 700; text-align: center; }
@@ -155,6 +157,7 @@ button:disabled { opacity: .4; cursor: default; }
 .line .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 370px; }
 .line .l2 { flex: 1; min-width: 0; margin-top: 0; }
 .line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; }
+.line .name .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sicon { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; flex: none; }
 .sicon.sm { width: 15px; height: 15px; margin-right: 4px; }
 .line .name .recbadge { margin-left: 8px; }
