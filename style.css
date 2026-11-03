@@ -1,6 +1,7 @@
 :root {
   --bg: #121316; --card: #1b1d22; --card2: #15171b; --line: #2a2d35; --text: #e8e6e3; --muted: #9a9ca3;
   --sc: #3cbf63; --sn: #4a8ff0; --ec: #e0524d; --accent: #f0b84a; --accent-text: #1a1200; --tgt: #f0b84a;
+  --rec: #35c9c0; --rec-bg: #0f2624;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -127,7 +128,7 @@ button:disabled { opacity: .4; cursor: default; }
 /* En-têtes de colonnes (vue Objet) : même grille que .line */
 .lhead { display: flex; align-items: center; gap: 12px; padding: 6px 0 2px; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
 .lhead .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 370px; }
-.lhead .name { flex: 1; } .lhead .hr { width: 60px; text-align: right; } .lhead .hc { width: 54px; text-align: center; } .lhead .arrow { width: 12px; }
+.lhead .name { flex: 1; } .lhead .hr { width: 60px; text-align: right; } .lhead .hc { width: 54px; text-align: center; white-space: nowrap; } .lhead .arrow { width: 12px; }
 .lhead .l2 { flex: 1; }
 .results { list-style: none; margin: 6px 0 0; padding: 4px; }
 .results li { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
@@ -135,8 +136,7 @@ button:disabled { opacity: .4; cursor: default; }
 .results img { width: 26px; height: 26px; }
 
 .legend { display: flex; gap: 12px; margin: 4px 0 8px; align-items: center; flex-wrap: wrap; }
-.legend .recsw { display: inline-block; width: 14px; height: 9px; border: 1px solid var(--accent); border-radius: 2px; vertical-align: middle; margin-right: 4px; background: #1f1a10; }
-.legend .recsw.best { box-shadow: 0 0 0 2px var(--accent); margin-left: 4px; }
+.legend .recsw { display: inline-block; width: 14px; height: 9px; border: 1px solid var(--rec); border-radius: 2px; vertical-align: middle; margin-right: 4px; background: var(--rec-bg); }
 .legend b { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
 .cur-dot { background: var(--text); } .tgt-dot { background: var(--tgt); }
 .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: middle; margin: 0 3px 0 6px; }
@@ -172,19 +172,20 @@ button:disabled { opacity: .4; cursor: default; }
 .showsel .tog.ec[aria-pressed="true"] { background: var(--ec); border-color: var(--ec); }
 .showsel .tog:hover { opacity: 1; }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
-button.cta-cap:hover { background: var(--sc); color: #fff; }
+button.cta-cap:hover, button.cta-cap.on { background: var(--sc); color: #fff; }
+button.link.tiny { font-size: 10px; text-transform: none; letter-spacing: 0; margin-left: 3px; color: var(--tgt); }
 button.cta-auto { background: #1a1630; border-color: #8f7df0; color: #b8aaff; font-weight: 600; }
 button.cta-auto:hover { background: #8f7df0; color: #fff; }
 .chip.max { opacity: .45; } .chip.max .pc { color: var(--muted); font-weight: 400; }
-.chip.rec { border-color: var(--accent); background: #1f1a10; } .chip.rec .cn { color: var(--accent); font-weight: 700; }
-.chip.best { box-shadow: 0 0 0 2px var(--accent); }
+.rec-note { color: var(--rec); }
+.chip.rec { border-color: var(--rec); background: var(--rec-bg); } .chip.rec .cn { color: var(--rec); font-weight: 700; }
 .chip .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; width: 200px; padding: 8px; background: #0f1013; border: 1px solid #3a3e4a; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
 .chip:hover .pop { display: block; }
 .chip .pop .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
 .chip .pop .bar i { display: block; height: 100%; }
 .rune { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 12px; padding: 1px 4px; border-radius: 4px; border: 1px solid transparent; }
-.rune.rec { border-color: var(--accent); background: #1f1a10; }
-.rune.rec .rn { color: var(--accent); font-weight: 700; }
+.rune.rec { border-color: var(--rec); background: var(--rec-bg); }
+.rune.rec .rn { color: var(--rec); font-weight: 700; }
 .rune .rn { color: var(--muted); width: 22px; text-align: right; }
 .rune .bar { flex: 1; height: 6px; border-radius: 4px; overflow: hidden; display: flex; background: #2a2d35; }
 .rune .bar i { display: block; height: 100%; }

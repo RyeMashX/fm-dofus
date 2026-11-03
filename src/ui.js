@@ -216,15 +216,15 @@ function lineAdvice() {
 }
 function paintLineAdvice() {
   const r = adviceCache; if (!r || !$('#lines')) return;
-  $$('#lines .chip').forEach(c => { c.classList.remove('rec', 'best'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
+  $$('#lines .chip').forEach(c => { c.classList.remove('rec'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
   const bestByStat = new Map();
   for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
   const top = r.moves?.[0];
   for (const m of bestByStat.values()) {
     const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (!c) continue;
     const isTop = top && top.rune.id === m.rune.id;
-    c.classList.add('rec'); if (isTop) c.classList.add('best');
-    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="warn small">${isTop ? 'meilleur coup' : 'meilleure rune de la ligne'} · ≈ ${f1(m.score)} poses restantes</div>`;
+    c.classList.add('rec');
+    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">rune conseillée · ≈ ${f1(m.score)} poses restantes</div>`;
   }
 }
 
@@ -519,20 +519,19 @@ const screenStatus = msg => { for (const id of ['#screen-status', '#screen-statu
 const screenOut = () => $(S.settings.view === 'fm' ? '#screen-out' : '#screen-out-item');
 function renderCaptureButtons() {
   const on = Cap.isCapturing();
-  for (const id of ['#cap-start', '#cap-start-item']) { const b = $(id); if (b) { b.textContent = on ? (id === '#cap-start' ? 'arrêter la capture' : 'Arrêter la capture') : (id === '#cap-start' ? 'capturer le jeu' : 'Capturer le jeu'); b.classList.toggle('hidden', !Cap.isSupported()); } }
+  const b = $('#cap-start'); if (b) { b.textContent = on ? 'Jeu connecté · arrêter' : 'Connecter le jeu'; b.classList.toggle('on', on); b.classList.toggle('hidden', !Cap.isSupported()); }
   for (const id of ['#cap-pose', '#cap-table-item']) { const b = $(id); if (b) b.classList.toggle('hidden', !on); }
-  if (!Cap.isSupported()) screenStatus('Capture de fenêtre non disponible dans ce navigateur (Chrome ou Edge conseillés).');
+  if (!Cap.isSupported()) screenStatus('Lecture de l\'écran non disponible dans ce navigateur (Chrome ou Edge conseillés).');
 }
 async function toggleCapture() {
   if (Cap.isCapturing()) { Cap.stopCapture(); renderCaptureButtons(); screenStatus(''); return; }
   try {
     const { width, height } = await Cap.startCapture(() => { renderCaptureButtons(); screenStatus('Capture terminée.'); });
-    screenStatus(`Fenêtre capturée (${width}×${height}). Ouvre la fenêtre de forgemagie avec l'historique visible.`);
+    screenStatus(`Jeu connecté (${width}×${height}). Ouvre la fenêtre de forgemagie avec l'historique visible.`);
   } catch (e) { screenStatus('Capture refusée : ' + e.message); }
   renderCaptureButtons();
 }
 document.querySelector('#cap-start').onclick = toggleCapture;
-document.querySelector('#cap-start-item').onclick = toggleCapture;
 document.querySelector('#cap-table-item').onclick = () => readAndRender('table');
 const progress = m => { if (m?.status === 'loading tesseract core' || m?.status?.includes('loading language')) screenStatus(`Chargement de l'OCR… ${Math.round((m.progress || 0) * 100)} %`); };
 
