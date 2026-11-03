@@ -60,6 +60,20 @@ const STATS = [
   { key: 'pa',       label: 'PA',                        weight: 100,  tiers: [['Ga Pa', 1, 78055, 1557]], heavyExo: true, forcesQuality: true },
 ];
 
+// Icônes de caractéristiques (celles du jeu, servies par dofusdb.fr).
+const STAT_ICONS = {
+  vita: 'tx_vitality', fo: 'tx_strength', ine: 'tx_intelligence', cha: 'tx_chance', age: 'tx_agility', ini: 'tx_initiative', pod: 'tx_pods',
+  sa: 'tx_wisdom', prospe: 'tx_prospecting', pui: 'tx_damagesPercent', tacle: 'tx_tackle', fuite: 'tx_escape', cri: 'tx_crit', so: 'tx_heal',
+  do_neutre: 'tx_res_neutral', do_terre: 'tx_res_earth', do_feu: 'tx_res_fire', do_eau: 'tx_res_water', do_air: 'tx_res_air',
+  do_pou: 'tx_push', do_cri: 'tx_criticalDamage', do_ren: 'tx_return', do_pi: 'tx_trap', pui_pi: 'tx_trapPercent', chasse: 'tx_weaponDamage', do: 'tx_damage',
+  do_per_ar: 'tx_weaponDamage', do_per_di: 'tx_distanceDamage', do_per_me: 'tx_meleeDamage', do_per_so: 'tx_spellDamage',
+  re_neutre: 'tx_res_neutre', re_terre: 'tx_res_strength', re_feu: 'tx_res_intelligence', re_eau: 'tx_res_chance', re_air: 'tx_res_agility',
+  re_cri: 'tx_criticalReduction', re_pou: 'tx_pushReduction',
+  re_per_neutre: 'tx_res_neutre', re_per_terre: 'tx_res_strength', re_per_feu: 'tx_res_intelligence', re_per_eau: 'tx_res_chance', re_per_air: 'tx_res_agility',
+  re_per_di: 'tx_res_distance', re_per_me: 'tx_res_melee', ret_pa: 'tx_attackAP', ret_pme: 'tx_attackMP', re_pa: 'tx_dodgeAP', re_pme: 'tx_dodgeMP',
+  invo: 'tx_summonableCreaturesBoost', po: 'tx_range', pm: 'tx_movementPoints', pa: 'tx_actionPoints',
+};
+for (const s of STATS) s.icon = STAT_ICONS[s.key] ? `https://dofusdb.fr/icons/characteristics/${STAT_ICONS[s.key]}.png` : null;
 const STAT_BY_KEY = Object.fromEntries(STATS.map(s => [s.key, s]));
 
 // Liste plate des runes : { id, stat, name, bonus, weight (poids total de la rune), tier }

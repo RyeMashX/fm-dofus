@@ -146,7 +146,10 @@ button:disabled { opacity: .4; cursor: default; }
 .line { border-top: 1px solid #22252c; padding: 5px 0; display: flex; align-items: center; gap: 12px; }
 .line .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 370px; }
 .line .l2 { flex: 1; min-width: 0; margin-top: 0; }
-.line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; }
+.sicon { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; flex: none; }
+.sicon.sm { width: 15px; height: 15px; margin-right: 4px; }
+.line .name .recbadge { margin-left: 8px; }
 .line.done .name { color: var(--sc); }
 .line.neg .name { color: var(--muted); }
 .line.exo .name::after { content: "exo"; font-size: 10px; color: var(--accent); margin-left: 5px; border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; }

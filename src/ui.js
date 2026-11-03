@@ -27,6 +27,7 @@ function diffText(o) {
   if ((S.item?.level ?? 200) < P.LEVEL_BONUS_BELOW) parts.push(`niveau < 170 → −${Math.round(20 * Math.max(0, 1.1 - q))}`);
   return `<span class="diff" title="Difficulté D : ${parts.join(' · ')}. SC = max(2, (100 − D) / 2)">D ${Math.round(o.difficulty)}</span>`;
 }
+const statImg = (stat, cls = 'sicon') => { const u = STAT_BY_KEY[stat]?.icon; return u ? `<img class="${cls}" src="${esc(u)}" alt="" loading="lazy">` : ''; };
 const runeImg = (r, cls = 'ricon') => r?.icon ? `<img class="${cls}" src="${esc(r.icon)}" alt="" loading="lazy">` : '';
 
 // ---- Modèle : DoFocus brut ou calibré sur le journal --------------------------
@@ -190,7 +191,7 @@ function renderItem() {
         <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}<div class="advice-note"></div></div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
-      <div class="l1"><span class="name">${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}${esc(st.label)}<span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
+      <div class="l1"><span class="name">${statImg(l.stat)}${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}${esc(st.label)}<span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
         <input class="num small cur" type="number" data-field="value" value="${l.value}" title="jet actuel">
         <span class="arrow">→</span>
         <input class="num small tgt" type="number" data-field="target" value="${tgt ?? ''}" placeholder="cible" title="cible (minimum visé)">
@@ -372,7 +373,7 @@ function renderAdvice() {
     const tie = k > 0 && m.score - best < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
+      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${f1(m.score)}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;
@@ -386,7 +387,7 @@ function renderPose() {
   const o = FM.odds(S.item, pending);
   $('#pose-rune').innerHTML = o.blocked
     ? `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
-    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)} ${diffText(o)}`;
+    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">${statImg(pending.stat, 'sicon sm')}+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)} ${diffText(o)}`;
   $$('#pose button[data-outcome]').forEach(b => b.disabled = !!o.blocked);
   $('#simulate').disabled = !!o.blocked;
   // sélecteur manuel
@@ -445,7 +446,7 @@ function renderLossPanel() {
     if (l.value - n <= floor && !n) return '';   // rien à retirer
     const canDrop = l.value - n > floor;
     const big = STAT_BY_KEY[l.stat].weight <= 0.25;
-    return `<div class="lrow ${locked ? 'locked' : ''}"><span class="name">${esc(labelOf(l.stat))}${i === d.t ? ' <span class="muted small">(posée)</span>' : ''}</span>
+    return `<div class="lrow ${locked ? 'locked' : ''}"><span class="name">${statImg(l.stat, 'sicon sm')}${esc(labelOf(l.stat))}${i === d.t ? ' <span class="muted small">(posée)</span>' : ''}</span>
       <span class="val">${l.value - n}</span>
       <button data-minus="${l.stat}" data-n="1" ${canDrop ? '' : 'disabled'}>−1</button>${big ? `<button data-minus="${l.stat}" data-n="5" ${canDrop ? '' : 'disabled'}>−5</button>` : ''}<button data-minus="${l.stat}" data-n="-1" ${n > 0 ? '' : 'disabled'}>+</button>
       <span class="delta">${n ? `−${n} <span class="muted">(${w1(n * STAT_BY_KEY[l.stat].weight)})</span>` : ''}</span></div>`;
@@ -645,7 +646,7 @@ function renderSettings() {
   const p = prices(); const q = ($('#prices-filter').value || '').trim().toLowerCase();
   const norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const list = STATS.filter(st => !q || norm(st.label).includes(norm(q)) || st.tiers.some(([n]) => norm(n).includes(norm(q))));
-  $('#prices-list').innerHTML = list.map(st => `<div class="prow"><span class="name">${esc(st.label)}</span>${st.tiers.map(([name], k) => {
+  $('#prices-list').innerHTML = list.map(st => `<div class="prow"><span class="name">${statImg(st.key, 'sicon sm')}${esc(st.label)}</span>${st.tiers.map(([name], k) => {
     const r = runeOf(st.key, k);
     const lower = k > 0 ? runeOf(st.key, k - 1) : null;
     return `<label class="pcell">${runeImg(r, 'ricon sm')}<span class="cn">${esc(name)}</span><input type="number" class="num small" min="0" step="1" inputmode="numeric" data-id="${r.id}" value="${p[r.id] ?? ''}" placeholder="—">${lower ? `<button type="button" class="x3" data-x3="${r.id}" data-from="${lower.id}" title="Craft : 3 × ${esc(lower.name)}">×3</button>` : ''}</label>`;
