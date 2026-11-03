@@ -108,13 +108,13 @@ function changeItem(t) {
 $('#manual-item').onclick = () => changeItem({ id: null, name: 'Objet manuel', level: 200, type: '', lines: [], unknown: [], manual: true });
 
 // Cible par défaut : vita/fo/ine/cha/age/pui → max − bonus de la Pa + 1 ; dommages, résistances %, cri → max ;
-// le reste → 1 (pas de ligne à 0). Ligne négative à fourchette (−20 à −16) → le moins négatif sans over (−16) ;
-// ligne négative fixe ou à max nul : pas de cible.
+// le reste → 1 (pas de ligne à 0). Ligne négative → son max, le moins négatif (−20 à −16 → −16 ; −5 fixe → −5) ;
+// ligne à max nul : pas de cible.
 function autoTarget(lines) {
   const target = {};
   for (const l of lines) {
     if (l.min == null) continue;
-    if (!(l.max > 0)) { if (l.max < 0 && l.min !== l.max) target[l.stat] = l.max; continue; }
+    if (!(l.max > 0)) { if (l.max < 0) target[l.stat] = l.max; continue; }   // ligne négative : le moins négatif (son max)
     const st = STAT_BY_KEY[l.stat];
     if (['vita', 'fo', 'ine', 'cha', 'age', 'pui'].includes(l.stat)) target[l.stat] = Math.max(1, l.max - (st.tiers[1]?.[1] ?? 1) + 1);
     else if (/^do|^re_per_|^cri$/.test(l.stat)) target[l.stat] = l.max;
@@ -190,7 +190,9 @@ function renderItem() {
   const pcClass = show.sc && !show.sn && !show.ec ? 'sc' : !show.sc && show.sn && !show.ec ? 'sn' : !show.sc && !show.sn && show.ec ? 'ec' : 'mix';
   // rune conseillée par ligne cible : celle qui minimise les poses restantes à la valeur actuelle
   // rune conseillée : même solveur que la vue FM (simulations), calculé en arrière-plan ; voir lineAdvice()
-  $('#lines').innerHTML = S.item.lines.map((l, i) => {
+  // ordre d'affichage : lignes du template positives, puis exos, puis lignes négatives (comme en jeu)
+  const order = S.item.lines.map((l, i) => i).sort((a, b) => { const g = l => l.min == null ? 1 : l.max < 0 ? 2 : 0; return g(S.item.lines[a]) - g(S.item.lines[b]) || a - b; });
+  $('#lines').innerHTML = order.map(i => { const l = S.item.lines[i];
     const st = STAT_BY_KEY[l.stat];
     const exo = l.min == null;
     const tgt = S.target[l.stat];
