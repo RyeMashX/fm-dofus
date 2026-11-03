@@ -14,9 +14,8 @@ body.view-settings { --w: 700px; }
 .seg button.glow.on { background: var(--sc); color: #fff; animation: none; }
 @keyframes glow { from { background: transparent; } to { background: #17382a; } }
 /* Estimation (vue Objet) */
-.estimate { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
-.est-head { margin-bottom: 2px; }
-.est-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 4px; }
+.estimate { margin-top: 2px; }
+.est-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 2px 0 4px; }
 .kpi.top3 .t3 { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; font-size: 13px; }
 .kpi.top3 .t3 > div { display: flex; align-items: center; gap: 6px; } .kpi.top3 .t3 .cn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kpi.top3 .t3 b { font-variant-numeric: tabular-nums; }

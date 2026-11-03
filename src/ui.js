@@ -217,8 +217,9 @@ let estimateKey = null, estimateCache = null;
 function renderEstimate() {
   const box = $('#estimate'); if (!box) return;
   const hasTarget = Object.keys(S.target).length > 0;
-  if (!hasTarget || Search.targetReached(S.item, S.target)) { box.classList.add('hidden'); return; }
-  box.classList.remove('hidden');
+  const card = $('#estimate-card');
+  if (!hasTarget || Search.targetReached(S.item, S.target)) { box.classList.add('hidden'); card.classList.toggle('hidden', !hasTarget); $('#estimate-sub').textContent = hasTarget ? 'cible atteinte' : ''; return; }
+  card.classList.remove('hidden'); box.classList.remove('hidden');
   const key = JSON.stringify([S.item.lines, S.target, S.reliquat]);
   if (key !== estimateKey) {
     box.innerHTML = '<span class="muted small">Estimation…</span>';
@@ -281,7 +282,8 @@ function paintEstimate() {
   const tot = rows.reduce((a, r) => a + r.c, 0);
   const detail = `<table class="rt"><thead><tr><th>Rune</th><th class="r">Nombre</th><th class="r">Prix unitaire</th><th class="r">Coût</th><th class="r">Part</th></tr></thead><tbody>${rows.map(({ x, u, c }) => `<tr><td>${runeImg(x.rune, 'ricon sm')}${esc(x.rune.name)}</td><td class="r">× ${f1(x.n)}</td><td class="r">${u > 0 ? kamas(u) : '<span class="warn">prix ?</span>'}</td><td class="r">${u > 0 ? kamas(c) : '—'}</td><td class="r muted">${u > 0 && tot ? Math.round(c / tot * 100) + ' %' : ''}</td></tr>`).join('')}</tbody></table>`;
   const top3 = rows.filter(r => r.c > 0).sort((a, b) => b.c - a.c).slice(0, 3);
-  box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées, moyenne en grand)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}${r.heavy ? ` · <span class="warn">dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}</span>` : ''}</div>
+  $('#estimate-sub').innerHTML = `pour atteindre la cible · ${r.runs} sessions simulées, moyenne en grand${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}`;
+  box.innerHTML = `${r.heavy ? `<p class="warn small">Dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}.</p>` : ''}
     <div class="kpis est-kpis">
       <div class="kpi"><div class="v">${f1(r.mean)} <small>poses</small></div>${dec(r.p10, r.median, r.p90, x => f1(Math.round(x)))}</div>
       <div class="kpi"><div class="v">${cost ? `${kShort(cost)} <small>kamas</small>` : '<span class="muted">—</span>'}</div>${cost ? dec(costP10, costMedian, costP90, kShort) : '<div class="l muted small">renseigne les prix (⚙)</div>'}${missing ? `<div class="warn small">${missing} rune${missing > 1 ? 's' : ''} sans prix</div>` : ''}</div>
