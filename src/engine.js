@@ -135,7 +135,7 @@ function shuffle(arr, rng) {
 
 // Tirage pondéré d'une ligne normale : poids min(1, runeWeight / poids_ligne), ×1/60 pour la cible.
 function pickLine(candidates, runeWeight, lines, rng, t) {
-  const w = candidates.map(i => Math.min(1, runeWeight / weightOf(lines[i])) * (i === t ? P.TARGET_PICK_FACTOR : 1));
+  const w = candidates.map(i => Math.min(1, runeWeight / weightOf(lines[i])) ** (P.PICK_EXP ?? 1) * (i === t ? P.TARGET_PICK_FACTOR : 1));
   let r = rng() * w.reduce((a, b) => a + b, 0);
   for (let k = 0; k < candidates.length; k++) { r -= w[k]; if (r < 0) return candidates[k]; }
   return candidates[candidates.length - 1];
