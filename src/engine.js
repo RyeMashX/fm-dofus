@@ -20,6 +20,7 @@ const P = {
   QUALITY_COEF: 60, QUALITY_EXP: 12,
   BASE: 5,
   SC_FLOOR: 2, SN_FLOOR: 15, SN_FLOOR_OVER: 5, SN_SLOPE: 0.375,
+  SN_KNEE: 100,             // difficulté à partir de laquelle le SN descend sous 50 (DoFocus : 100)
   NEGATIVE_HALF: 0.5,       // rune posée sur une ligne qui reste négative : demi-poids
   // pertes
   HIT_COEF: 0.75, HIT_EXP: 0.85,
@@ -58,7 +59,7 @@ function difficulty({ position = 0, over = false, overWeight = 0, ratio = 0, qua
 function outcomesFromDifficulty(d, over) {
   const sc = Math.max(P.SC_FLOOR, (100 - d) / 2);
   let sn = over ? Math.max(P.SN_FLOOR_OVER, 40 - P.SN_SLOPE * (d - 100))
-         : d <= 100 ? Math.min(50, 100 - sc) : Math.max(P.SN_FLOOR, 50 - P.SN_SLOPE * (d - 100));
+         : d <= P.SN_KNEE ? Math.min(50, 100 - sc) : Math.max(P.SN_FLOOR, 50 - P.SN_SLOPE * (d - P.SN_KNEE));
   sn = Math.min(Math.max(sn, 0), 100 - sc);
   return { sc, sn, ec: 100 - sc - sn };
 }
