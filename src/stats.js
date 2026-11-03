@@ -30,7 +30,7 @@ const STATS = [
   { key: 'do_ren',   label: 'Renvoi de dommages',       weight: 5,    tiers: [['Do Ren', 1, 78017, 7437], ['Pa Do Ren', 3, 78017, 30942]] },
   { key: 'do_pi',    label: 'Dommages pièges',          weight: 5,    tiers: [['Do Pi', 1, 78268, 7446], ['Pa Do Pi', 3, 78023, 10613]] },
   { key: 'pui_pi',   label: 'Puissance pièges',         weight: 2,    tiers: [['Per Pi', 1, 78024, 7447], ['Pa Per Pi', 3, 78266, 10615], ['Ra Per Pi', 10, 78267, 10616]] },
-  { key: 'chasse',   label: 'Dommages de chasse',       weight: 5,    tiers: [['de chasse', 1, 78059, 10057]], weaponOnly: true },
+  { key: 'chasse',   label: 'Arme de chasse',           weight: 5,    tiers: [['Chasse', 1, 78059, 10057]], weaponOnly: true },
   { key: 'do',       label: 'Dommages (fixe, tous éléments)', weight: 20, tiers: [['Do', 1, 78015, 7435]] },
   { key: 'do_per_ar',label: 'Dommages armes (%)',       weight: 15,   tiers: [['Do Per Ar', 1, 78093, 18721]] },
   { key: 'do_per_di',label: 'Dommages distance (%)',    weight: 15,   tiers: [['Do Per Di', 1, 78091, 18720]] },

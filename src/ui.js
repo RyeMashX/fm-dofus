@@ -190,7 +190,7 @@ function renderItem() {
         <div class="pop"><div class="bar">${bar(o)}</div>${oddsText(o)} ${diffText(o)}<div class="advice-note"></div></div></div>`;
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
-      <div class="l1"><span class="name" title="${esc(st.label)}">${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}${esc(st.label)}<span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
+      <div class="l1"><span class="name">${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}${esc(st.label)}<span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
         <input class="num small cur" type="number" data-field="value" value="${l.value}" title="jet actuel">
         <span class="arrow">→</span>
         <input class="num small tgt" type="number" data-field="target" value="${tgt ?? ''}" placeholder="cible" title="cible (minimum visé)">
