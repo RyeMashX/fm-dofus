@@ -286,7 +286,7 @@ function renderAdvice() {
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
       <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
-      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${m.score.toFixed(1).replace('.', ',')}</b> poses pour finir</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
+      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${m.score.toFixed(1).replace('.', ',')}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;
   }).join('')}</div>`;
   $$('.move').forEach(d => d.onclick = () => { const [stat, tier] = d.dataset.rune.split(':'); pending = runeOf(stat, +tier); renderAdvice(); renderPose(); });

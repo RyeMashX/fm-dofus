@@ -203,7 +203,10 @@ export function candidates(state, target) {
   return list.filter(c => !c.odds.blocked);
 }
 
-export function nextBestMoves(state, target, { samples = 300, horizon = 8, seed = 1, top = 3 } = {}) {
+// Score d'une rune = nombre moyen de poses (celle-ci comprise) pour atteindre toutes les cibles en la jouant
+// maintenant puis en suivant la politique, sur des sessions simulées jusqu'au bout (même estimateur que
+// simulateSessions, donc même chiffre que l'estimation de la vue Objet).
+export function nextBestMoves(state, target, { samples = 300, horizon = 400, seed = 1, top = 3 } = {}) {
   if (targetReached(state.item, target)) return { reached: true, moves: [] };
   const T = buildTables(state, target);
   const h0 = estimateRemaining(state, target, T);
