@@ -87,6 +87,8 @@ body.view-settings { --w: 700px; }
 .pcell .x3:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 main { margin: 0 auto; padding: 0 10px 40px; }
 header.top { display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: 10px 10px 4px; }
+header.top h1 { white-space: nowrap; }
+header.top .search { flex: 1 1 120px; }
 h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }
 h2 { font-size: 15px; margin: 0; }
 footer { margin: 0 auto; padding: 0 10px 24px; }
@@ -119,9 +121,15 @@ button:disabled { opacity: .4; cursor: default; }
 .search { position: relative; min-width: 0; }
 .search input { width: 100%; padding: 5px 10px; }
 .search .results { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; margin: 0; background: #16181d; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px #000a; max-height: 320px; overflow: auto; }
-.itembar { display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: 6px 10px 2px; }
-.itembar img { width: 36px; height: 36px; }
+.itembar { display: flex; align-items: center; gap: 10px; margin: 0 auto; padding: 6px 10px 2px; flex-wrap: wrap; }
+.itembar img { width: 36px; height: 36px; flex: none; }
+.itembar .grow { flex: 1 1 140px; min-width: 0; }
+.itembar h2, .itembar .grow .small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .itembar h2 { font-size: 16px; }
+@media (max-width: 560px) {
+  .itembar .grow { flex-basis: calc(100% - 46px); }
+  .itembar #cap-start { margin-right: auto; }
+}
 .relgrp { display: inline-flex; align-items: center; gap: 4px; }
 .relgrp .lbl { font-weight: 600; margin-right: 2px; }
 .relgrp input { width: 64px; font-weight: 700; text-align: center; }
@@ -272,6 +280,7 @@ body.view-fm .move { padding: 6px 8px; }
 body.view-fm .outcomes button[data-outcome] { font-size: 15px; padding: 8px 0; }
 body.view-fm .relgrp input { width: 56px; }
 body.view-fm .itembar h2 { font-size: 14px; }
+body.pip .itembar .grow { flex-basis: calc(100% - 46px); } body.pip .itembar #cap-start { margin-right: auto; }
 @media (max-width: 380px) {
   body.view-fm #samples-select { display: none; }
   body.view-fm .move .meta { gap: 6px; }
