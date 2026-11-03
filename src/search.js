@@ -142,13 +142,14 @@ export function overSlack(item, target) {
 //  1. une rune d'une ligne cible encore à monter (d'une pierre deux coups : Pa Fo à 45/50 pour une vita à 415) ;
 //  2. une rune d'une ligne du template hors cible qui ne créerait pas d'over en SC (Cha à 69/70) ;
 //  3. sinon l'exo le plus léger et le moins cher (cha, ini…).
-// Si même une rune de poids 1 dépasse la marge (cible au max), on ne nettoie pas : l'over sert de tampon.
+// Si même une rune de poids 1 (soit jusqu'à 1,2 de perte) dépasse la marge, on ne nettoie pas : l'over sert de tampon.
 const CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pod', 'pui', 'sa', 'prospe'];
 export function cleaningMove(state, target, T) {
   const { item } = state;
   const slack = overSlack(item, target);
   if (!(slack > 0)) return null;
-  const ok = r => r.weight <= slack + 1e-9 && !FM.odds(item, r).blocked;
+  // marge : la perte sur un over dépasse le poids de la rune jusqu'à 20 % (5 ou 6 vita pour un poids 1)
+  const ok = r => r.weight * (1 + FM.P.OVER_EXTRA) <= slack + 1e-9 && !FM.odds(item, r).blocked;
   // 1. ligne cible à monter
   T = T || buildTables(state, target);
   let best = null;
