@@ -283,7 +283,7 @@ body.view-fm .move { padding: 6px 8px; }
 body.view-fm .outcomes button[data-outcome] { font-size: 15px; padding: 8px 0; }
 body.view-fm .relgrp input { width: 56px; }
 
-body.pip .itembar .grow { flex-basis: calc(100% - 46px); } body.pip .itembar #cap-start { margin-right: auto; }
+body.pip .itembar .grow, body.view-fm .itembar .grow { flex-basis: calc(100% - 46px); } body.pip .itembar #cap-start, body.view-fm .itembar #cap-start { margin-right: auto; }
 @media (max-width: 380px) {
   body.view-fm #samples-select { display: none; }
   body.view-fm .move .meta { gap: 6px; }
