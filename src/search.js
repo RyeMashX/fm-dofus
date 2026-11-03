@@ -213,6 +213,7 @@ export function heavyCost(state, target, { trials = 60, seed = 11, maxRecover = 
     const tot = c => c + (c - 1) * R;
     out.phases.push({ stat, rune, p, recover: R, cycles, total: tot(cycles.mean) });
     out.total += tot(cycles.mean); out.totalMedian += tot(cycles.median); out.totalP10 += tot(cycles.p10); out.totalP90 += tot(cycles.p90);
+    out.phases.at(-1).recoverRunes = new Map([...rec].map(([id, c]) => [id, c / Math.max(1, n)]));
     out.runes.set(rune.id, (out.runes.get(rune.id) || 0) + cycles.mean);
     for (const [id, c] of rec) out.runes.set(id, (out.runes.get(id) || 0) + c / Math.max(1, n) * (cycles.mean - 1));
   }
@@ -296,33 +297,38 @@ export function simulateSessions(state, target, { runs = 200, maxPoses = 400, se
   const heavy = heavyCost(state, target, { seed });
   target = normalTarget(state.item, target);
   const T = buildTables(state, target);
-  const poses = [], runeCounts = new Map();
+  const detail = [], runeCounts = new Map();
   let unfinished = 0;
+  const add = (map, id, n) => map.set(id, (map.get(id) || 0) + n);
   for (let k = 0; k < runs; k++) {
     const rng = rngFrom(seed * 104729 + k);
-    let s = state, n = 0;
+    let s = state, n = 0; const mine = new Map();
     while (n < maxPoses && !targetReached(s.item, target)) {
       const moves = policyMoves(s, target, T).slice(0, 3);
       let done = false;
       for (const m of moves) {
         const q = FM.applyMove(s, m.rune, rng);
         if (!q.outcome) continue;
-        s = { item: q.item, reliquat: q.reliquat }; n++; done = true;
-        runeCounts.set(m.rune.id, (runeCounts.get(m.rune.id) || 0) + 1);
+        s = { item: q.item, reliquat: q.reliquat }; n++; done = true; add(mine, m.rune.id, 1);
         break;
       }
       if (!done) break;
     }
     if (!targetReached(s.item, target)) unfinished++;
-    poses.push(n);
+    // phase exo lourd : cycles tirés (géométrique), remontée moyenne par cycle raté
+    if (heavy) for (const ph of heavy.phases) {
+      if (!ph.cycles) { n += BIG; continue; }
+      const cycles = Math.max(1, Math.ceil(Math.log(1 - rng()) / Math.log(1 - ph.p)));
+      n += cycles + (cycles - 1) * ph.recover;
+      add(mine, ph.rune.id, cycles);
+      for (const [id, c] of ph.recoverRunes || []) add(mine, id, c * (cycles - 1));
+    }
+    detail.push({ poses: n, runes: Object.fromEntries(mine) });
+    for (const [id, c] of mine) add(runeCounts, id, c);
   }
-  poses.sort((a, b) => a - b);
+  const poses = detail.map(d => d.poses).sort((a, b) => a - b);
   const q = p => poses[Math.min(poses.length - 1, Math.floor(p * poses.length))];
   const mean = poses.reduce((a, b) => a + b, 0) / poses.length;
-  const per = new Map([...runeCounts.entries()].map(([id, n]) => [id, n / runs]));
-  if (heavy) for (const [id, n] of heavy.runes) per.set(id, (per.get(id) || 0) + n);
-  const perRun = [...per.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n })).sort((a, b) => b.n - a.n);
-  const h = heavy || { total: 0, totalMedian: 0, totalP10: 0, totalP90: 0 };
-  return { runs, mean: mean + h.total, median: q(0.5) + h.totalMedian, p10: q(0.1) + h.totalP10, p90: q(0.9) + h.totalP90, unfinished: unfinished / runs, runes: perRun,
-           base: { mean, median: q(0.5), p90: q(0.9) }, heavy };
+  const perRun = [...runeCounts.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n: n / runs })).sort((a, b) => b.n - a.n);
+  return { runs, mean, median: q(0.5), p10: q(0.1), p90: q(0.9), unfinished: unfinished / runs, runes: perRun, detail, heavy };
 }

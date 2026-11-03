@@ -17,7 +17,16 @@ body.view-settings { --w: 700px; }
 .estimate { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
 .est-head { margin-bottom: 2px; }
 .est-kpis { grid-template-columns: repeat(2, minmax(0, 260px)); margin: 4px 0 4px; }
-.est-kpis .kpi .v { color: var(--accent); }
+.est-kpis .kpi .v { color: var(--accent); } .est-kpis .kpi .v small { font-size: 12px; font-weight: 500; color: var(--text); margin-left: 2px; }
+.dec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.dec span { display: flex; flex-direction: column; } .dec i { font-style: normal; font-size: 11px; color: var(--muted); } .dec b { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 6px 0 10px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart .g { stroke: #2a2d35; stroke-width: 1; } .chart .t { fill: var(--muted); font-size: 9px; }
+.chart .s { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.chart .s2 { fill: none; stroke: var(--text); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.chart .m { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; } .chart .d { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+.chart .b { fill: var(--accent); opacity: .85; } .chart .b:hover { opacity: 1; }
 .kpi.haspop { position: relative; }
 .kpi.haspop .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; width: 300px; max-height: 320px; overflow: auto; background: #202329; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; box-shadow: 0 8px 24px #0009; }
 .kpi.haspop:hover .pop { display: block; }

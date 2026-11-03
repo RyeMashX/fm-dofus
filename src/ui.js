@@ -232,7 +232,10 @@ function renderEstimate() {
 function estimateCost(r) {
   const p = prices(); let cost = 0, missing = 0;
   const rows = r.runes.filter(x => x.n >= 0.05).map(x => { const u = p[x.id]; const c = u > 0 ? u * x.n : 0; if (u > 0) cost += c; else missing++; return { x, u, c }; });
-  return { rows, cost, missing, costP90: r.mean > 0 ? cost * r.p90 / r.mean : 0 };
+  // coût par session simulée (runes sans prix ignorées) → déciles
+  const costs = (r.detail || []).map(d => Object.entries(d.runes).reduce((a, [id, n]) => a + (p[id] > 0 ? p[id] * n : 0), 0)).sort((a, b) => a - b);
+  const q = (arr, x) => arr.length ? arr[Math.min(arr.length - 1, Math.floor(x * arr.length))] : 0;
+  return { rows, cost, missing, costs, costP10: q(costs, 0.1), costMedian: q(costs, 0.5), costP90: q(costs, 0.9) };
 }
 // Estimation figée au départ (poses et coût attendus), pour la comparer au réel dans le bilan et les archives.
 function freezeBaseline(r = estimateCache) {
@@ -243,22 +246,53 @@ function freezeBaseline(r = estimateCache) {
                  lines: S.item.lines.map(l => ({ stat: l.stat, value: l.value })), reliquat: S.reliquat, after: S.history.length };
   save(); return S.baseline;
 }
-const f1 = x => x >= 1000 ? Math.round(x).toLocaleString('fr-FR') : x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
+const f1 = x => x >= 1000 ? Math.round(x).toLocaleString('fr-FR') : Number.isInteger(x) ? String(x) : x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
 const pctDiff = (real, est) => { if (!(est > 0)) return ''; const d = Math.round((real / est - 1) * 100); return `<span class="${d > 25 ? 'bad' : d < -25 ? 'ok' : 'muted'}">${d >= 0 ? '+' : '−'}${Math.abs(d)} %</span>`; };
+// Courbe de répartition (part des sessions terminées en ≤ x), SVG inline, une série.
+function cdfSvg(values, { fmt = v => String(v), marks = [0.1, 0.5, 0.9] } = {}) {
+  const v = values.slice().sort((a, b) => a - b); const n = v.length; if (!n) return '';
+  const W = 300, H = 128, L = 34, R = 8, T = 8, B = 30;
+  const xmax = v[Math.min(n - 1, Math.floor(0.98 * n))] || 1;
+  const X = x => L + Math.min(1, x / xmax) * (W - L - R), Y = y => T + (1 - y) * (H - T - B);
+  const pts = v.map((x, i) => `${X(x).toFixed(1)},${Y((i + 1) / n).toFixed(1)}`).join(' ');
+  const grid = [0.25, 0.5, 0.75, 1].map(g => `<line x1="${L}" x2="${W - R}" y1="${Y(g)}" y2="${Y(g)}" class="g"/><text x="${L - 4}" y="${Y(g) + 3}" class="t" text-anchor="end">${Math.round(g * 100)} %</text>`).join('');
+  const mk = marks.map((m, i) => { const x = v[Math.min(n - 1, Math.floor(m * n))]; const ty = i % 2 ? H - 16 : H - 5; return `<line x1="${X(x)}" x2="${X(x)}" y1="${Y(0)}" y2="${Y(m)}" class="m"/><circle cx="${X(x)}" cy="${Y(m)}" r="3" class="d"/><text x="${X(x)}" y="${ty}" class="t" text-anchor="middle">${esc(fmt(x))}</text>`; }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${grid}<polyline points="${pts}" class="s"/>${mk}</svg>`;
+}
+// Pareto du coût par rune : part de chaque rune et part cumulée, même axe (%).
+function paretoSvg(rows) {
+  const tot = rows.reduce((a, r) => a + r.c, 0); if (!(tot > 0)) return '';
+  const top = rows.filter(r => r.c > 0).sort((a, b) => b.c - a.c).slice(0, 6);
+  const W = 300, H = 128, L = 34, R = 8, T = 8, B = 30, bw = (W - L - R) / top.length;
+  const short = name => name.replace(/^Pa /, 'P·').replace(/^Ra /, 'R·').replace(/Neutre/, 'Neu').replace(/Terre/, 'Ter');
+  const Y = y => T + (1 - y) * (H - T - B);
+  let cum = 0;
+  const bars = top.map((r, i) => { const sh = r.c / tot; cum += sh; const x = L + i * bw + 2, h = Y(0) - Y(sh);
+    return `<rect x="${x.toFixed(1)}" y="${Y(sh).toFixed(1)}" width="${(bw - 4).toFixed(1)}" height="${h.toFixed(1)}" rx="2" class="b"><title>${esc(r.x.rune.name)} : ${Math.round(sh * 100)} % du coût (${kShort(r.c)})</title></rect><text x="${(x + (bw - 4) / 2).toFixed(1)}" y="${H - 16}" class="t" text-anchor="middle">${esc(short(r.x.rune.name))}</text>`; }).join('');
+  cum = 0;
+  const line = top.map((r, i) => { cum += r.c / tot; return `${(L + i * bw + bw / 2).toFixed(1)},${Y(cum).toFixed(1)}`; }).join(' ');
+  const grid = [0.5, 1].map(g => `<line x1="${L}" x2="${W - R}" y1="${Y(g)}" y2="${Y(g)}" class="g"/><text x="${L - 4}" y="${Y(g) + 3}" class="t" text-anchor="end">${Math.round(g * 100)} %</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${grid}${bars}<polyline points="${line}" class="s2"/></svg>`;
+}
 function paintEstimate() {
   const box = $('#estimate'); const r = estimateCache;
   if (!r) { box.innerHTML = '<span class="muted small">Estimation indisponible.</span>'; return; }
-  const { rows, cost, missing, costP90 } = estimateCost(r);
+  const { rows, cost, missing, costs, costP10, costMedian, costP90 } = estimateCost(r);
   const b = S.baseline;
-  const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${x.n.toFixed(1).replace('.', ',')}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
-  box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}</div>
+  const dec = (a, m, z, fmt) => `<div class="dec"><span><i>1er décile</i><b>${fmt(a)}</b></span><span><i>médiane</i><b>${fmt(m)}</b></span><span><i>dernier décile</i><b>${fmt(z)}</b></span></div>`;
+  const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${f1(x.n)}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
+  box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées, moyenne en grand)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}${r.heavy ? ` · <span class="warn">dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}</span>` : ''}</div>
     <div class="kpis est-kpis">
-      <div class="kpi"><div class="v">≈ ${f1(r.mean)}</div><div class="l">poses<br><span class="muted">médiane ${f1(r.median)} · 9 fois sur 10 sous ${f1(r.p90)}</span>${r.heavy ? `<br><span class="warn">dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}</span>` : ''}</div></div>
-      <div class="kpi haspop"><div class="v">${cost ? `≈ ${kShort(cost)}` : '<span class="muted">—</span>'}</div><div class="l">kamas${cost ? `<br><span class="muted">jusqu'à ${kShort(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : '<br><span class="muted">renseigne les prix (⚙)</span>'}</div>
-        <div class="pop">${detail}</div></div>
+      <div class="kpi"><div class="v">${f1(r.mean)} <small>poses</small></div>${dec(r.p10, r.median, r.p90, x => f1(Math.round(x)))}</div>
+      <div class="kpi haspop"><div class="v">${cost ? `${kShort(cost)} <small>kamas</small>` : '<span class="muted">—</span>'}</div>${cost ? dec(costP10, costMedian, costP90, kShort) : '<div class="l muted small">renseigne les prix (⚙)</div>'}${missing ? `<div class="warn small">${missing} rune${missing > 1 ? 's' : ''} sans prix</div>` : ''}<div class="pop">${detail}</div></div>
     </div>
-    <details class="est-more"><summary class="small muted">détail des runes</summary>${detail}</details>
-    <div class="row small baseline">${b ? `<span>Figée ${b.after ? `après ${b.after} pose${b.after > 1 ? 's' : ''}` : 'au départ'} : ≈ ${f1(b.poses)} poses · ${b.cost ? `≈ ${kShort(b.cost)}` : 'coût ?'}</span><button id="freeze" class="link small">refiger</button>` : `<span class="muted">Fige l'estimation pour la comparer au résultat dans le bilan (sinon, figée automatiquement à la première pose).</span><button id="freeze" class="secondary small">Figer l'estimation</button>`}</div>`;
+    <details class="est-more"><summary class="small muted">détail</summary>
+      <div class="charts">
+        <div><div class="small muted">Sessions terminées en moins de … poses</div>${cdfSvg(r.detail.map(d => d.poses), { fmt: f1 })}</div>
+        ${costs.some(c => c > 0) ? `<div><div class="small muted">Sessions coûtant moins de … kamas</div>${cdfSvg(costs, { fmt: kShort })}</div>` : ''}
+        ${cost ? `<div><div class="small muted">Part du coût par rune (cumul en ligne)</div>${paretoSvg(rows)}</div>` : ''}
+      </div>${detail}</details>
+    <div class="row small baseline">${b ? `<span>Figée ${b.after ? `après ${b.after} pose${b.after > 1 ? 's' : ''}` : 'au départ'} : ${f1(b.poses)} poses · ${b.cost ? kShort(b.cost) : 'coût ?'}</span><button id="freeze" class="link small">refiger</button>` : `<span class="muted">Fige l'estimation pour la comparer au résultat dans le bilan (sinon, figée automatiquement à la première pose).</span><button id="freeze" class="secondary small">Figer l'estimation</button>`}</div>`;
   $('#freeze').onclick = () => { if (S.baseline && !confirm('Remplacer l\'estimation figée ?')) return; freezeBaseline(); paintEstimate(); };
 }
 
