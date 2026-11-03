@@ -231,10 +231,10 @@ function paintLineAdvice() {
     const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (!c) continue;
     const isTop = top && top.rune.id === m.rune.id;
     c.classList.add('rec');
-    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = `<div class="rec-note small">rune conseillée · ≈ ${f1(m.score)} poses restantes</div>`;
+    const n = c.querySelector('.advice-note'); if (n) n.innerHTML = '';
     // vue allégée : badge après le nom de la caractéristique, bulle avec la rune
     const bd = $(`#lines .recbadge[data-stat="${m.rune.stat}"]`);
-    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(m.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(m.rune, 'ricon sm')}<b>${esc(m.rune.name)}</b> <span class="muted small">+${m.rune.bonus}</span></div><div class="bar">${bar(m.odds)}</div>${oddsText(m.odds)} ${diffText(m.odds)}<div class="rec-note small">rune conseillée · ≈ ${f1(m.score)} poses restantes</div></div>`; }
+    if (bd) { bd.classList.remove('hidden'); bd.innerHTML = `${runeImg(m.rune, 'ricon sm')}<div class="pop"><div class="rec-title">${runeImg(m.rune, 'ricon sm')}<b>${esc(m.rune.name)}</b> <span class="muted small">+${m.rune.bonus}</span><span class="spacer"></span>${diffText(m.odds)}</div><div class="bar">${bar(m.odds)}</div>${oddsText(m.odds)}</div>`; }
   }
 }
 

@@ -197,7 +197,7 @@ body.pip .line .range, body.pip .lhead .hr { display: none; }
 .recbadge .pop { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; width: 220px; padding: 8px; background: #0f1013; border: 1px solid #3a3e4a; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.5); line-height: 1.4; }
 .recbadge:hover .pop { display: block; }
 .recbadge .pop .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 5px 0; }
-.recbadge .rec-title { display: flex; align-items: center; gap: 6px; color: var(--rec); }
+.recbadge .rec-title { display: flex; align-items: center; gap: 6px; color: var(--rec); } .recbadge .rec-title .diff { margin-left: 0; }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
 button.cta-cap:hover, button.cta-cap.on { background: var(--sc); color: #fff; }
 button.ico { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 18px; padding: 0; margin-left: 3px; vertical-align: middle; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--sc); }
