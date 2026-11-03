@@ -64,17 +64,33 @@ $('#search-input').addEventListener('input', e => {
   const q = e.target.value;
   searchTimer = setTimeout(async () => {
     const ul = $('#search-results');
-    if (q.trim().length < 2) { ul.innerHTML = ''; return; }
+    if (q.trim().length < 2) { ul.innerHTML = ''; ul.classList.add('hidden'); return; }
     try {
       const items = await searchItems(q);
       ul.innerHTML = items.map((t, i) => `<li data-i="${i}"><img src="${esc(iconUrl(t))}" alt=""><span class="grow">${esc(t.name)}</span><span class="muted small">niv. ${t.level} · ${esc(t.type)}</span></li>`).join('')
         || '<li class="muted">Aucun résultat</li>';
-      ul.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => useTemplate(items[+li.dataset.i]));
+      ul.classList.remove('hidden');
+      ul.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => changeItem(items[+li.dataset.i]));
       setStatus('');
     } catch (err) { setStatus('DofusDB injoignable : saisis l\'objet à la main.'); }
   }, 250);
 });
-$('#manual-item').onclick = () => useTemplate({ id: null, name: 'Objet manuel', level: 200, type: '', lines: [], unknown: [], manual: true });
+document.addEventListener('click', e => { if (!e.target.closest('.search')) { const ul = $('#search-results'); if (ul) ul.classList.add('hidden'); } });
+$('#search-input').addEventListener('focus', () => { const ul = $('#search-results'); if (ul && ul.innerHTML) ul.classList.remove('hidden'); });
+// Changement d'objet : avertit si la session en cours n'est pas finie ou pas archivée.
+function changeItem(t) {
+  if (S.item && S.history.length) {
+    const reached = Object.keys(S.target).length > 0 && Search.targetReached(S.item, S.target);
+    const archived = S.archivedLen === S.history.length;
+    if (!reached || !archived) {
+      const why = [!reached ? 'la cible n\'est pas atteinte' : '', !archived ? 'la session n\'est pas archivée' : ''].filter(Boolean).join(' et ');
+      if (!confirm(`Changer d'objet ? Sur ${S.template?.name || 'l\'objet en cours'}, ${why}. La session sera archivée dans le bilan telle quelle.`)) { $('#search-results').classList.add('hidden'); return; }
+    }
+    archiveSession();
+  }
+  useTemplate(t);
+}
+$('#manual-item').onclick = () => changeItem({ id: null, name: 'Objet manuel', level: 200, type: '', lines: [], unknown: [], manual: true });
 
 // Cible par défaut : vita/fo/ine/cha/age/pui → max − bonus de la Pa + 1 ; dommages, résistances %, cri → max ;
 // le reste → 1 (pas de ligne à 0). Ligne négative à fourchette (−20 à −16) → le moins négatif sans over (−16) ;
@@ -100,7 +116,7 @@ function useTemplate(t) {
   S.target = autoTarget(S.item.lines);
   S.settings.view = 'item';
   pending = null; lastAdvice = null;
-  $('#search-results').innerHTML = ''; $('#search-input').value = '';
+  $('#search-results').innerHTML = ''; $('#search-results').classList.add('hidden'); $('#search-input').value = '';
   save(); renderAll();
 }
 
@@ -117,16 +133,19 @@ function renderAll() {
   const view = settingsOpen ? 'settings' : has ? S.settings.view : 'search';
   root.body.className = 'view-' + view + (root !== document ? ' pip' : '');
   $('#search').classList.toggle('hidden', view !== 'search');
-  $('#view-switch').classList.toggle('hidden', !has);
-  $('#reliquat-bar').classList.toggle('hidden', !(view === 'item' || view === 'fm'));
+  $('#item-bar').classList.toggle('hidden', !has || view === 'settings');
   for (const v of ['item', 'fm', 'bilan', 'settings']) $$('.view-' + v).forEach(s => s.classList.toggle('hidden', view !== v));
   $$('#view-switch button').forEach(b => b.classList.toggle('on', !settingsOpen && b.dataset.view === S.settings.view));
   if (view === 'settings') { renderSettings(); return; }
   if (!has) return;
   const reached = Object.keys(S.target).length > 0 && Search.targetReached(S.item, S.target);
   $('#tab-bilan').classList.toggle('glow', reached);
-  $('#reliquat').value = S.reliquat;
-  $('#item-chip').textContent = `${S.template.name} · niv. ${S.item.level}`;
+  for (const id of ['#reliquat', '#reliquat-fm']) { const el = $(id); if (el) el.value = S.reliquat; }
+  const t = S.template;
+  $('#item-name').textContent = t.name;
+  $('#item-meta').textContent = [t.type || 'objet', t.unknown?.length ? `${t.unknown.length} effet(s) non gérés` : ''].filter(Boolean).join(' · ');
+  $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
+  $('#item-level-text').textContent = S.item.level;
   if (view === 'fm') { renderPose(); renderHistory(); renderAdvice(); }
   else if (view === 'bilan') renderBilan(reached);
   else renderItem();
@@ -136,18 +155,15 @@ function renderAll() {
 }
 
 // ---- Reliquat -----------------------------------------------------------------
-function setReliquat(v) { S.reliquat = Math.max(0, w1(Number(v) || 0)); $('#reliquat').value = S.reliquat; save(); }
-$('#reliquat').onchange = e => setReliquat(e.target.value);
-$('#rel-minus').onclick = () => setReliquat(S.reliquat - 1);
-$('#rel-plus').onclick = () => setReliquat(S.reliquat + 1);
+function setReliquat(v) { S.reliquat = Math.max(0, w1(Number(v) || 0)); for (const id of ['#reliquat', '#reliquat-fm']) { const el = $(id); if (el) el.value = S.reliquat; } save(); }
+for (const sfx of ['', '-fm']) {
+  $('#reliquat' + sfx).onchange = e => setReliquat(e.target.value);
+  $('#rel-minus' + sfx).onclick = () => setReliquat(S.reliquat - 1);
+  $('#rel-plus' + sfx).onclick = () => setReliquat(S.reliquat + 1);
+}
 
 // ---- Vue Objet ----------------------------------------------------------------
 function renderItem() {
-  const t = S.template;
-  $('#item-name').textContent = t.name;
-  $('#item-meta').textContent = [t.type || 'objet', t.unknown?.length ? `${t.unknown.length} effet(s) non gérés` : ''].filter(Boolean).join(' · ');
-  $('#item-icon').src = iconUrl(t) || ''; $('#item-icon').classList.toggle('hidden', !iconUrl(t));
-  $('#item-level-text').textContent = S.item.level;
   const show = S.settings.show;
   for (const k of ['sc', 'sn', 'ec']) { const b = $('#show-' + k); if (b) b.setAttribute('aria-pressed', String(!!show[k])); }
   const shown = o => pct((show.sc ? o.sc : 0) + (show.sn ? o.sn : 0) + (show.ec ? o.ec : 0));
@@ -314,7 +330,6 @@ $('#exo-select').onchange = e => {
 };
 for (const k of ['sc', 'sn', 'ec']) document.querySelector('#show-' + k).onclick = () => { S.settings.show[k] = !S.settings.show[k]; save(); renderItem(); };
 $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.item.lines) }; save(); renderItem(); };
-$('#change-item').onclick = () => { if (confirm('Changer d\'objet ? L\'objet en cours sera perdu' + (S.history.length ? ' (la session est archivée dans le bilan).' : '.'))) { archiveSession(); S = blank(); save(); renderAll(); } };
 
 // ---- Vue FM : conseil ---------------------------------------------------------
 $('#top-select').onchange = e => { S.settings.top = Number(e.target.value); save(); };
@@ -693,6 +708,7 @@ function archiveSession() {
     byRune: d.byRune.map(b => ({ id: b.rune?.id, name: b.name, n: b.n, SC: b.SC, SN: b.SN, EC: b.EC, cost: b.cost, unit: b.unit ?? null })) };
   const i = list.findIndex(x => x.id === snap.id);
   if (i >= 0) list[i] = snap; else list.push(snap);
+  S.archivedLen = S.history.length;
   saveSessions(list); save();
   return snap;
 }
@@ -805,7 +821,7 @@ pipBtn.onclick = async () => {
     catch { const link = pip.document.createElement('link'); link.rel = 'stylesheet'; link.href = ss.href; pip.document.head.appendChild(link); }
   }
   pip.document.title = 'FM Dofus';
-  const parts = ['header.top', '#reliquat-bar', 'main'].map(sel => document.querySelector(sel));
+  const parts = ['header.top', '#item-bar', 'main'].map(sel => document.querySelector(sel));
   const placeholder = document.createElement('div');
   placeholder.className = 'card pip-placeholder';
   placeholder.innerHTML = '<p>L\'outil est ouvert dans la fenêtre flottante.</p><p class="muted small">Ferme-la pour le ramener ici.</p>';

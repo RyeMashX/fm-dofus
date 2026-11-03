@@ -6,7 +6,7 @@ Page : `index.html` (modules ES, aucun build nécessaire). Hébergée sur GitHub
 
 ## Utilisation
 
-1. Chercher l'objet par son nom (données DofusDB) ou le créer à la main.
+1. Chercher l'objet par son nom dans la barre du haut (données DofusDB) ou le créer à la main. L'objet (icône, nom, type, niveau) et les onglets restent affichés quel que soit l'onglet ; changer d'objet en cours de session demande confirmation si la cible n'est pas atteinte ou la session pas archivée.
 2. Saisir le jet actuel de chaque ligne, le reliquat affiché par le jeu, et la **cible** (valeur minimale) sur les lignes qui comptent. Ajouter les exos voulus.
 3. « Calculer » : l'outil simule, pour chaque rune candidate, des sessions complètes (cette rune puis sa politique jusqu'à la cible) et propose celle qui minimise le nombre moyen de poses restantes, celle-ci comprise. C'est le même estimateur que l'estimation de la vue Objet.
 4. Poser la rune dans le jeu, puis cliquer SC / SN / EC. En SN et EC, saisir le nouveau reliquat et décrémenter les lignes tombées ; l'outil vérifie que le poids perdu est cohérent.

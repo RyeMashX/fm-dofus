@@ -10,58 +10,53 @@
 <body>
 <header class="top">
   <h1>FM Dofus</h1>
+  <div class="search grow">
+    <input id="search-input" type="search" placeholder="Changer d'objet (nom, DofusDB)…" autocomplete="off">
+    <ul id="search-results" class="results hidden"></ul>
+  </div>
   <span id="status" class="muted small"></span>
-  <div class="spacer"></div>
   <button id="pip" class="secondary small hidden" title="Ouvrir dans une fenêtre qui reste au-dessus des autres (Chrome, Edge)">Flottant</button>
-  <div id="view-switch" class="seg hidden">
+  <button id="settings-btn" class="secondary small gear" title="Réglages : prix des runes, modèle">⚙</button>
+</header>
+
+<div id="item-bar" class="itembar hidden">
+  <img id="item-icon" alt="">
+  <div class="grow">
+    <h2 id="item-name"></h2>
+    <div class="muted small"><span id="item-meta"></span> · niveau <span id="item-level-text"></span></div>
+  </div>
+  <div id="view-switch" class="seg">
     <button data-view="item">Objet</button>
     <button data-view="fm">FM</button>
     <button data-view="bilan" id="tab-bilan">Bilan</button>
   </div>
-  <button id="settings-btn" class="secondary small gear" title="Réglages : prix des runes">⚙</button>
-</header>
-
-<div id="reliquat-bar" class="reliquat hidden">
-  <span class="lbl">Reliquat</span>
-  <button id="rel-minus" class="step">−1</button>
-  <input id="reliquat" type="number" step="1" min="0" class="num" inputmode="decimal">
-  <button id="rel-plus" class="step">+1</button>
-  <div class="spacer"></div>
-  <span id="item-chip" class="itemchip"></span>
 </div>
 
 <main>
   <section id="search" class="card">
-    <h2>Objet</h2>
-    <input id="search-input" type="search" placeholder="Nom de l'objet (DofusDB)…" autocomplete="off">
-    <ul id="search-results" class="results"></ul>
-    <p class="muted small">Ou <button class="link" id="manual-item">créer un objet à la main</button>.</p>
+    <h2>Commencer</h2>
+    <p class="muted small">Cherche un objet par son nom dans la barre du haut (données DofusDB), ou <button class="link" id="manual-item">crée un objet à la main</button>.</p>
   </section>
 
   <!-- Vue Objet -->
   <section id="item" class="card view-item hidden">
-    <div class="item-head">
-      <img id="item-icon" alt="">
-      <div class="grow">
-        <h2 id="item-name"></h2>
-        <div class="muted small"><span id="item-meta"></span> · niveau <span id="item-level-text"></span></div>
-      </div>
-      <button id="change-item" class="secondary small">Changer</button>
-    </div>
     <div class="row">
+      <h2>Jets</h2>
       <button id="cap-start-item" class="cta-cap small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">Capturer le jeu</button>
       <button id="cap-table-item" class="primary small hidden" title="Lit Min/Max/valeur de chaque ligne et le reliquat">Lire le tableau</button>
       <span id="screen-status-item" class="muted small grow"></span>
+      <span class="relgrp" title="Reliquat affiché par le jeu"><span class="lbl">Reliquat</span><button id="rel-minus" class="step small">−1</button><input id="reliquat" type="number" step="1" min="0" class="num" inputmode="decimal"><button id="rel-plus" class="step small">+1</button></span>
+      <span class="showsel" title="Chance affichée sur chaque rune : somme des pastilles actives">Affiché :
+        <button type="button" id="show-sc" class="tog sc" aria-pressed="true">SC</button><button type="button" id="show-sn" class="tog sn" aria-pressed="false">SN</button><button type="button" id="show-ec" class="tog ec" aria-pressed="false">EC</button></span>
       <button id="auto-target" class="cta-auto small" title="vita/fo/ine/cha/age/pui : max − pa + 1 ; do, ré %, cri : max ; ligne négative à fourchette : le moins négatif ; le reste : 1">Cible auto</button>
     </div>
     <div id="screen-out-item"></div>
-    <div class="legend small muted"><span><b class="cur-dot"></b> actuel</span><span><b class="tgt-dot"></b> cible</span>
-      <span class="showsel" title="Chance affichée sur chaque rune : somme des pastilles actives">Affiché :
-        <button type="button" id="show-sc" class="tog sc" aria-pressed="true">SC</button><button type="button" id="show-sn" class="tog sn" aria-pressed="false">SN</button><button type="button" id="show-ec" class="tog ec" aria-pressed="false">EC</button></span>
-      <span title="Meilleure rune de chaque ligne d'après le solveur ; double contour : meilleur coup sur l'objet"><i class="recsw"></i> rune conseillée</span></div>
+    <div class="lhead small muted"><div class="l1"><span class="name">Caractéristique</span><span class="hr">Jet</span><span class="hc">Actuel</span><span class="arrow"></span><span class="hc">Cible</span></div><div class="l2">Runes · chance affichée</div></div>
     <div id="lines"></div>
     <div class="row">
       <select id="exo-select"><option value="">+ Ajouter un exo…</option></select>
+      <div class="spacer"></div>
+      <span class="legend small muted" title="Meilleure rune de chaque ligne d'après le solveur ; double contour : meilleur coup sur l'objet"><i class="recsw"></i> rune conseillée · <i class="recsw best"></i> meilleur coup</span>
     </div>
   </section>
 
@@ -84,6 +79,9 @@
   <section id="pose" class="card view-fm hidden">
     <div class="row">
       <div id="pose-rune" class="grow"></div>
+      <span class="relgrp" title="Reliquat affiché par le jeu"><span class="lbl small">Reliquat</span><button id="rel-minus-fm" class="step small">−1</button><input id="reliquat-fm" type="number" step="1" min="0" class="num" inputmode="decimal"><button id="rel-plus-fm" class="step small">+1</button></span>
+    </div>
+    <div class="row">
       <button class="link small" id="other-rune">autre rune</button>
       <button id="cap-start" class="link small" title="Choisis la fenêtre du jeu (partage de fenêtre du navigateur)">capturer le jeu</button>
     </div>
