@@ -51,7 +51,7 @@ Poids à perdre = poids de la rune (÷2 si la ligne reste négative). Dans l'ord
 
 ### Points contestés par l'expérience en jeu (à mesurer)
 
-- **Ordre de l'exo lourd (PA, PM, PO, invocation).** Le moteur impose l'exo lourd en premier, sur l'objet le plus vide possible, parce que DoFocus fait détruire jusqu'à 100 de poids par échec de Ga Pa. En jeu, la pratique est l'inverse : objet fini, puis tentatives de Ga Pa, puis remontée de ce qui est tombé ; l'ordre « exo d'abord » ne marche pas (qualité à 1, l'exo saute pendant la remontée). Cela implique que la perte réelle sur un EC de Ga Pa est bien plus faible que le poids de la rune. À mesurer dans le journal (lignes tombées par EC de Ga Pa, SN éventuels, chute de l'exo pendant la remontée) avant de changer : perte plafonnée sur les échecs d'exo lourd, règle « exo en dernier », pénalité des runes lourdes pendant la remontée.
+- **Ordre de l'exo lourd (PA, PM, PO, invocation)** : réglé. Pratique en jeu, confirmée : objet monté au jet voulu, tentative de Ga Pa (SC 1 %, pas de SN), en EC jusqu'à 100 de poids tombent, on remonte, on retente ; en moyenne une centaine de cycles. L'ordre inverse ne marche pas : un exo lourd déjà posé tombe en 2-3 poses ratées (constante `HEAVY_EXO_HIT` = 0,5 par pose ratée, estimation à affiner). Le solveur vise d'abord la cible sans l'exo, puis propose l'exo ; le coût de la phase exo (cycles géométriques × remontée simulée après un EC) est estimé à part et ajouté aux scores et à l'estimation de la vue Objet.
 - **Pa Pui à ratio 20** : voir la calibration ci-dessous.
 
 ### Calibration sur les poses réelles

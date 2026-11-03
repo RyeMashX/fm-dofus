@@ -219,7 +219,7 @@ function freezeBaseline(r = estimateCache) {
                  lines: S.item.lines.map(l => ({ stat: l.stat, value: l.value })), reliquat: S.reliquat, after: S.history.length };
   save(); return S.baseline;
 }
-const f1 = x => x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
+const f1 = x => x >= 1000 ? Math.round(x).toLocaleString('fr-FR') : x.toFixed(x >= 10 ? 0 : 1).replace('.', ',');
 const pctDiff = (real, est) => { if (!(est > 0)) return ''; const d = Math.round((real / est - 1) * 100); return `<span class="${d > 25 ? 'bad' : d < -25 ? 'ok' : 'muted'}">${d >= 0 ? '+' : '−'}${Math.abs(d)} %</span>`; };
 function paintEstimate() {
   const box = $('#estimate'); const r = estimateCache;
@@ -229,7 +229,7 @@ function paintEstimate() {
   const detail = `<div class="rtable">${rows.map(({ x, u, c }) => `<div class="rrow">${runeImg(x.rune, 'ricon sm')}<span class="cn">${esc(x.rune.name)}</span><span class="cnt">× ${x.n.toFixed(1).replace('.', ',')}</span><span class="cost">${u > 0 ? kShort(c) : '<span class="warn small">prix ?</span>'}</span></div>`).join('')}</div>`;
   box.innerHTML = `<div class="est-head small muted">Pour atteindre la cible <span class="muted">(${r.runs} sessions simulées)</span>${r.unfinished > 0.02 ? ` · <span class="warn">${Math.round(r.unfinished * 100)} % n'aboutissent pas</span>` : ''}</div>
     <div class="kpis est-kpis">
-      <div class="kpi"><div class="v">≈ ${f1(r.mean)}</div><div class="l">poses<br><span class="muted">médiane ${r.median} · 9 fois sur 10 sous ${r.p90}</span></div></div>
+      <div class="kpi"><div class="v">≈ ${f1(r.mean)}</div><div class="l">poses<br><span class="muted">médiane ${f1(r.median)} · 9 fois sur 10 sous ${f1(r.p90)}</span>${r.heavy ? `<br><span class="warn">dont exo : ${r.heavy.phases.map(x => x.cycles ? `${esc(x.rune.name)} ≈ ${Math.round(x.cycles.mean)} tentatives, ≈ ${f1(x.recover)} poses de remontée chacune` : `${esc(x.rune.name)} impossible (${x.blocked})`).join(' ; ')}</span>` : ''}</div></div>
       <div class="kpi haspop"><div class="v">${cost ? `≈ ${kShort(cost)}` : '<span class="muted">—</span>'}</div><div class="l">kamas${cost ? `<br><span class="muted">jusqu'à ${kShort(costP90)} dans les mauvais cas${missing ? ` · ${missing} rune${missing > 1 ? 's' : ''} sans prix` : ''}</span>` : '<br><span class="muted">renseigne les prix (⚙)</span>'}</div>
         <div class="pop">${detail}</div></div>
     </div>
@@ -277,16 +277,18 @@ function renderAdvice() {
   if (!res) { out.innerHTML = '<p class="muted small">Clique « Calculer » pour obtenir le prochain coup.</p>'; return; }
   if (res.reached) { out.innerHTML = '<p class="ok">Cible atteinte sur toutes les lignes.</p>'; return; }
   if (!res.moves.length) { out.innerHTML = '<p class="muted small">Aucune rune posable sur les lignes cibles (plafonds atteints ?).</p>'; return; }
-  const note = res.heavyFirst ? `<p class="warn small">Exo lourd en attente : à poser avant tout le reste, chaque échec détruit jusqu'à ${res.moves[0].rune.weight} de poids sur l'objet.</p>` : '';
+  const hv = res.heavy; const ph0 = hv?.phases?.[0];
+  const note = res.exo && ph0 ? `<p class="small"><b class="ok">Objet au jet.</b> Il reste l'exo : chaque tentative passe à ${pct(ph0.p * 100)} % ; en EC, jusqu'à ${res.moves[0].rune.weight} de poids tombent, on remonte (≈ ${f1(ph0.recover)} poses) puis on retente. En moyenne ${Math.round(ph0.cycles.mean)} cycles, une fois sur deux moins de ${ph0.cycles.median}, une fois sur dix plus de ${ph0.cycles.p90}.</p>`
+    : hv && hv.total < 900 ? `<p class="muted small">Les scores comprennent la phase exo lourd à la fin (≈ ${Math.round(hv.total)} poses : ${hv.phases.map(x => `${esc(x.rune.name)} ≈ ${Math.round(x.cycles?.mean ?? 0)} tentatives`).join(', ')}).</p>` : '';
   const best = res.moves[0].score;
   out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
     const tie = k > 0 && m.score - best < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
+      <div class="sub">+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
-      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${m.score.toFixed(1).replace('.', ',')}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
+      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${f1(m.score)}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;
   }).join('')}</div>`;
   $$('.move').forEach(d => d.onclick = () => { const [stat, tier] = d.dataset.rune.split(':'); pending = runeOf(stat, +tier); renderAdvice(); renderPose(); });

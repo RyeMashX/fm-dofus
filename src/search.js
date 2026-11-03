@@ -3,9 +3,13 @@
 // 1. Tables par ligne cible : espérance E[v] du nombre de poses pour amener la ligne de la valeur v
 //    à la cible, calculée par programmation dynamique (valeur par valeur, meilleure rune à chaque
 //    valeur) à partir des probabilités du moteur, avec un coût de casse collatérale par tentative.
-// 2. Pour chaque rune candidate : on simule N trajectoires de H poses (la rune, puis une politique
-//    gloutonne fondée sur les tables), et on mesure poses jouées + estimation du reste (Σ E).
+// 2. Pour chaque rune candidate : on simule N sessions (la rune, puis une politique gloutonne fondée
+//    sur les tables) jusqu'à la cible, et on mesure les poses jouées.
 // Le coup retenu minimise cette espérance.
+//
+// Exo lourd (PA, PM, PO, invocation hors template) : il se tente en dernier, sur l'objet au jet voulu.
+// SC 1 % ; chaque EC détruit jusqu'au poids de la rune (100 pour PA), il faut remonter puis retenter.
+// Le coût de cette phase (≈ 1/p cycles de « tentative + remontée ») est estimé à part et ajouté.
 
 import * as FM from './engine.js';
 import { STAT_BY_KEY, RUNES } from './stats.js';
@@ -26,6 +30,11 @@ export function missing(item, target) {
   return Object.entries(target).map(([stat, min]) => ({ stat, missing: Math.max(0, min - valueOf(item, stat)) })).filter(m => m.missing > 0);
 }
 export function targetReached(item, target) { return missing(item, target).length === 0; }
+
+// Exo lourd : stat à 1 % / 0 % / 99 % dont la ligne n'est pas dans le template de l'objet.
+export function isHeavyExo(item, stat) { const st = STAT_BY_KEY[stat]; if (!st?.heavyExo) return false; const l = lineOf(item, stat); return !l || l.min == null; }
+export function heavyPending(item, target) { return Object.keys(target).filter(s => isHeavyExo(item, s) && valueOf(item, s) < target[s]); }
+export function normalTarget(item, target) { const t = {}; for (const [s, v] of Object.entries(target)) if (!isHeavyExo(item, s)) t[s] = v; return t; }
 
 // Poids présent sur l'objet et part de ce poids qui sert la cible.
 function presentWeights(item, target) {
@@ -60,6 +69,7 @@ export function buildTables(state, target) {
   }
   const tables = {};
   for (const [stat, t] of Object.entries(target)) {
+    if (isHeavyExo(item, stat)) continue;
     const line = lineOf(item, stat);
     const lo = Math.min(0, line?.min ?? 0);
     const E = new Map(), choice = new Map();
@@ -101,7 +111,8 @@ export function buildTables(state, target) {
 export function estimateRemaining(state, target, T = buildTables(state, target)) {
   let h = 0, pw = null;
   for (const stat of Object.keys(target)) {
-    const tb = T.tables[stat]; const v = valueOf(state.item, stat);
+    const tb = T.tables[stat]; if (!tb) continue;
+    const v = valueOf(state.item, stat);
     const e = tb.Eof(v);
     h += e;
     if (tb.heavyRepass && e > 0 && e < BIG) {
@@ -117,21 +128,14 @@ export function estimateRemaining(state, target, T = buildTables(state, target))
 
 // Exo lourd (PA, PM, PO, invocation) encore à poser : il passe avant tout le reste, car chaque échec
 // (99 %) détruit jusqu'au poids de la rune sur l'objet. On ne le laisse pas à la simulation.
-export function pendingHeavy(state, target, T) {
-  for (const stat of Object.keys(target)) {
-    const tb = T.tables[stat];
-    if (!tb.heavy || valueOf(state.item, stat) >= tb.t) continue;
-    const o = FM.odds(state.item, tb.heavy);
-    if (!o.blocked) return { rune: tb.heavy, odds: o };
-  }
-  return null;
-}
+export function pendingHeavy() { return null; } // ancienne règle « exo lourd d'abord », abandonnée
 
 // Politique par défaut : la rune qui minimise 1 + casse + pass·E[v+b] + (1−pass)·E[v] sur sa ligne.
 function policyMoves(state, target, T) {
   const list = [];
   for (const { stat } of missing(state.item, target)) {
-    const tb = T.tables[stat]; const v = valueOf(state.item, stat);
+    const tb = T.tables[stat]; if (!tb) continue;
+    const v = valueOf(state.item, stat);
     for (const r of RUNES.filter(r => r.stat === stat)) {
       const o = FM.odds(state.item, r);
       if (o.blocked) continue;
@@ -159,7 +163,8 @@ function rollout(state, target, T, first, H, rng, stats) {
     stats.outcomes[r.outcome]++;
   }
   s = { item: r.item, reliquat: r.reliquat };
-  while (poses < H && !targetReached(s.item, target)) {
+  const normal = normalTarget(s.item, target);
+  while (poses < H && !targetReached(s.item, normal)) {
     const moves = policyMoves(s, target, T);
     let done = false;
     for (const m of moves.slice(0, 3)) {
@@ -169,7 +174,49 @@ function rollout(state, target, T, first, H, rng, stats) {
     }
     if (!done) break;
   }
-  return poses + estimateRemaining(s, target, T);
+  return poses + estimateRemaining(s, normal, T);
+}
+
+// Coût de la phase exo lourd depuis l'objet au jet : p = chance de SC, R = poses de remontée après un EC
+// (simulées depuis l'objet au jet, politique gloutonne). Cycles ~ géométrique(p) : 1/p en moyenne.
+export function heavyCost(state, target, { trials = 60, seed = 11, maxRecover = 400 } = {}) {
+  const pend = heavyPending(state.item, target);
+  if (!pend.length) return null;
+  const normal = normalTarget(state.item, target);
+  // objet « au jet » : lignes cibles normales mises à la cible
+  let full = state.item;
+  for (const [stat, t] of Object.entries(normal)) if (valueOf(full, stat) < t) full = withValue(full, stat, t);
+  const fullState = { item: full, reliquat: state.reliquat };
+  const T = buildTables(fullState, normal);
+  const out = { phases: [], total: 0, totalMedian: 0, totalP10: 0, totalP90: 0, runes: new Map() };
+  for (const stat of pend) {
+    const rune = RUNES.find(r => r.stat === stat && r.tier === 0);
+    const o = FM.odds(full, rune);
+    const p = o.blocked ? 0 : o.sc / 100;
+    if (!(p > 0)) { out.phases.push({ stat, rune, blocked: o.blocked || 'sc-0' }); out.total += BIG; continue; }
+    let sumR = 0, n = 0; const rec = new Map();
+    for (let k = 0; k < trials; k++) {
+      const rng = rngFrom(seed * 7877 + k);
+      const r = FM.applyMove(fullState, rune, rng, 'EC');
+      let s = { item: r.item, reliquat: r.reliquat }, poses = 0;
+      while (poses < maxRecover && !targetReached(s.item, normal)) {
+        const moves = policyMoves(s, normal, T).slice(0, 3);
+        let done = false;
+        for (const m of moves) { const q = FM.applyMove(s, m.rune, rng); if (!q.outcome) continue; s = { item: q.item, reliquat: q.reliquat }; poses++; done = true; rec.set(m.rune.id, (rec.get(m.rune.id) || 0) + 1); break; }
+        if (!done) break;
+      }
+      sumR += poses; n++;
+    }
+    const R = n ? sumR / n : 0;
+    const q = x => Math.ceil(Math.log(1 - x) / Math.log(1 - p));
+    const cycles = { mean: 1 / p, median: q(0.5), p10: q(0.1), p90: q(0.9) };
+    const tot = c => c + (c - 1) * R;
+    out.phases.push({ stat, rune, p, recover: R, cycles, total: tot(cycles.mean) });
+    out.total += tot(cycles.mean); out.totalMedian += tot(cycles.median); out.totalP10 += tot(cycles.p10); out.totalP90 += tot(cycles.p90);
+    out.runes.set(rune.id, (out.runes.get(rune.id) || 0) + cycles.mean);
+    for (const [id, c] of rec) out.runes.set(id, (out.runes.get(id) || 0) + c / Math.max(1, n) * (cycles.mean - 1));
+  }
+  return out;
 }
 
 // Runes candidates : tout ce qui se pose sur une ligne cible incomplète, plus des coups de « nettoyage »
@@ -180,6 +227,11 @@ function rollout(state, target, T, first, H, rng, stats) {
 const EXO_CLEAN_ORDER = ['cha', 'ini', 'age', 'fo', 'ine', 'pui', 'pod', 'sa', 'prospe'];
 export function candidates(state, target) {
   const { item } = state;
+  const normal = normalTarget(item, target);
+  if (targetReached(item, normal)) {
+    return heavyPending(item, target).map(stat => { const rune = RUNES.find(r => r.stat === stat && r.tier === 0); return { rune, odds: FM.odds(item, rune), onTarget: true, purpose: 'exo' }; }).filter(c => !c.odds.blocked);
+  }
+  target = normal;
   const need = new Set(missing(item, target).map(m => m.stat));
   const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(item, rune), onTarget: true }));
   const present = new Set(item.lines.map(l => l.stat));
@@ -208,10 +260,20 @@ export function candidates(state, target) {
 // simulateSessions, donc même chiffre que l'estimation de la vue Objet).
 export function nextBestMoves(state, target, { samples = 300, horizon = 400, seed = 1, top = 3 } = {}) {
   if (targetReached(state.item, target)) return { reached: true, moves: [] };
-  const T = buildTables(state, target);
-  const h0 = estimateRemaining(state, target, T);
-  const heavy = pendingHeavy(state, target, T);
-  const pool = heavy ? [heavy] : candidates(state, target);
+  const normal = normalTarget(state.item, target);
+  const heavy = heavyCost(state, target, { seed });
+  if (targetReached(state.item, normal)) {
+    // objet au jet : la seule chose à faire est de tenter l'exo lourd
+    const moves = candidates(state, target).map(({ rune, odds, purpose }) => {
+      const ph = heavy?.phases.find(x => x.stat === rune.stat);
+      return { rune, odds, purpose, score: ph?.total ?? BIG, netGain: 0, pHurtTarget: 0, expLossOnTarget: 0, phase: ph };
+    });
+    return { reached: false, exo: true, h0: heavy?.total ?? 0, heavy, moves: moves.slice(0, top), all: moves };
+  }
+  const T = buildTables(state, normal);
+  const extra = heavy ? heavy.total : 0;   // phase exo lourd, identique pour toutes les candidates
+  const h0 = estimateRemaining(state, normal, T) + extra;
+  const pool = candidates(state, target);
   const results = pool.map(({ rune, odds, purpose, cleans }) => {
     const stats = { hurt: 0, lost: 0, outcomes: { SC: 0, SN: 0, EC: 0 } };
     let sum = 0, n = 0;
@@ -221,16 +283,18 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
       if (c == null) continue;
       sum += c; n++;
     }
-    const score = n ? sum / n : Infinity;
+    const score = n ? sum / n + extra : Infinity;
     return { rune, odds, purpose, cleans, score, netGain: h0 - score, pHurtTarget: n ? stats.hurt / n : 0, expLossOnTarget: n ? stats.lost / n : 0 };
   });
   results.sort((a, b) => a.score - b.score);
-  return { reached: false, h0, heavyFirst: !!heavy, moves: results.slice(0, top), all: results };
+  return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
 }
 
 // Sessions complètes simulées avec la politique gloutonne (exo lourd d'abord, puis la meilleure rune par
 // ligne) jusqu'à la cible : distribution du nombre de poses et runes consommées, pour estimer le coût.
 export function simulateSessions(state, target, { runs = 200, maxPoses = 400, seed = 1 } = {}) {
+  const heavy = heavyCost(state, target, { seed });
+  target = normalTarget(state.item, target);
   const T = buildTables(state, target);
   const poses = [], runeCounts = new Map();
   let unfinished = 0;
@@ -238,8 +302,7 @@ export function simulateSessions(state, target, { runs = 200, maxPoses = 400, se
     const rng = rngFrom(seed * 104729 + k);
     let s = state, n = 0;
     while (n < maxPoses && !targetReached(s.item, target)) {
-      const heavy = pendingHeavy(s, target, T);
-      const moves = heavy ? [{ rune: heavy.rune }] : policyMoves(s, target, T).slice(0, 3);
+      const moves = policyMoves(s, target, T).slice(0, 3);
       let done = false;
       for (const m of moves) {
         const q = FM.applyMove(s, m.rune, rng);
@@ -256,6 +319,10 @@ export function simulateSessions(state, target, { runs = 200, maxPoses = 400, se
   poses.sort((a, b) => a - b);
   const q = p => poses[Math.min(poses.length - 1, Math.floor(p * poses.length))];
   const mean = poses.reduce((a, b) => a + b, 0) / poses.length;
-  const perRun = [...runeCounts.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n: n / runs })).sort((a, b) => b.n - a.n);
-  return { runs, mean, median: q(0.5), p10: q(0.1), p90: q(0.9), unfinished: unfinished / runs, runes: perRun };
+  const per = new Map([...runeCounts.entries()].map(([id, n]) => [id, n / runs]));
+  if (heavy) for (const [id, n] of heavy.runes) per.set(id, (per.get(id) || 0) + n);
+  const perRun = [...per.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n })).sort((a, b) => b.n - a.n);
+  const h = heavy || { total: 0, totalMedian: 0, totalP10: 0, totalP90: 0 };
+  return { runs, mean: mean + h.total, median: q(0.5) + h.totalMedian, p10: q(0.1) + h.totalP10, p90: q(0.9) + h.totalP90, unfinished: unfinished / runs, runes: perRun,
+           base: { mean, median: q(0.5), p90: q(0.9) }, heavy };
 }
