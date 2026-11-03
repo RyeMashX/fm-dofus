@@ -128,7 +128,7 @@ button:disabled { opacity: .4; cursor: default; }
 /* En-têtes de colonnes (vue Objet) : même grille que .line */
 .lhead { display: flex; align-items: center; gap: 12px; padding: 6px 0 2px; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
 .lhead .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 370px; }
-.lhead .name { flex: 1; } .lhead .hr { width: 60px; text-align: right; } .lhead .hc { width: 54px; text-align: center; white-space: nowrap; } .lhead .arrow { width: 12px; }
+.lhead .name { flex: 1; padding-left: 24px; } .lhead .hr { width: 60px; text-align: right; } .lhead .hc { width: 54px; text-align: center; white-space: nowrap; } .lhead .arrow { width: 12px; }
 .lhead .l2 { flex: 1; }
 .results { list-style: none; margin: 6px 0 0; padding: 4px; }
 .results li { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
@@ -210,7 +210,8 @@ button.cta-auto:hover { background: #8f7df0; color: #fff; }
 .rune .pc { width: 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--sc); font-weight: 600; }
 .rune.max .pc { color: var(--muted); font-weight: 400; }
 .bar i.sc { background: var(--sc); } .bar i.sn { background: var(--sn); } .bar i.ec { background: var(--ec); }
-.line .del { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; margin-right: 6px; border-radius: 50%; font-size: 13px; line-height: 1; color: var(--muted); background: transparent; border: 1px solid var(--line); vertical-align: middle; }
+.line .slot { flex: none; width: 18px; margin-right: 6px; display: inline-flex; align-items: center; }
+.line .del { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 50%; font-size: 13px; line-height: 1; color: var(--muted); background: transparent; border: 1px solid var(--line); vertical-align: middle; }
 .line .del:hover { color: #fff; background: var(--ec); border-color: var(--ec); }
 
 /* Conseil */
