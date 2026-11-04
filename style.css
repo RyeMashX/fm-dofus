@@ -113,6 +113,7 @@ button.link { background: none; border: none; padding: 0; color: var(--accent); 
 button.step { padding: 5px 10px; font-weight: 600; }
 button:disabled { opacity: .4; cursor: default; }
 
+label.sel { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; } label.sel select { color: var(--text); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .seg button { border: none; border-radius: 0; background: transparent; padding: 4px 12px; }
 .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 600; }
