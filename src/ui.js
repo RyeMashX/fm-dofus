@@ -242,7 +242,7 @@ function paintLineAdvice() {
   $$('#lines .chip').forEach(c => { c.classList.remove('rec', 'tie'); const n = c.querySelector('.advice-note'); if (n) n.innerHTML = ''; });
   $$('#lines .recbadge').forEach(b => { b.classList.add('hidden'); b.innerHTML = ''; });
   const bestByStat = new Map();
-  for (const m of r.all || []) { if (m.purpose === 'nettoyage') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
+  for (const m of r.all || []) { if (m.purpose === 'nettoyage' || m.purpose === 'descente') continue; const b = bestByStat.get(m.rune.stat); if (!b || m.score < b.score) bestByStat.set(m.rune.stat, m); }
   for (const m of bestByStat.values()) {
     const c = $(`#lines .chip[data-rune="${m.rune.id}"]`); if (c) c.classList.add('rec');
     // vue allégée : badge après le nom de la caractéristique, bulle avec la rune
@@ -394,7 +394,7 @@ function renderAdvice() {
     const tie = k > 0 && m.score - res.moves[0].score < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
+      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'descente' ? ` · <span class="warn">pour faire baisser ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${f1(m.score)}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;

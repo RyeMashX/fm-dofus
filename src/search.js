@@ -181,6 +181,58 @@ export function cleaningMove(state, target, T) {
   return null;
 }
 
+// Descente : poser une rune sur une ligne qui n'est pas une cible incomplète (ligne finie, hors cible, ou exo
+// léger) pour que sa perte fasse baisser une ligne cible coincée (ratio trop haut), là où la table dit que
+// repartir de plus bas coûte moins : E(v − n) < E(v). Valeur = 1 + (1 − SC) × Σ_ℓ P(perte sur ℓ) × gain attendu,
+// avec P d'après les poids de tirage du moteur (première ligne touchée) et n uniforme sur 1..⌈f/w⌉.
+// Valeur mise sous la même forme que les coups normaux (1 + reste attendu de la ligne bénéficiaire).
+const DESCENT_EXO = ['cha', 'ini', 'age', 'fo', 'ine'];
+export function descentMoves(state, target, T) {
+  const { item } = state;
+  const miss = missing(item, target);
+  if (!miss.length || overLines(item).length) return [];
+  // lignes cibles qui gagneraient à baisser
+  const benef = [];
+  for (const { stat } of miss) {
+    const tb = T.tables[stat]; if (!tb) continue;
+    const v = valueOf(item, stat); const l = lineOf(item, stat); if (!l || l.min == null || !(v > 0)) continue;
+    const lo = Math.max(tb.lo, Math.min(l.min, 0));
+    let best = 0; for (let n = 1; n <= 10 && v - n >= lo; n++) best = Math.max(best, tb.Eof(v) - tb.Eof(v - n));
+    if (best > 0.5) benef.push({ stat, v, lo, tb, line: l });
+  }
+  if (!benef.length) return [];
+  const need = new Set(miss.map(m => m.stat));
+  // runes de descente : petites runes des lignes qui ne sont pas des cibles incomplètes, et exos légers
+  const runes = [];
+  for (const l of item.lines) {
+    if (l.min == null || need.has(l.stat) || l.max <= 0) continue;
+    for (const r of RUNES.filter(r => r.stat === l.stat && r.tier <= 1)) runes.push(r);
+  }
+  for (const k of DESCENT_EXO) { const l = item.lines.find(x => x.stat === k); if (l && l.min != null) continue; const r = RUNES.find(r => r.stat === k && r.tier === 0); if (r) runes.push(r); }
+  const normals = item.lines.filter(l => l.min != null && l.value > 0 && l.value <= Math.max(l.min, l.max));
+  const out = [];
+  for (const r of runes) {
+    const o = FM.odds(item, r); if (o.blocked) continue;
+    const f = r.weight - state.reliquat; if (f <= 0) continue;
+    const kexp = FM.P.PICK_EXP ?? 1;
+    const pi = normals.map(l => ({ l, w: Math.min(1, f / STAT_BY_KEY[l.stat].weight) ** kexp * (l.stat === r.stat ? FM.P.TARGET_PICK_FACTOR : 1) }));
+    const tot = pi.reduce((a, x) => a + x.w, 0); if (!(tot > 0)) continue;
+    let gain = 0, benefStat = null, benefP = 0;
+    for (const b of benef) {
+      const x = pi.find(p => p.l.stat === b.stat); if (!x) continue;
+      const pHit = x.w / tot, w = STAT_BY_KEY[b.stat].weight, nmax = Math.max(1, Math.min(b.v - b.lo, Math.ceil(f / w - 1e-9)));
+      let g = 0; for (let n = 1; n <= nmax; n++) g += (b.tb.Eof(b.v) - b.tb.Eof(Math.max(b.lo, b.v - n))) / nmax;
+      gain += pHit * g; if (pHit * g > benefP) { benefP = pHit * g; benefStat = b.stat; }
+    }
+    if (!(gain > 0.5)) continue;
+    // même forme que les coups normaux : 1 + reste attendu de la ligne bénéficiaire après le coup
+    const b0 = benef.find(b => b.stat === benefStat);
+    const val = 1 + b0.tb.Eof(b0.v) - (1 - o.sc / 100) * gain;
+    out.push({ rune: r, val, purpose: 'descente', cleans: benefStat, gain });
+  }
+  return out;
+}
+
 export function policyMoves(state, target, T) {
   const list = [];
   const miss = missing(state.item, target);
@@ -196,6 +248,7 @@ export function policyMoves(state, target, T) {
       list.push({ rune: r, val: 1 + c + pass * tb.Eof(v + r.bonus) + (1 - pass) * tb.Eof(v) });
     }
   }
+  for (const d of descentMoves(state, target, T)) list.push(d);
   return list.sort((a, b) => a.val - b.val);
 }
 
@@ -287,6 +340,8 @@ export function candidates(state, target) {
   target = normal;
   const need = new Set(missing(item, target).map(m => m.stat));
   const list = RUNES.filter(r => need.has(r.stat)).map(rune => ({ rune, odds: FM.odds(item, rune), onTarget: true }));
+  // descente : les 3 meilleures d'après leur valeur de politique (les simulations départagent)
+  for (const d of descentMoves(state, target, buildTables(state, target)).sort((a, b) => a.val - b.val).slice(0, 3)) if (!list.some(c => c.rune.id === d.rune.id)) list.push({ rune: d.rune, odds: FM.odds(item, d.rune), onTarget: false, purpose: 'descente', cleans: d.cleans });
   const clean = overLines(item).length ? cleaningMove(state, target) : null;
   if (clean) {
     const over = overLines(item)[0];

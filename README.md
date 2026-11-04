@@ -82,7 +82,9 @@ $$D = 5 + 60\,Q^{12} + 12\max(0, r - 14) + 45\,[p \ge 0{,}8 \wedge \neg\text{ove
 **Tables par ligne** : $p_\rho = (SC + SN)/100$, $c_\rho = (1 - SC/100) \max(0, W_\rho - R)\,\text{part}/\text{ppp}$, et
 $$E(v) = \min_\rho \frac{1 + c_\rho + p_\rho\,E(\min(v + b_\rho, t))}{p_\rho}, \qquad E(v \ge t) = 0$$
 
-**Politique** : nettoyage si over, exo lourd si tout le reste est au jet, sinon $\arg\min_\rho \big[1 + c_\rho + p_\rho E(v + b_\rho) + (1 - p_\rho) E(v)\big]$.
+**Descente** : poser une rune sur une ligne qui n'est pas une cible incomplète (ligne finie, hors cible, exo léger) pour que sa perte fasse baisser une ligne cible coincée (ratio trop haut, Ra bloquée par le plafond), là où la table dit que repartir de plus bas coûte moins ($E(v - n) < E(v)$). Valeur $= 1 + E_\ell(v_\ell) - (1 - SC)\sum_\ell P(\text{perte sur } \ell)\,\mathbb{E}_n[E_\ell(v_\ell) - E_\ell(v_\ell - n)]$, avec $P$ d'après les poids de tirage des pertes et $n$ uniforme sur $1..\lceil f/w_\ell \rceil$. Dans la politique et parmi les candidates (3 meilleures). Sur les Solerets (intelligence 92 → cible 100, Ra bloquée au-dessus de 91), la session simulée passe de 68 à 43 poses.
+
+**Politique** : nettoyage si over, exo lourd si tout le reste est au jet, descente si elle vaut mieux, sinon $\arg\min_\rho \big[1 + c_\rho + p_\rho E(v + b_\rho) + (1 - p_\rho) E(v)\big]$.
 
 **Recherche avancée** (réglage « Recherche : avancée » de la vue FM) : les deux premières poses sont comparées par simulation (6 premières runes × jusqu'à 8 secondes), la suite par la politique ; le conseil indique « puis … ». Plus long, utile quand un coup n'a de sens qu'avec sa suite.
 
