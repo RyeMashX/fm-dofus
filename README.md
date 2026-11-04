@@ -59,6 +59,35 @@ Poids à perdre = poids de la rune (÷2 si la ligne reste négative). Dans l'ord
 
 Le journal (vue FM → « Exporter le journal ») enregistre chaque pose réelle (format v2) : horodatage, version de l'outil, session, objet, modèle actif et ses paramètres, cible, état avant (lignes, reliquat), rune, chances annoncées avec les facteurs du modèle (régime, difficulté, qualité, position, ratio, over, demi-poids), résultat, variations, état après, écart de cohérence, provenance (saisie manuelle, lecture d'écran automatique ou vérifiée, avec l'entrée OCR brute). L'export contient aussi les sessions archivées et les prix. Le compteur « n non exportées » dans la vue FM rappelle d'exporter : le journal ne vit que dans le navigateur. `node scripts/fit-journal.mjs journal.json` compare les résultats aux chances sous différents paramètres. Calibration du 2026-11-02 (156 poses, Ceinture de la Reine des Voleurs et Bottes du Strigide) : le palier des 80 % pèse +25 (DoFocus : +45) et la pénalité de ratio jet/bonus au-delà de 14 vaut 24 par point (DoFocus : 12). Avec ces valeurs, SC/SN/EC observés et attendus coïncident par tranche de difficulté ; avec les valeurs DoFocus, Pa Pui à 60/75 était annoncée à 58 % de passage pour 24 % observés (21 poses). Réserve : l'écart est porté presque entièrement par Pa Pui (5 passages sur 21 pour 12 attendus, p ≈ 0,2 %) ; les autres runes à ratio > 14 (17 poses) collent à DoFocus et la pente doublée les dégrade. DoFocus reste donc le modèle par défaut ; « Calibré » est proposé dans ⚙ comme hypothèse, à confirmer avec d'autres poses à ratio élevé hors palier (Pa Cha à 60/70, par exemple). Les tests unitaires vérifient les valeurs DoFocus.
 
+## Formules
+
+Notations : $j$ jet actuel de la ligne posée, $b$ bonus de la rune, $w$ poids d'un point de la ligne, $W = b\,w$ poids de la rune, $[m, M]$ fourchette, $t$ cible, $R$ reliquat, $[\cdot]$ indicatrice.
+
+**Qualité** (ligne posée exclue, over ignoré, template seulement ; $Q = 1$ avec un exo PA/PM) :
+$$Q = \frac{\sum_{\ell \ne \text{posée}} w_\ell \min(j_\ell, M_\ell)}{\sum_{\ell \ne \text{posée}} w_\ell M_\ell}$$
+
+**Position, over, ratio** : $p = \frac{j + b - m}{M - m}$, $\text{over} = [j + b > M]$, $r = j / b$.
+
+**Difficulté** :
+$$D = 5 + 60\,Q^{12} + 12\max(0, r - 14) + 45\,[p \ge 0{,}8 \wedge \neg\text{over} \wedge m \ne M] + \big(65 + 4\,(j + b - M)\,w\big)[\text{over}] - 20\max(0, 1{,}1 - Q)[\text{niveau} < 170]$$
+
+**Résultats** : $SC = \max(2, (100 - D)/2)$ ; $SN = \min(50, 100 - SC)$ si $D \le 100$ hors over, $\max(15, 50 - 0{,}375(D - 100))$ si $D > 100$ hors over, $\max(5, 40 - 0{,}375(D - 100))$ en over, borné par $100 - SC$ ; $EC = 100 - SC - SN$.
+
+**Exo** (poids final $f = (j + b) w$) : $S = 57$ si $f \le 2$ ; $57 - (f - 2)\,38/13$ si $f \le 15$ ; $19 - 1{,}9\,(f - 15)$ si $f < 25$ ; 0 au-delà. $SC = \max(1, 0{,}077 S)$, $SN = 0{,}923 S$. PA, PM, Po : 1 / 0 / 99.
+
+**Plafonds** : $j + b \le \max(M, \lfloor 101/w \rfloor)$ ; charge over + exo $\le 101$ ; $W/2$ si la ligne reste négative.
+
+**Pertes** (SN et EC), $f_0 = W$ : (1) lignes over et exo hors ligne posée, ordre aléatoire, probabilité 1 pour un over du template et $\min(1, 0{,}75 (f/w)^{0{,}85})$ pour un exo, points retirés $n = \min(\text{dispo}, \max(1, \lceil f/w \rceil)) + \epsilon$ avec $\epsilon \sim \mathcal{U}\{0..\lfloor 0{,}2 n \rfloor\}$ si $w < 1$ ; (2) reliquat ; (3) ligne posée en over, en EC, probabilité ÷ 3 ; (4) lignes normales, tirage pondéré $\pi_\ell = \min(1, f/w_\ell)^k$ ($k = 1$), ligne posée × 1/60, $n \sim \mathcal{U}\{1..\lceil f/w_\ell \rceil\}$, jusqu'à $f \le 0$ ; (5) dépassement rendu au reliquat.
+
+**Tables par ligne** : $p_\rho = (SC + SN)/100$, $c_\rho = (1 - SC/100) \max(0, W_\rho - R)\,\text{part}/\text{ppp}$, et
+$$E(v) = \min_\rho \frac{1 + c_\rho + p_\rho\,E(\min(v + b_\rho, t))}{p_\rho}, \qquad E(v \ge t) = 0$$
+
+**Politique** : nettoyage si over, exo lourd si tout le reste est au jet, sinon $\arg\min_\rho \big[1 + c_\rho + p_\rho E(v + b_\rho) + (1 - p_\rho) E(v)\big]$.
+
+**Score d'une candidate** : $N$ sessions à graines communes, première pose = la candidate avec résultat stratifié (SC / SN / EC en proportion exacte), puis la politique jusqu'à la cible ; score = moyenne des poses, première comprise.
+
+**Exo lourd** : $C \sim$ géométrique$(p)$, $\mathbb{E}[C] = 1/p$, quantile $C_x = \lceil \ln(1 - x)/\ln(1 - p) \rceil$, $\bar R$ remontée simulée après EC, total $= C + (C - 1)\bar R$.
+
 ## Développement
 
 ```
