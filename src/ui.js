@@ -364,16 +364,20 @@ $('#advise').onclick = () => computeAdvice();
 function computeAdvice(scroll = false) {
   const out = $('#advice-out');
   if (!Object.keys(S.target).length) { out.innerHTML = '<p class="muted small">Renseigne au moins une cible dans la vue Objet.</p>'; return; }
-  out.innerHTML = '<p class="muted small">Calcul…</p>';
+  const adv = S.settings.search === 'advanced';
+  const t0 = Date.now();
+  out.innerHTML = `<p class="muted small"><span class="spin"></span> Calcul${adv ? ' (recherche avancée)' : ''}… <span id="calc-time"></span></p>`;
+  const timer = setInterval(() => { const el = $('#calc-time'); if (el) el.textContent = Math.round((Date.now() - t0) / 1000) + ' s'; else clearInterval(timer); }, 1000);
   const key = JSON.stringify([S.item.lines, S.target, S.reliquat]); computeAdvice.key = key;
-  const fn = S.settings.search === 'advanced' ? 'nextBestMoves2' : 'nextBestMoves';
-  solve(fn, state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff }).then(r => {
+  const fn = adv ? 'nextBestMoves2' : 'nextBestMoves';
+  solve(fn, state(), S.target, { samples: Math.round(S.settings.samples / (adv ? 8 : 3)), top: S.settings.top, seed: Date.now() & 0xffff }).then(r => {
+    clearInterval(timer);
     if (computeAdvice.key !== key || S.settings.view !== 'fm') return;
     lastAdvice = r;
     if (!lastAdvice.reached && lastAdvice.moves.length) pending = lastAdvice.moves[0].rune;
     renderAdvice(); renderPose();
     if (scroll) $('#advice').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }).catch(err => { out.innerHTML = `<p class="warn small">Calcul impossible : ${esc(err.message)}</p>`; });
+  }).catch(err => { clearInterval(timer); out.innerHTML = `<p class="warn small">Calcul impossible : ${esc(err.message)}</p>`; });
 }
 
 function renderAdvice() {
