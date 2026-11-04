@@ -84,6 +84,8 @@ $$E(v) = \min_\rho \frac{1 + c_\rho + p_\rho\,E(\min(v + b_\rho, t))}{p_\rho}, \
 
 **Politique** : nettoyage si over, exo lourd si tout le reste est au jet, sinon $\arg\min_\rho \big[1 + c_\rho + p_\rho E(v + b_\rho) + (1 - p_\rho) E(v)\big]$.
 
+**Recherche avancée** (réglage « Recherche : avancée » de la vue FM) : les deux premières poses sont comparées par simulation (6 premières runes × jusqu'à 8 secondes), la suite par la politique ; le conseil indique « puis … ». Plus long, utile quand un coup n'a de sens qu'avec sa suite.
+
 **Score d'une candidate** : $N$ sessions à graines communes, première pose = la candidate avec résultat stratifié (SC / SN / EC en proportion exacte), puis la politique jusqu'à la cible ; score = moyenne des poses, première comprise.
 
 **Exo lourd** : $C \sim$ géométrique$(p)$, $\mathbb{E}[C] = 1/p$, quantile $C_x = \lceil \ln(1 - x)/\ln(1 - p) \rceil$, $\bar R$ remontée simulée après EC, total $= C + (C - 1)\bar R$.

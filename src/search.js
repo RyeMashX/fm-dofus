@@ -389,3 +389,47 @@ export function simulateSessions(state, target, { runs = 200, maxPoses = 400, se
   const perRun = [...runeCounts.entries()].map(([id, n]) => ({ id, rune: RUNES.find(r => r.id === id), n: n / runs })).sort((a, b) => b.n - a.n);
   return { runs, mean, median: q(0.5), p10: q(0.1), p90: q(0.9), unfinished: unfinished / runs, runes: perRun, detail, heavy };
 }
+
+// Recherche avancée : les deux premières poses sont comparées par simulation (paires rune 1 → rune 2),
+// la suite par la politique. Capture les coups qui n'ont de sens qu'avec leur suite (Ra Vi puis nettoyage…).
+export function nextBestMoves2(state, target, { samples = 200, seed = 1, top = 3, firsts = 6, seconds = 8 } = {}) {
+  const base = nextBestMoves(state, target, { samples: Math.max(60, Math.round(samples / 2)), seed, top: 50 });
+  if (base.reached || base.exo || !base.all.length) return base;
+  const normal = normalTarget(state.item, target);
+  const T = buildTables(state, normal);
+  const extra = base.heavy ? base.heavy.total : 0;
+  const rank = new Map(base.all.map((m, i) => [m.rune.id, i]));
+  const out = [];
+  for (const m1 of base.all.slice(0, firsts)) {
+    // secondes poses : candidates maintenant et après un passage de la première
+    const after = FM.applyMove(state, m1.rune, rngFrom(1), 'SN');
+    const pool = new Map();
+    for (const c of candidates(state, target)) pool.set(c.rune.id, c.rune);
+    if (after.outcome) for (const c of candidates({ item: after.item, reliquat: after.reliquat }, target)) pool.set(c.rune.id, c.rune);
+    const r2s = [...pool.values()].sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99)).slice(0, seconds);
+    let best = null;
+    for (const r2 of r2s) {
+      let sum = 0, n = 0; const costs = new Array(samples).fill(null);
+      for (let k = 0; k < samples; k++) {
+        const rng = rngFrom(seed * 7919 + k);
+        const u = (k + 0.5) / samples * 100;
+        const forced = u < m1.odds.sc ? 'SC' : u < m1.odds.sc + m1.odds.sn ? 'SN' : 'EC';
+        let r = FM.applyMove(state, m1.rune, rng, forced); if (!r.outcome) break;
+        let s = { item: r.item, reliquat: r.reliquat }, poses = 1;
+        const nm = normalTarget(s.item, target);
+        if (!targetReached(s.item, nm)) { const q = FM.applyMove(s, r2, rng); if (q.outcome) { s = { item: q.item, reliquat: q.reliquat }; poses++; } }
+        while (poses < 400 && !targetReached(s.item, nm)) {
+          const mv = policyMoves(s, nm, T); let done = false;
+          for (const m of mv.slice(0, 3)) { const q = FM.applyMove(s, m.rune, rng); if (!q.outcome) continue; s = { item: q.item, reliquat: q.reliquat }; poses++; done = true; break; }
+          if (!done) break;
+        }
+        const c = poses + estimateRemaining(s, nm, T); sum += c; n++; costs[k] = c;
+      }
+      const score = n ? sum / n + extra : Infinity;
+      if (!best || score < best.score) best = { ...m1, next: r2, score, costs };
+    }
+    if (best) out.push(best);
+  }
+  out.sort((a, b) => a.score - b.score);
+  return { ...base, advanced: true, moves: out.slice(0, top), all: out };
+}

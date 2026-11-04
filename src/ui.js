@@ -166,6 +166,7 @@ function renderAll() {
   else renderItem();
   renderCaptureButtons();
   $('#top-select').value = String(S.settings.top);
+  $('#search-select').value = S.settings.search === 'advanced' ? 'advanced' : 'standard';
   const ss = $('#samples-select'); ss.value = String(S.settings.samples); if (!ss.value) { ss.value = '1500'; S.settings.samples = 1500; }
 }
 
@@ -356,6 +357,7 @@ $('#auto-target').onclick = () => { S.target = { ...S.target, ...autoTarget(S.it
 
 // ---- Vue FM : conseil ---------------------------------------------------------
 $('#top-select').onchange = e => { S.settings.top = Number(e.target.value); save(); };
+$('#search-select').onchange = e => { S.settings.search = e.target.value; save(); };
 $('#samples-select').onchange = e => { S.settings.samples = Number(e.target.value); save(); };
 $('#advise').onclick = () => computeAdvice();
 
@@ -364,7 +366,8 @@ function computeAdvice(scroll = false) {
   if (!Object.keys(S.target).length) { out.innerHTML = '<p class="muted small">Renseigne au moins une cible dans la vue Objet.</p>'; return; }
   out.innerHTML = '<p class="muted small">Calcul…</p>';
   const key = JSON.stringify([S.item.lines, S.target, S.reliquat]); computeAdvice.key = key;
-  solve('nextBestMoves', state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff }).then(r => {
+  const fn = S.settings.search === 'advanced' ? 'nextBestMoves2' : 'nextBestMoves';
+  solve(fn, state(), S.target, { samples: Math.round(S.settings.samples / 3), top: S.settings.top, seed: Date.now() & 0xffff }).then(r => {
     if (computeAdvice.key !== key || S.settings.view !== 'fm') return;
     lastAdvice = r;
     if (!lastAdvice.reached && lastAdvice.moves.length) pending = lastAdvice.moves[0].rune;
@@ -387,7 +390,7 @@ function renderAdvice() {
     const tie = k > 0 && m.score - res.moves[0].score < 0.3;
     return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
       <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
+      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
       <div class="bar">${bar(m.odds)}</div>
       <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${f1(m.score)}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
     </div>`;
