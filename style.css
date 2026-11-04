@@ -187,6 +187,7 @@ button.busy::after { content: ''; position: absolute; left: 50%; top: 50%; width
 .line.exo .name::after { content: "exo"; font-size: 10px; color: var(--accent); margin-left: 5px; border: 1px solid var(--accent); border-radius: 3px; padding: 0 3px; }
 .line .range { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .line .cur { font-weight: 700; }
+.line .cur.unread { border-color: var(--ec); background: #2a1715; }   /* non lue à l'écran : à vérifier à la main */
 .line .tgt { color: var(--tgt); border-color: #6b5520; background: #1f1a10; }
 .line .tgt::placeholder { color: #6b5520; }
 .line .arrow { color: var(--muted); }

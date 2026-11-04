@@ -210,7 +210,7 @@ function renderItem() {
     }).join('');
     return `<div class="line ${done ? 'done' : ''} ${exo ? 'exo' : ''} ${l.max < 0 ? 'neg' : ''}" data-i="${i}">
       <div class="l1"><span class="name"><span class="slot">${exo ? '<button class="del" data-del="1" title="Retirer cet exo"><svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' : ''}</span>${statImg(l.stat)}<span class="lbl">${esc(st.label)}</span><span class="recbadge hidden" data-stat="${l.stat}"></span></span><span class="range">${exo ? '' : l.min === l.max ? `${l.min}` : `${l.min} à ${l.max}`}</span>
-        <input class="num small cur" type="number" data-field="value" value="${l.value}" title="jet actuel${exo ? '' : l.min === l.max ? ` (${l.min})` : ` (${l.min} à ${l.max})`}">
+        <input class="num small cur ${unreadStats.has(l.stat) ? 'unread' : ''}" type="number" data-field="value" value="${l.value}" title="jet actuel${exo ? '' : l.min === l.max ? ` (${l.min})` : ` (${l.min} à ${l.max})`}">
         <span class="arrow">→</span>
         <input class="num small tgt" type="number" data-field="target" value="${tgt ?? ''}" placeholder="cible" title="cible (minimum visé)">
         </div>
@@ -342,7 +342,7 @@ function paintEstimate() {
 function onLineEdit(e) {
   const i = +e.target.closest('.line').dataset.i; const l = S.item.lines[i];
   const v = e.target.value === '' ? null : Number(e.target.value);
-  if (e.target.dataset.field === 'value') l.value = v ?? 0;
+  if (e.target.dataset.field === 'value') { l.value = v ?? 0; unreadStats.delete(l.stat); }
   else { if (v == null) delete S.target[l.stat]; else S.target[l.stat] = v; }
   save(); renderItem();
 }
@@ -600,17 +600,14 @@ function renderTableRead(r) {
   const changes = rows.filter(x => x.nu != null && x.nu !== x.old);
   const unread = rows.filter(x => x.nu == null);
   // application directe ; « annuler » remet les valeurs précédentes
-  const before = { lines: S.item.lines.map(l => ({ ...l })), reliquat: S.reliquat, reliquatBefore: S.reliquatBefore };
   for (const x of rows) if (x.nu != null) S.item.lines.find(l => l.stat === x.stat).value = x.nu;
   if (r.reliquat != null) { S.reliquat = r.reliquat; S.reliquatBefore = r.reliquat; }
+  // lignes non lues : champ « actuel » mis en évidence jusqu'à une saisie manuelle
+  unreadStats = new Set(unread.map(x => x.stat));
   save(); renderAll();
-  const o2 = screenOut();
-  o2.innerHTML = `<p class="small"><span class="ok">Tableau lu</span> · ${rows.length - unread.length}/${rows.length} lignes${r.reliquat != null ? ` · reliquat ${r.reliquat}` : ''}${changes.length ? ` · ${changes.map(x => `${esc(labelOf(x.stat))} ${x.old} → <b>${x.nu}</b>`).join(', ')}` : ' · rien ne change'} <button id="read-undo" class="link small">annuler</button></p>
-    ${unread.length ? `<p class="warn small">Non lues : ${unread.map(x => esc(labelOf(x.stat))).join(', ')}</p>` : ''}
-    ${unknown.length ? `<p class="muted small">Lues sans correspondance : ${unknown.map(t => esc(t.label)).join(', ')}</p>` : ''}
-    ${r.tableUnparsed?.length ? `<p class="muted small">Texte non reconnu : ${r.tableUnparsed.map(t => `« ${esc(t)} »`).join(' · ')}</p>` : ''}`;
-  $('#read-undo').onclick = () => { S.item.lines = before.lines; S.reliquat = before.reliquat; S.reliquatBefore = before.reliquatBefore; save(); renderAll(); screenOut().innerHTML = ''; };
+  screenOut().innerHTML = r.tableUnparsed?.length && unread.length ? `<p class="muted small">Texte non reconnu : ${r.tableUnparsed.map(t => `« ${esc(t)} »`).join(' · ')}</p>` : '';
 }
+let unreadStats = new Set();
 
 // Lecture de la dernière pose : déduit la rune, le résultat et les pertes, puis ouvre le panneau de vérification.
 function renderPoseRead(r) {
