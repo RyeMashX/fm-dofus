@@ -139,7 +139,7 @@ function useTemplate(t) {
 let settingsOpen = false;   // l'écran de réglages se superpose à la vue courante
 function setView(v) { S.settings.view = v; settingsOpen = false; save(); renderAll(); }
 $$('#view-switch button').forEach(b => b.onclick = () => setView(b.dataset.view));
-document.querySelector('#settings-btn').onclick = () => { settingsOpen = true; renderAll(); };
+document.querySelector('#settings-btn').onclick = () => { settingsOpen = !settingsOpen; renderAll(); };
 document.querySelector('#settings-back').onclick = () => { settingsOpen = false; renderAll(); };
 document.querySelector('#bilan-prices').onclick = () => { settingsOpen = true; renderAll(); };
 
@@ -148,7 +148,8 @@ function renderAll() {
   const view = settingsOpen ? 'settings' : has ? S.settings.view : 'search';
   root.body.className = 'view-' + view + (root !== document ? ' pip' : '');
   $('#search').classList.toggle('hidden', view !== 'search');
-  $('#item-bar').classList.toggle('hidden', !has || view === 'settings');
+  $('#item-bar').classList.toggle('hidden', !has);
+  $('#settings-btn').classList.toggle('on', settingsOpen);
   for (const v of ['item', 'fm', 'bilan', 'settings']) $$('.view-' + v).forEach(s => s.classList.toggle('hidden', view !== v));
   $$('#view-switch button').forEach(b => b.classList.toggle('on', !settingsOpen && b.dataset.view === S.settings.view));
   if (view === 'settings') { renderSettings(); return; }
@@ -597,17 +598,18 @@ function renderTableRead(r) {
   }
   const unknown = r.table.filter((t, i) => !used.has(i));
   const changes = rows.filter(x => x.nu != null && x.nu !== x.old);
-  out.innerHTML = `<div class="loss"><div class="row"><strong>Tableau lu</strong><span class="muted small">${rows.filter(x => x.nu != null).length}/${rows.length} lignes${r.reliquat != null ? ` · reliquat ${r.reliquat}` : ''}</span></div>
-    ${rows.map(x => `<div class="lrow"><span class="name">${esc(labelOf(x.stat))}</span><span class="val">${x.nu == null ? '<span class="muted">non lue</span>' : x.nu !== x.old ? `<span class="muted">${x.old} →</span> <b class="warn">${x.nu}</b>` : x.nu}</span></div>`).join('')}
-    ${unknown.length ? `<p class="muted small">Lignes lues sans correspondance : ${unknown.map(t => esc(t.label)).join(', ')}</p>` : ''}
-    ${r.tableUnparsed?.length ? `<p class="muted small">Texte lu non reconnu : ${r.tableUnparsed.map(t => `« ${esc(t)} »`).join(' · ')}</p>` : ''}
-    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary" ${changes.length || r.reliquat != null ? '' : 'disabled'}>Appliquer</button></div></div>`;
-  $('#read-cancel').onclick = () => { out.innerHTML = ''; };
-  $('#read-apply').onclick = () => {
-    for (const x of rows) if (x.nu != null) S.item.lines.find(l => l.stat === x.stat).value = x.nu;
-    if (r.reliquat != null) { S.reliquat = r.reliquat; S.reliquatBefore = r.reliquat; }
-    save(); out.innerHTML = ''; renderAll();
-  };
+  const unread = rows.filter(x => x.nu == null);
+  // application directe ; « annuler » remet les valeurs précédentes
+  const before = { lines: S.item.lines.map(l => ({ ...l })), reliquat: S.reliquat, reliquatBefore: S.reliquatBefore };
+  for (const x of rows) if (x.nu != null) S.item.lines.find(l => l.stat === x.stat).value = x.nu;
+  if (r.reliquat != null) { S.reliquat = r.reliquat; S.reliquatBefore = r.reliquat; }
+  save(); renderAll();
+  const o2 = screenOut();
+  o2.innerHTML = `<p class="small"><span class="ok">Tableau lu</span> · ${rows.length - unread.length}/${rows.length} lignes${r.reliquat != null ? ` · reliquat ${r.reliquat}` : ''}${changes.length ? ` · ${changes.map(x => `${esc(labelOf(x.stat))} ${x.old} → <b>${x.nu}</b>`).join(', ')}` : ' · rien ne change'} <button id="read-undo" class="link small">annuler</button></p>
+    ${unread.length ? `<p class="warn small">Non lues : ${unread.map(x => esc(labelOf(x.stat))).join(', ')}</p>` : ''}
+    ${unknown.length ? `<p class="muted small">Lues sans correspondance : ${unknown.map(t => esc(t.label)).join(', ')}</p>` : ''}
+    ${r.tableUnparsed?.length ? `<p class="muted small">Texte non reconnu : ${r.tableUnparsed.map(t => `« ${esc(t)} »`).join(' · ')}</p>` : ''}`;
+  $('#read-undo').onclick = () => { S.item.lines = before.lines; S.reliquat = before.reliquat; S.reliquatBefore = before.reliquatBefore; save(); renderAll(); screenOut().innerHTML = ''; };
 }
 
 // Lecture de la dernière pose : déduit la rune, le résultat et les pertes, puis ouvre le panneau de vérification.
@@ -761,19 +763,32 @@ function renderSessions() {
   const ratio = cmp.length ? cmp.reduce((a, s) => a + s.poses / s.baseline.poses, 0) / cmp.length : null;
   $('#sessions-stats').innerHTML = `${list.length} session${list.length > 1 ? 's' : ''} · ${tot.poses} poses · ${tot.cost ? kamas(tot.cost) : 'coût inconnu'} · chance moyenne ${tot.z / list.length >= 0 ? '+' : '−'}${Math.abs(tot.z / list.length).toFixed(1).replace('.', ',')} σ${ratio != null ? ` · réel / estimé ×${ratio.toFixed(2).replace('.', ',')} sur ${cmp.length} session${cmp.length > 1 ? 's' : ''} terminée${cmp.length > 1 ? 's' : ''}` : ''}`;
   const date = iso => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  out.innerHTML = list.map(s => `<details class="sess ${s.id === S.sessionId ? 'cur' : ''}"><summary>
-      <span class="d">${date(s.t)}</span><span class="cn">${esc(s.item.name || 'objet')}${s.id === S.sessionId ? ' <span class="muted small">(en cours)</span>' : ''}</span>
-      <span class="st ${s.reached ? 'ok' : 'muted'}">${s.reached ? '✓' : '…'}</span><span class="cnt">${s.poses} poses</span>
-      <span class="z ${s.z >= 1 ? 'ok' : s.z <= -1 ? 'bad' : 'muted'}">${s.z >= 0 ? '+' : '−'}${Math.abs(s.z).toFixed(1).replace('.', ',')} σ</span>
-      <span class="cost">${s.cost ? kShort(s.cost) : '<span class="muted">—</span>'}</span></summary>
-    <div class="small sessbody">
-      ${s.baseline ? `<div>Estimé ${s.baseline.after ? `après ${s.baseline.after} pose${s.baseline.after > 1 ? 's' : ''}` : 'au départ'} : ≈ ${f1(s.baseline.poses)} poses${s.baseline.cost ? ` · ≈ ${kShort(s.baseline.cost)}` : ''} → réel ${s.poses} poses ${pctDiff(s.poses, s.baseline.poses)}${s.cost && s.baseline.cost ? ` · ${kShort(s.cost)} ${pctDiff(s.cost, s.baseline.cost)}` : ''}</div>` : ''}
-      <div>SC ${s.n.SC} · SN ${s.n.SN} · EC ${s.n.EC}${!s.baseline && s.expectedAtStart != null ? ` · ≈ ${Math.round(s.expectedAtStart)} poses attendues au départ` : ''} · poids détruit ${String(s.lostWeight).replace('.', ',')}${s.ms ? ` · ${Math.round(s.ms / 60e3)} min` : ''}${s.simulated ? ` · <span class="warn">${s.simulated} simulée${s.simulated > 1 ? 's' : ''}</span>` : ''}</div>
-      <div class="muted">Cible : ${Object.entries(s.target).map(([k, v]) => `${esc(labelOf(k))} ${v}`).join(', ') || '—'}</div>
-      <div class="muted">Final : ${s.lines.filter(l => l.value).map(l => `${esc(labelOf(l.stat))} ${l.value}`).join(', ')}</div>
-      <div class="muted">${s.byRune.map(b => `${esc(b.name)} × ${b.n}`).join(' · ')}</div>
+  const z = v => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1).replace('.', ',')} σ`;
+  const body = s => {
+    const N = s.poses || 1, pc = k => Math.round(s.n[k] / N * 100);
+    const est = s.baseline?.poses > 0 ? s.baseline.poses : s.expectedAtStart;
+    const bar = (v, max, cls) => `<i class="${cls}" style="width:${Math.min(100, v / max * 100).toFixed(1)}%"></i>`;
+    const mx = Math.max(s.poses, est || 0) * 1.05;
+    return `<div class="sessbody">
+      <div class="sb-grid">
+        <div class="sb"><div class="sb-t">Poses</div><div class="sb-v">${s.poses}${est ? ` <span class="muted small">vs ${f1(est)} estimées</span> ${pctDiff(s.poses, est)}` : ''}</div>
+          ${est ? `<div class="cmp"><div><span>réel</span><div class="hbar">${bar(s.poses, mx, 'real')}</div></div><div><span>estimé</span><div class="hbar">${bar(est, mx, 'est')}</div></div></div>` : ''}</div>
+        <div class="sb"><div class="sb-t">Coût</div><div class="sb-v">${s.cost ? kShort(s.cost) : '—'}${s.cost && s.baseline?.cost ? ` <span class="muted small">vs ${kShort(s.baseline.cost)}</span> ${pctDiff(s.cost, s.baseline.cost)}` : ''}</div>
+          ${s.cost && s.baseline?.cost ? `<div class="cmp"><div><span>réel</span><div class="hbar">${bar(s.cost, Math.max(s.cost, s.baseline.cost) * 1.05, 'real')}</div></div><div><span>estimé</span><div class="hbar">${bar(s.baseline.cost, Math.max(s.cost, s.baseline.cost) * 1.05, 'est')}</div></div></div>` : ''}</div>
+        <div class="sb"><div class="sb-t">Résultats</div><div class="sb-v"><span class="odds"><b>${pc('SC')} %</b> <i>${pc('SN')} %</i> <s>${pc('EC')} %</s></span></div><div class="bar"><i class="sc" style="width:${pc('SC')}%"></i><i class="sn" style="width:${pc('SN')}%"></i><i class="ec" style="width:${pc('EC')}%"></i></div>
+          <div class="muted small">chance ${z(s.z)} · poids détruit ${String(s.lostWeight).replace('.', ',')}${s.ms ? ` · ${Math.round(s.ms / 60e3)} min` : ''}${s.simulated ? ` · <span class="warn">${s.simulated} simulée${s.simulated > 1 ? 's' : ''}</span>` : ''}</div></div>
+      </div>
+      <div class="sb-lines">${s.lines.filter(l => l.value || s.target[l.stat] != null).map(l => { const t = s.target[l.stat]; const ok = t == null ? null : l.value >= t; return `<span class="sl ${ok === false ? 'bad' : ok ? 'ok' : ''}">${statImg(l.stat, 'sicon sm')}${esc(labelOf(l.stat))} <b>${l.value}</b>${t != null ? `<span class="muted">/${t}</span>` : ''}</span>`; }).join('')}</div>
+      <div class="sb-runes">${s.byRune.map(b => { const r = b.id ? RUNES.find(x => x.id === b.id) : null; return `<span class="chip sm">${r ? runeImg(r, 'ricon sm') : ''}<span class="cn">${esc(b.name)}</span><span class="pc mix">× ${b.n}</span><span class="tags"><span class="tag SC">${b.SC}</span><span class="tag SN">${b.SN}</span><span class="tag EC">${b.EC}</span></span></span>`; }).join('')}</div>
       <div class="row"><div class="spacer"></div><button class="link small" data-del-session="${s.id}">supprimer</button></div>
-    </div></details>`).join('');
+    </div>`;
+  };
+  out.innerHTML = `<div class="sess-head small muted"><span class="chev"></span><span class="d">Date</span><span class="cn">Objet</span><span class="st">Cible</span><span class="cnt">Poses</span><span class="z">Chance</span><span class="cost">Coût</span></div>` +
+    list.map(s => `<details class="sess ${s.id === S.sessionId ? 'cur' : ''}"><summary>
+      <span class="chev">▸</span><span class="d">${date(s.t)}</span><span class="cn">${esc(s.item.name || 'objet')}${s.id === S.sessionId ? ' <span class="muted small">(en cours)</span>' : ''}</span>
+      <span class="st ${s.reached ? 'ok' : 'muted'}" title="${s.reached ? 'cible atteinte' : 'cible non atteinte'}">${s.reached ? '✓ atteinte' : 'en cours'}</span><span class="cnt">${s.poses}</span>
+      <span class="z ${s.z >= 1 ? 'ok' : s.z <= -1 ? 'bad' : 'muted'}">${z(s.z)}</span>
+      <span class="cost">${s.cost ? kShort(s.cost) : '<span class="muted">—</span>'}</span></summary>${body(s)}</details>`).join('');
   $$('#sessions-out [data-del-session]').forEach(b => b.onclick = () => { if (confirm('Supprimer cette session de l\'historique ?')) { saveSessions(sessions().filter(x => x.id !== +b.dataset.delSession)); renderSessions(); } });
 }
 document.querySelector('#session-archive').onclick = () => { if (archiveSession()) { renderSessions(); setStatus('Session archivée.'); setTimeout(() => setStatus(''), 2000); } };

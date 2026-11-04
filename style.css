@@ -49,6 +49,9 @@ body.view-settings { --w: 700px; }
 .kpi .l .bad { color: var(--ec); font-weight: 600; } .kpi .l .ok { font-weight: 600; }
 .rtable { display: flex; flex-direction: column; }
 /* Sessions */
+.sess-head { display: flex; align-items: center; gap: 8px; padding: 4px 0; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
+.sess-head .chev, .sess .chev { width: 14px; text-align: center; color: var(--muted); }
+.sess[open] .chev { transform: rotate(90deg); display: inline-block; }
 .sess { border-top: 1px solid #22252c; }
 .sess summary { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; list-style: none; }
 .sess summary::-webkit-details-marker { display: none; }
@@ -57,9 +60,18 @@ body.view-settings { --w: 700px; }
 .sess .cn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sess .st { width: 14px; text-align: center; }
 .sess .cnt, .sess .z, .sess .cost { font-variant-numeric: tabular-nums; text-align: right; }
-.sess .cnt { width: 64px; } .sess .z { width: 56px; } .sess .cost { width: 90px; }
+.sess .cnt, .sess-head .cnt { width: 48px; } .sess .z, .sess-head .z { width: 56px; } .sess .cost, .sess-head .cost { width: 80px; } .sess .st, .sess-head .st { width: 70px; text-align: left; } .sess-head .d { width: 56px; } .sess-head .cn { flex: 1; } .sess-head .cnt, .sess-head .z, .sess-head .cost { text-align: right; }
 .sess .bad { color: var(--ec); }
-.sessbody { padding: 2px 0 8px 8px; display: flex; flex-direction: column; gap: 3px; }
+.sessbody { padding: 4px 0 8px 22px; display: flex; flex-direction: column; gap: 8px; }
+.sb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sb { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+.sb-t { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; } .sb-v { font-size: 14px; font-weight: 700; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb .bar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; background: #2a2d35; margin: 4px 0; }
+.cmp > div { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); } .cmp span { width: 42px; }
+.hbar { flex: 1; height: 6px; background: #2a2d35; border-radius: 3px; overflow: hidden; } .hbar i { display: block; height: 100%; } .hbar .real { background: var(--accent); } .hbar .est { background: var(--muted); }
+.sb-lines { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; } .sb-lines .sl { display: inline-flex; align-items: center; gap: 2px; } .sb-lines .sl.ok b { color: var(--sc); } .sb-lines .sl.bad b { color: var(--ec); }
+.sb-runes { display: flex; flex-wrap: wrap; gap: 4px; } .chip.sm { font-size: 12px; padding: 2px 6px 2px 4px; } .chip.sm .tags { display: inline-flex; gap: 2px; margin-left: 4px; } .chip.sm .tag { min-width: 16px; padding: 0 3px; margin: 0; }
+@media (max-width: 560px) { .sb-grid { grid-template-columns: 1fr; } }
 /* Bilan */
 .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 12px; }
 .kpi { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
@@ -209,6 +221,7 @@ button.busy::after { content: ''; position: absolute; left: 50%; top: 50%; width
 .recbadge .rec-title { display: flex; align-items: center; gap: 6px; color: var(--rec); } .recbadge .rec-title .diff { margin-left: 0; }
 button.cta-cap { background: #10261a; border-color: var(--sc); color: var(--sc); font-weight: 600; }
 button.cta-cap:hover, button.cta-cap.on { background: var(--sc); color: #fff; }
+#settings-btn.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 button.ico { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 18px; padding: 0; margin-left: 3px; vertical-align: middle; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--sc); }
 button.ico:hover { background: var(--sc); color: #fff; border-color: var(--sc); }
 button.ico.tgt { color: var(--tgt); } button.ico.tgt:hover { background: var(--tgt); color: var(--accent-text); border-color: var(--tgt); }
