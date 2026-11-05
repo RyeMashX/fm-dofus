@@ -10,7 +10,9 @@ body.view-item { --w: 1060px; } body.view-item.light { --w: 640px; }
 body.view-fm { --w: 460px; }
 body.view-bilan, body.view-search { --w: 560px; }
 body.view-settings { --w: 700px; }
-.gear { padding: 3px 8px; font-size: 15px; line-height: 1; }
+.gear { padding: 3px 8px; font-size: 15px; line-height: 1; min-width: 32px; height: 26px; display: inline-grid; place-items: center; }
+.gear .ic { width: 15px; height: 15px; display: block; }
+#pip.on { color: var(--accent); border-color: var(--accent); }
 .seg button.glow { color: var(--sc); font-weight: 700; box-shadow: inset 0 0 0 1px var(--sc); animation: glow 1.6s ease-in-out infinite alternate; }
 .seg button.glow.on { background: var(--sc); color: #fff; animation: none; }
 @keyframes glow { from { background: transparent; } to { background: #17382a; } }
