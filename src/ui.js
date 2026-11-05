@@ -521,6 +521,7 @@ function journalExport() {
 }
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
+  const hid = Date.now();
   const keepStatus = $('#screen-status')?.textContent;
   if (!S.baseline && Object.keys(S.target).length && !Search.targetReached(S.item, S.target)) freezeBaseline(null);
   if (!simulated) {
@@ -528,7 +529,7 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
     // du modèle (régime, difficulté, qualité, position, ratio, over…), modèle et paramètres actifs, cible,
     // provenance (saisie, lecture d'écran), version de l'outil.
     let odds = null; try { const o = FM.odds(S.item, rune); odds = o.blocked ? { blocked: o.blocked, limit: o.limit } : { ...o }; } catch {}
-    journalAdd({ v: 2, t: new Date().toISOString(), version: VERSION, session: S.sessionId ?? null,
+    journalAdd({ v: 2, t: new Date().toISOString(), hid, version: VERSION, session: S.sessionId ?? null,
                  item: { id: S.template?.id ?? null, name: S.template?.name, level: S.item.level, type: S.template?.type },
                  model: { key: S.settings.model || 'dofocus', P: { ...FM.P } }, target: { ...S.target },
                  before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore },
@@ -537,7 +538,7 @@ function commit({ rune, outcome, lines, reliquat, changes, simulated = false, ga
                  source: poseSource, ocr: ocrEntry });
     poseSource = 'manuel'; ocrEntry = null;
   }
-  S.history.push({ id: Date.now(), rune: { stat: rune.stat, tier: rune.tier, name: rune.name }, outcome, changes,
+  S.history.push({ id: hid, rune: { stat: rune.stat, tier: rune.tier, name: rune.name }, outcome, changes,
                    reliquatDelta: w1(reliquat - reliquatBefore), simulated, gap,
                    before: { lines: S.item.lines.map(l => ({ ...l })), reliquat: reliquatBefore, reliquatBefore: S.reliquatBefore } });
   S.item.lines = lines.filter(l => l.min != null || l.value > 0);
@@ -840,29 +841,78 @@ function renderHistory() {
   $('#journal-stats').innerHTML = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} (tous objets)${fresh ? ` · <span class="${fresh >= 30 ? 'warn' : 'muted'}">${fresh} non exportée${fresh > 1 ? 's' : ''}</span>` : ' · <span class="ok">tout exporté</span>'}`;
   $('#journal-export').disabled = !j.length;
   $('#undo').disabled = !h.length;
-  const e = h.at(-1);
-  $('#history-list').innerHTML = !e ? '<li class="muted small">Aucune pose.</li>' : (() => {
-    const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(labelOf(c.stat))}`).join(', ');
+  const row = (e, i) => {
+    const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(STAT_BY_KEY[c.stat]?.short || c.stat)}`).join(', ');
     const rel = e.reliquatDelta ? ` · reliquat ${e.reliquatDelta > 0 ? '+' : ''}${e.reliquatDelta}` : '';
-    return `<li><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button id="hist-edit" class="link small" title="Reprendre cette pose : résultat, reliquat et lignes tombées">modifier</button></li>`;
-  })();
-  const ed = $('#hist-edit'); if (ed) ed.onclick = editLastEntry;
+    return `<li data-i="${i}"><span class="muted small hn">${i + 1}</span><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button class="link small" data-edit="${i}" title="Modifier cette pose">modifier</button></li>`;
+  };
+  const last = h.length - 1;
+  $('#history-list').innerHTML = (h.length ? row(h[last], last) : '<li class="muted small">Aucune pose.</li>')
+    + (h.length > 1 ? `<li class="hmore"><details ${histOpen ? 'open' : ''}><summary class="link small">${h.length - 1} pose${h.length > 2 ? 's' : ''} précédente${h.length > 2 ? 's' : ''}</summary><ol class="hall">${[...h].slice(0, -1).map((e, i) => row(e, i)).reverse().join('')}</ol></details></li>` : '')
+    + `<li class="hadd"><button id="hist-add" class="link small" title="Ajouter une pose faite sans l'outil">+ ajouter une pose</button></li>`;
+  const det = $('#history-list details'); if (det) det.ontoggle = () => { histOpen = det.open; };
+  $$('#history-list [data-edit]').forEach(b => b.onclick = () => openHistEditor(+b.dataset.edit));
+  const add = $('#hist-add'); if (add) add.onclick = () => openHistEditor(-1);
 }
-// Reprise de la dernière pose : on l'annule, puis on rouvre la saisie avec ses valeurs pré-remplies.
-function editLastEntry() {
-  const e = S.history.pop(); if (!e) return;
-  S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat;
-  journalPop(e); save();
-  pending = runeOf(e.rune.stat, e.rune.tier);
-  renderAll();
-  if (e.outcome === 'SC') { setStatus('Pose annulée : choisis le résultat (SC / SN / EC).'); setTimeout(() => setStatus(''), 3000); return; }
-  startOutcome(e.outcome);
-  if (lossDraft) {
-    for (const c of e.changes) if (c.delta < 0) lossDraft.deltas[c.stat] = -c.delta;
-    lossDraft.newReliquat = e.after?.reliquat ?? S.reliquat + (e.reliquatDelta || 0);
-    renderLossPanel();
+let histOpen = false;
+
+// Édition d'une pose de l'historique (ou ajout) : rune, résultat, lignes modifiées, reliquat ; puis rejeu
+// des poses suivantes à partir de l'état d'avant, pour que l'objet reflète la correction.
+function openHistEditor(i) {
+  const h = S.history; const e = i >= 0 ? h[i] : null;
+  const rune = e ? e.rune : { stat: pending?.stat ?? S.item.lines[0]?.stat, tier: pending?.tier ?? 0 };
+  const draft = { rune: { ...rune }, outcome: e?.outcome ?? 'EC', changes: e ? e.changes.map(c => ({ ...c })) : [], reliquatDelta: e?.reliquatDelta ?? 0 };
+  const stats = STATS.filter(st => st.tiers.length);
+  const render = () => {
+    const tiers = STAT_BY_KEY[draft.rune.stat]?.tiers || [];
+    const host = $('#hist-editor');
+    host.innerHTML = `<div class="loss hedit"><div class="row"><strong>${e ? `Pose ${i + 1}` : 'Nouvelle pose'}</strong><div class="spacer"></div><button class="link small" id="he-cancel">annuler</button></div>
+      <div class="row small"><label class="sel">Rune <select id="he-stat">${stats.map(st => `<option value="${st.key}" ${st.key === draft.rune.stat ? 'selected' : ''}>${esc(st.label)}</option>`).join('')}</select></label>
+        <select id="he-tier" class="small">${tiers.map(([name], k) => `<option value="${k}" ${k === draft.rune.tier ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select>
+        <span class="seg small">${['SC', 'SN', 'EC'].map(o => `<button data-o="${o}" class="${o === draft.outcome ? 'on' : ''}">${o}</button>`).join('')}</span></div>
+      <div class="he-changes">${draft.changes.map((c, k) => `<div class="row small"><span class="grow">${statImg(c.stat, 'sicon sm')}${esc(labelOf(c.stat))}</span><input type="number" class="num small" data-k="${k}" value="${c.delta}"><button class="link small" data-del="${k}">×</button></div>`).join('')}
+        <div class="row small"><select id="he-add-stat" class="small"><option value="">+ ligne modifiée…</option>${STATS.map(st => `<option value="${st.key}">${esc(st.label)}</option>`).join('')}</select></div></div>
+      <div class="row small"><label class="sel">Reliquat <input id="he-rel" type="number" step="0.1" class="num small" value="${draft.reliquatDelta}" title="variation du reliquat (+ gagné, − consommé)"></label><div class="spacer"></div>${e ? '<button class="link small" id="he-delete">supprimer la pose</button>' : ''}<button id="he-ok" class="primary small">Enregistrer</button></div></div>`;
+    $('#he-stat').onchange = ev => { draft.rune.stat = ev.target.value; draft.rune.tier = 0; render(); };
+    $('#he-tier').onchange = ev => { draft.rune.tier = +ev.target.value; };
+    $$('#hist-editor [data-o]').forEach(b => b.onclick = () => { draft.outcome = b.dataset.o; render(); });
+    $$('#hist-editor input[data-k]').forEach(inp => inp.onchange = ev => { draft.changes[+ev.target.dataset.k].delta = Number(ev.target.value) || 0; });
+    $$('#hist-editor [data-del]').forEach(b => b.onclick = () => { draft.changes.splice(+b.dataset.del, 1); render(); });
+    $('#he-add-stat').onchange = ev => { if (ev.target.value) { draft.changes.push({ stat: ev.target.value, delta: 0 }); render(); } };
+    $('#he-rel').onchange = ev => { draft.reliquatDelta = w1(Number(ev.target.value) || 0); };
+    $('#he-cancel').onclick = () => { host.innerHTML = ''; };
+    const del = $('#he-delete'); if (del) del.onclick = () => { if (!confirm('Supprimer cette pose ?')) return; h.splice(i, 1); journalRemove(e.id); replayHistory(i); host.innerHTML = ''; };
+    $('#he-ok').onclick = () => {
+      const r = runeOf(draft.rune.stat, draft.rune.tier); if (!r) return;
+      draft.changes = draft.changes.filter(c => c.delta);
+      const entry = { id: e?.id ?? Date.now(), rune: { stat: r.stat, tier: r.tier, name: r.name }, outcome: draft.outcome, changes: draft.changes, reliquatDelta: draft.reliquatDelta, simulated: e?.simulated ?? false, gap: 0, edited: true,
+                      before: e ? e.before : { lines: S.item.lines.map(l => ({ ...l })), reliquat: S.reliquat, reliquatBefore: S.reliquatBefore } };
+      if (e) h[i] = entry; else h.push(entry);
+      journalPatch(entry);
+      replayHistory(e ? i : h.length - 1); host.innerHTML = '';
+    };
+  };
+  render();
+  $('#hist-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+// Rejeu des poses depuis l'indice i : l'état d'avant de chaque pose est l'état d'après de la précédente.
+function replayHistory(i) {
+  const h = S.history;
+  let lines, rel, relBefore;
+  if (i <= 0 || !h.length) { const b = h[0]?.before ?? { lines: S.item.lines, reliquat: S.reliquat, reliquatBefore: S.reliquatBefore }; lines = b.lines.map(l => ({ ...l })); rel = b.reliquat; relBefore = b.reliquatBefore ?? b.reliquat; }
+  else { const b = h[i].before; lines = b.lines.map(l => ({ ...l })); rel = b.reliquat; relBefore = b.reliquatBefore ?? b.reliquat; }
+  for (let k = Math.max(0, i); k < h.length; k++) {
+    const e = h[k];
+    e.before = { lines: lines.map(l => ({ ...l })), reliquat: rel, reliquatBefore: relBefore };
+    for (const c of e.changes) { let l = lines.find(x => x.stat === c.stat); if (!l) { l = { stat: c.stat, value: 0, min: null, max: null }; lines.push(l); } l.value += c.delta; }
+    relBefore = rel; rel = w1(rel + (e.reliquatDelta || 0));
   }
+  S.item.lines = lines; S.reliquat = rel; S.reliquatBefore = rel; lastAdvice = null;
+  save(); renderAll();
 }
+function journalRemove(hid) { try { const j = journal(); const k = j.findIndex(x => x.hid === hid); if (k >= 0) { j.splice(k, 1); localStorage.setItem(JKEY, JSON.stringify(j)); } } catch {} }
+function journalPatch(e) { try { const j = journal(); const x = j.find(x => x.hid === e.id); if (x) { x.outcome = e.outcome; x.changes = e.changes; x.rune = { ...x.rune, stat: e.rune.stat, tier: e.rune.tier, name: e.rune.name }; x.edited = true; localStorage.setItem(JKEY, JSON.stringify(j)); } } catch {} }
+
 $('#undo').onclick = () => {
   const e = S.history.pop(); if (!e) return;
   S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat; lastAdvice = null; save(); renderAll();

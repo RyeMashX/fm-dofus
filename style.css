@@ -295,6 +295,12 @@ button.sc:hover { background: var(--sc); color: #fff; } button.sn:hover { backgr
 
 ol#history-list { margin: 4px 0 0; padding-left: 20px; }
 ol#history-list li { padding: 2px 0; font-size: 13px; }
+ol#history-list .hn { display: inline-block; min-width: 18px; }
+ol#history-list li.hmore, ol#history-list li.hadd { list-style: none; margin-left: -20px; }
+ol#history-list details summary { cursor: pointer; }
+ol.hall { margin: 4px 0 0; padding-left: 20px; max-height: 260px; overflow: auto; }
+.hedit .seg.small button { padding: 2px 8px; font-size: 12px; }
+.hedit .he-changes { margin: 4px 0; }
 .tag { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
 .tag.SC { background: var(--sc); color: #fff; } .tag.SN { background: var(--sn); color: #fff; } .tag.EC { background: var(--ec); color: #fff; }
 
