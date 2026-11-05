@@ -164,7 +164,7 @@ function renderAll() {
   $('#settings-btn').classList.toggle('on', settingsOpen);
   for (const v of ['item', 'fm', 'bilan', 'settings']) $$('.view-' + v).forEach(s => s.classList.toggle('hidden', view !== v));
   $$('#view-switch button').forEach(b => b.classList.toggle('on', !settingsOpen && b.dataset.view === S.settings.view));
-  if (view === 'settings') { renderSettings(); return; }
+  if (view === 'settings') { renderSettings(); renderJournal(); return; }
   if (!has) return;
   const reached = Object.keys(S.target).length > 0 && Search.targetReached(S.item, S.target);
   $('#tab-bilan').classList.toggle('glow', reached);
@@ -551,7 +551,7 @@ function journalExport() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = `fm-dofus-journal-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
-  renderHistory();
+  renderJournal();
 }
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
@@ -872,22 +872,35 @@ function renderHistory() {
   const h = S.history;
   const n = { SC: 0, SN: 0, EC: 0 }; h.forEach(e => n[e.outcome]++);
   $('#history-stats').textContent = h.length ? `${h.length} · ${n.SC} SC · ${n.SN} SN · ${n.EC} EC` : '';
+  $('#undo').disabled = !h.length;
+  const last = h.length - 1;
+  const ouvert = (e, i) => histRows.has(e.id) ? histRows.get(e.id) : i === last;   // la dernière dépliée par défaut
+  const val = d => `<span class="${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${String(w1(d)).replace('.', ',')}</span>`;
+  const row = (e, i) => {
+    const open = ouvert(e, i);
+    const det = [...e.changes.map(c => `<div class="hd">${statImg(c.stat, 'sicon sm')}<span class="grow">${esc(labelOf(c.stat))}</span>${val(c.delta)}</div>`),
+      e.reliquatDelta ? `<div class="hd"><span class="sicon sm"></span><span class="grow">Reliquat</span>${val(e.reliquatDelta)}</div>` : '',
+      e.gap ? `<div class="hd muted"><span class="sicon sm"></span><span class="grow">Écart de cohérence</span>${String(e.gap).replace('.', ',')}</div>` : ''].join('');
+    return `<li data-i="${i}" class="${open ? 'open' : ''}"><div class="hl" data-toggle="${e.id}" title="${open ? 'Replier' : 'Voir l\'impact sur les caractéristiques'}"><span class="muted small hn">${i + 1}</span><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}<span class="hr">${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''}</span><button class="hedit-btn" data-edit="${i}" title="Modifier cette pose" aria-label="Modifier cette pose"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.2 2.3a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2L6 12.5l-3 .8.8-3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.4"/></svg></button></div>${open && det ? `<div class="hdet">${det}</div>` : ''}</li>`;
+  };
+  $('#history-list').innerHTML = (h.length ? row(h[last], last) : '<li class="muted small">Aucune pose.</li>')
+    + (h.length > 1 ? `<li class="hmore"><details ${histOpen ? 'open' : ''}><summary class="link small">${h.length - 1} pose${h.length > 2 ? 's' : ''} précédente${h.length > 2 ? 's' : ''}</summary><ul class="hall">${[...h].slice(0, -1).map((e, i) => row(e, i)).reverse().join('')}</ul></details></li>` : '');
+  const det = $('#history-list details'); if (det) det.ontoggle = () => { histOpen = det.open; };
+  $$('#history-list [data-edit]').forEach(b => b.onclick = ev => { ev.stopPropagation(); openHistEditor(+b.dataset.edit); });
+  $$('#history-list [data-toggle]').forEach(el => el.onclick = () => {
+    const id = +el.dataset.toggle, i = h.findIndex(x => x.id === id);
+    histRows.set(id, !ouvert(h[i], i)); renderHistory();
+  });
+}
+const histRows = new Map(); // id de pose → dépliée ou non (sinon : seule la dernière est dépliée)
+// Journal permanent (réglages)
+function renderJournal() {
   const j = journal();
   let exported = 0; try { exported = Number(localStorage.getItem(XKEY)) || 0; } catch {}
   const fresh = Math.max(0, j.length - Math.min(exported, j.length));
-  $('#journal-stats').innerHTML = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} (tous objets)${fresh ? ` · <span class="${fresh >= 30 ? 'warn' : 'muted'}">${fresh} non exportée${fresh > 1 ? 's' : ''}</span>` : ' · <span class="ok">tout exporté</span>'}`;
+  $('#journal-stats').innerHTML = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} (tous objets)${fresh ? ` · <span class="${fresh >= 30 ? 'warn' : 'muted'}">${fresh} non exportée${fresh > 1 ? 's' : ''}</span>` : j.length ? ' · <span class="ok">tout exporté</span>' : ''}`;
   $('#journal-export').disabled = !j.length;
-  $('#undo').disabled = !h.length;
-  const row = (e, i) => {
-    const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(STAT_BY_KEY[c.stat]?.short || c.stat)}`).join(', ');
-    const rel = e.reliquatDelta ? ` · reliquat ${e.reliquatDelta > 0 ? '+' : ''}${e.reliquatDelta}` : '';
-    return `<li data-i="${i}"><span class="muted small hn">${i + 1}</span><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button class="hedit-btn" data-edit="${i}" title="Modifier cette pose" aria-label="Modifier cette pose"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.2 2.3a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2L6 12.5l-3 .8.8-3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.4"/></svg></button></li>`;
-  };
-  const last = h.length - 1;
-  $('#history-list').innerHTML = (h.length ? row(h[last], last) : '<li class="muted small">Aucune pose.</li>')
-    + (h.length > 1 ? `<li class="hmore"><details ${histOpen ? 'open' : ''}><summary class="link small">${h.length - 1} pose${h.length > 2 ? 's' : ''} précédente${h.length > 2 ? 's' : ''}</summary><ol class="hall">${[...h].slice(0, -1).map((e, i) => row(e, i)).reverse().join('')}</ol></details></li>` : '');
-  const det = $('#history-list details'); if (det) det.ontoggle = () => { histOpen = det.open; };
-  $$('#history-list [data-edit]').forEach(b => b.onclick = () => openHistEditor(+b.dataset.edit));
+  $('#journal-clear').disabled = !j.length;
 }
 let histOpen = false;
 
@@ -966,6 +979,7 @@ function journalPatch(e) { try { const j = journal(); const x = j.find(x => x.hi
 
 $('#undo').onclick = () => {
   const e = S.history.pop(); if (!e) return;
+  journalRemove(e.id); // une pose annulée ne doit pas rester dans les données de calibration
   S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat; lastAdvice = null; save(); renderAll();
 };
 $('#reset').onclick = () => {
@@ -977,7 +991,11 @@ $('#reset').onclick = () => {
 
 $('#hist-add').onclick = () => openHistEditor(-1);
 $('#journal-export').onclick = () => journalExport();
-$('#journal-clear').onclick = () => { if (confirm('Vider le journal des poses réelles ? (export conseillé avant)')) { try { localStorage.removeItem(JKEY); localStorage.removeItem(XKEY); } catch {} renderHistory(); } };
+$('#journal-clear').onclick = () => {
+  const n = journal().length;
+  if (!confirm(`Vider le journal ? Les ${n} poses réelles enregistrées (tous objets) seront effacées de ce navigateur. Exporte-le avant si tu ne l'as pas fait.`)) return;
+  try { localStorage.removeItem(JKEY); localStorage.removeItem(XKEY); } catch {} renderJournal();
+};
 
 function setStatus(msg) { const el = $('#status'); if (el) el.textContent = msg; }
 

@@ -308,12 +308,23 @@ button.sc:hover { background: var(--sc); color: #fff; } button.sn:hover { backgr
 .loss .check { margin-top: 6px; font-size: 12px; }
 .relgrp { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 
-ol#history-list { margin: 4px 0 0; padding-left: 20px; }
-ol#history-list li { padding: 2px 0; font-size: 13px; }
-ol#history-list .hn { display: inline-block; min-width: 18px; }
-ol#history-list li.hmore, ol#history-list li.hadd { list-style: none; margin-left: -20px; }
-ol#history-list details summary { cursor: pointer; }
-ol.hall { margin: 4px 0 0; padding-left: 20px; max-height: 260px; overflow: auto; }
+#history-list, ul.hall { list-style: none; margin: 4px 0 0; padding: 0; }
+#history-list li { font-size: 13px; }
+#history-list .hl { display: flex; align-items: center; gap: 4px; padding: 3px 2px; min-width: 0; cursor: pointer; border-radius: 5px; }
+#history-list .hl:hover { background: #22252c; }
+#history-list .hn { display: inline-block; min-width: 22px; text-align: right; margin-right: 4px; flex: none; }
+#history-list .tag { flex: none; margin-right: 2px; }
+#history-list .ricon { flex: none; margin-right: 2px; }
+#history-list .hr { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#history-list .hedit-btn { flex: none; margin-left: auto; }
+#history-list .hdet { padding: 0 0 4px 62px; }
+#history-list .hd { display: flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 34px 1px 0; }
+#history-list .hd .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+#history-list .hd .pos { color: var(--sc); font-weight: 700; font-variant-numeric: tabular-nums; }
+#history-list .hd .neg { color: var(--ec); font-weight: 700; font-variant-numeric: tabular-nums; }
+#history-list .hd span.sicon { display: inline-block; width: 16px; }
+#history-list li.hmore summary { cursor: pointer; margin: 4px 0; }
+ul.hall { max-height: 320px; overflow: auto; }
 .hedit .seg.small button { padding: 2px 8px; font-size: 12px; }
 .hedit .he-changes { margin: 4px 0; }
 .tag { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
@@ -353,3 +364,7 @@ body.pip main { padding-bottom: 16px; }
 .hadd-btn { display: inline-grid; place-items: center; width: 28px; height: 26px; padding: 0; border-radius: 6px; color: var(--accent); }
 .hadd-btn:hover { border-color: var(--accent); }
 .hadd-btn svg { width: 14px; height: 14px; display: block; }
+.hadd-btn.danger { color: var(--ec); }
+.hadd-btn.danger:hover { border-color: var(--ec); }
+.hadd-btn:disabled { opacity: .4; cursor: default; }
+#history > .row:first-child h2 + span { flex: none; }
