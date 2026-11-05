@@ -1,7 +1,7 @@
 // Interface : deux vues (Objet, FM), reliquat en tête, cycle automatique en mode FM. Vanilla JS.
 import * as FM from './engine.js';
 import * as Search from './search.js';
-import { STATS, STAT_BY_KEY, RUNES } from './stats.js';
+import { STATS, STAT_BY_KEY, RUNES, RUNE_BY_ID } from './stats.js';
 import { searchItems, iconUrl, labelOf } from './dofusdb.js';
 import * as Cap from './capture.js';
 import { interpretEntry } from './ocr.js';
@@ -393,9 +393,9 @@ function renderAdvice() {
   
   out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
-    const tie = k > 0 && m.score - res.moves[0].score < 0.3;
+    const tie = k > 0 && Math.abs(m.score - res.moves[0].score) < 0.3;
     const open = adviceOpen.has(m.rune.id);
-    const sub = `${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'descente' ? ` · <span class="warn">pour faire baisser ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}`;
+    const sub = `${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'descente' ? ` · <span class="warn">pour faire baisser ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}${m.departage ? ` · <span class="muted" title="L'écart de poses avec ${esc(RUNE_BY_ID[m.departage.devant]?.name ?? '')} est dans le bruit des simulations : à égalité, la rune la plus sûre d'après le calcul déterministe passe devant.">à égalité aux aléas près, plus sûre</span>` : ''}`;
     return `<div class="move ${on ? 'on' : ''} ${open ? 'open' : ''}" data-rune="${m.rune.id}">
       <div class="c"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${m.purpose || m.next ? '<span class="dot warn" title="voir le détail">●</span>' : ''}<div class="bar">${bar(m.odds)}</div><span class="poses" title="Poses restantes, celle-ci comprise (moyenne des sessions simulées)"><b>${f1(m.score)}</b></span>${diffText(m.odds)}<button class="more" data-more="${m.rune.id}" title="${open ? 'Réduire' : 'Détail'}">${open ? '−' : '+'}</button></div>
       ${open ? `<div class="sub">${sub}</div><div class="meta">${oddsText(m.odds)}<span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span><span class="muted">≈ ${f1(m.score)} poses restantes, celle-ci comprise</span></div>` : ''}

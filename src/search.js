@@ -364,6 +364,29 @@ export function pairedDiff(a, b) {
   return { n, diff: mean, se: Math.sqrt(v / n) };
 }
 
+// Départage du premier coup : l'écart de poses avec la meilleure moyenne n'est retenu que s'il dépasse le
+// bruit des simulations (2 erreurs-types sur les mêmes tirages). Parmi les candidates à égalité avec elle,
+// la valeur déterministe de la politique (dp : 1 + casse + reste attendu de la ligne, d'après les tables)
+// désigne le coup conseillé, ce qui écarte les runes à chances plancher qu'un tirage favorable aurait mises
+// en tête. Les suivantes restent classées par poses restantes.
+export function departager(results, z = 2) {
+  const out = [...results].sort((a, b) => a.score - b.score);
+  if (out.length < 2) return out;
+  const best = out[0];
+  let pick = 0;
+  for (let i = 1; i < out.length; i++) {
+    const d = pairedDiff(best, out[i]);
+    if (!(d.diff <= z * d.se)) continue;   // nettement moins bonne : pas d'égalité
+    if ((out[i].dp ?? Infinity) < (out[pick].dp ?? Infinity)) pick = i;
+  }
+  if (pick > 0) {
+    const [m] = out.splice(pick, 1);
+    m.departage = { devant: best.rune.id, ecart: m.score - best.score };
+    out.unshift(m);
+  }
+  return out;
+}
+
 export function nextBestMoves(state, target, { samples = 300, horizon = 400, seed = 1, top = 3 } = {}) {
   if (targetReached(state.item, target)) return { reached: true, moves: [] };
   const normal = normalTarget(state.item, target);
@@ -399,8 +422,8 @@ export function nextBestMoves(state, target, { samples = 300, horizon = 400, see
   // valeur déterministe de la politique, à titre indicatif (dp)
   const dp = new Map(policyMoves(state, normal, T).map(m => [m.rune.id, m.val]));
   for (const m of results) m.dp = dp.get(m.rune.id) ?? Infinity;
-  results.sort((a, b) => a.score - b.score);   // ordre strict par poses restantes (ce qui est affiché)
-  return { reached: false, h0, heavy, moves: results.slice(0, top), all: results };
+  const ordered = departager(results);   // poses restantes, égalités départagées par dp
+  return { reached: false, h0, heavy, moves: ordered.slice(0, top), all: ordered };
 }
 
 // Sessions complètes simulées avec la politique gloutonne (exo lourd d'abord, puis la meilleure rune par
@@ -485,6 +508,6 @@ export function nextBestMoves2(state, target, { samples = 200, seed = 1, top = 3
     }
     if (best) out.push(best);
   }
-  out.sort((a, b) => a.score - b.score);
-  return { ...base, advanced: true, moves: out.slice(0, top), all: out };
+  const ordered = departager(out);
+  return { ...base, advanced: true, moves: ordered.slice(0, top), all: ordered };
 }

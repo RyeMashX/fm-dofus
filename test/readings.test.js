@@ -166,3 +166,22 @@ test('pertes : conservation du poids, reliquat et PA sous une vi vs une do', () 
   assert.ok(paHitsDo / N > 0.04 && paHitsDo / N < 0.2, `PA sous do : ${paHitsDo / N}`);
   assert.ok(paHitsDo > 5 * paHitsVi);
 });
+
+// Départage des égalités : écart de poses dans le bruit → la valeur déterministe (dp) tranche
+import { departager } from '../src/search.js';
+test('départage : égalité aux aléas près, la plus petite dp passe devant ; écart net, le score décide', () => {
+  const r = (name, score, dp, costs) => ({ rune: { id: name, name }, score, dp, costs });
+  // Vi : 88 de moyenne mais tirages très dispersés, Pa Do Eau : 89 ; écart non significatif
+  const bruit = [0, 30, -25, 10, -15, 20, -20, 5];
+  const vi = r('Vi', 88, 437, bruit.map(x => 88 + x));
+  const pde = r('Pa Do Eau', 89, 59, bruit.map(x => 89 - x));
+  const out = departager([vi, pde]);
+  assert.deepEqual(out.map(m => m.rune.id), ['Pa Do Eau', 'Vi']);
+  assert.equal(out[0].departage.devant, 'Vi');
+  // écart net (mêmes tirages, toujours 5 de plus) : le score l'emporte malgré la dp
+  const a = r('A', 10, 50, bruit.map(x => 10 + x)), b = r('B', 15, 1, bruit.map(x => 15 + x));
+  assert.deepEqual(departager([b, a]).map(m => m.rune.id), ['A', 'B']);
+  // seul le premier coup est départagé : la suite reste classée par poses restantes
+  const c = r('C', 90, 300, bruit.map(x => 90 + x));
+  assert.deepEqual(departager([vi, c, pde]).map(m => m.rune.id), ['Pa Do Eau', 'Vi', 'C']);
+});
