@@ -870,11 +870,9 @@ function renderHistory() {
   };
   const last = h.length - 1;
   $('#history-list').innerHTML = (h.length ? row(h[last], last) : '<li class="muted small">Aucune pose.</li>')
-    + (h.length > 1 ? `<li class="hmore"><details ${histOpen ? 'open' : ''}><summary class="link small">${h.length - 1} pose${h.length > 2 ? 's' : ''} précédente${h.length > 2 ? 's' : ''}</summary><ol class="hall">${[...h].slice(0, -1).map((e, i) => row(e, i)).reverse().join('')}</ol></details></li>` : '')
-    + `<li class="hadd"><button id="hist-add" class="link small" title="Ajouter une pose faite sans l'outil">+ ajouter une pose</button></li>`;
+    + (h.length > 1 ? `<li class="hmore"><details ${histOpen ? 'open' : ''}><summary class="link small">${h.length - 1} pose${h.length > 2 ? 's' : ''} précédente${h.length > 2 ? 's' : ''}</summary><ol class="hall">${[...h].slice(0, -1).map((e, i) => row(e, i)).reverse().join('')}</ol></details></li>` : '');
   const det = $('#history-list details'); if (det) det.ontoggle = () => { histOpen = det.open; };
   $$('#history-list [data-edit]').forEach(b => b.onclick = () => openHistEditor(+b.dataset.edit));
-  const add = $('#hist-add'); if (add) add.onclick = () => openHistEditor(-1);
 }
 let histOpen = false;
 
@@ -962,6 +960,7 @@ $('#reset').onclick = () => {
   S.reliquat = 0; S.reliquatBefore = 0; S.history = []; lastAdvice = null; save(); renderAll();
 };
 
+$('#hist-add').onclick = () => openHistEditor(-1);
 $('#journal-export').onclick = () => journalExport();
 $('#journal-clear').onclick = () => { if (confirm('Vider le journal des poses réelles ? (export conseillé avant)')) { try { localStorage.removeItem(JKEY); localStorage.removeItem(XKEY); } catch {} renderHistory(); } };
 
