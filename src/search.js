@@ -365,19 +365,25 @@ export function pairedDiff(a, b) {
 }
 
 // Départage du premier coup : l'écart de poses avec la meilleure moyenne n'est retenu que s'il dépasse le
-// bruit des simulations (2 erreurs-types sur les mêmes tirages). Parmi les candidates à égalité avec elle,
-// la valeur déterministe de la politique (dp : 1 + casse + reste attendu de la ligne, d'après les tables)
-// désigne le coup conseillé, ce qui écarte les runes à chances plancher qu'un tirage favorable aurait mises
-// en tête. Les suivantes restent classées par poses restantes.
+// bruit des simulations (2 erreurs-types sur les mêmes tirages) et s'il est petit (au plus 2 % ou 0,5 pose). Parmi les candidates à égalité avec elle,
+// le coup conseillé est celui qui a le plus de chances de passer (SC + SN), puis le moins de risque d'abîmer
+// une cible. Les tables par ligne ne peuvent pas trancher : la meilleure rune de chaque ligne y a la même
+// valeur relative (l'ordre des lignes n'y compte pas, seules les simulations le voient).
+// Un coup de nettoyage ou de descente en tête n'est pas déplacé. Les suivantes restent classées par poses.
 export function departager(results, z = 2) {
   const out = [...results].sort((a, b) => a.score - b.score);
   if (out.length < 2) return out;
   const best = out[0];
+  if (best.purpose) return out;
+  const pass = m => m.odds ? m.odds.sc + m.odds.sn : -Infinity;
+  const mieux = (a, b) => pass(a) > pass(b) + 1e-9 || (Math.abs(pass(a) - pass(b)) <= 1e-9 && (a.pHurtTarget ?? 1) < (b.pHurtTarget ?? 1));
   let pick = 0;
   for (let i = 1; i < out.length; i++) {
     const d = pairedDiff(best, out[i]);
-    if (!(d.diff <= z * d.se)) continue;   // nettement moins bonne : pas d'égalité
-    if ((out[i].dp ?? Infinity) < (out[pick].dp ?? Infinity)) pick = i;
+    // égalité : écart dans le bruit ET petit en valeur (≤ 2 % de la meilleure, au moins 0,5 pose) ; sinon le
+    // nombre de poses affiché décide, même si le bruit est grand
+    if (!(d.diff <= z * d.se) || out[i].score - best.score > Math.max(0.5, 0.02 * best.score)) continue;
+    if (!out[i].purpose && mieux(out[i], out[pick])) pick = i;
   }
   if (pick > 0) {
     const [m] = out.splice(pick, 1);
