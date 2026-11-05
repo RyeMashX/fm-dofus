@@ -5,6 +5,7 @@ import { STATS, STAT_BY_KEY, RUNES, RUNE_BY_ID } from './stats.js';
 import { searchItems, iconUrl, labelOf } from './dofusdb.js';
 import * as Cap from './capture.js';
 import { interpretEntry } from './ocr.js';
+import { corrigerSCReliquat } from './correction.js';
 
 let root = document;   // document courant : la page, ou la fenêtre flottante (PiP)
 const $ = sel => root.querySelector(sel);
@@ -56,6 +57,17 @@ function applyModel(key) { Object.assign(FM.P, (MODELS[key] || MODELS.dofocus).P
 
 // ---- État --------------------------------------------------------------------
 let S = load() || blank();
+// Correction des données enregistrées : SC dont le reliquat a bougé → SN (journal, historique, sessions archivées)
+try {
+  const j = JSON.parse(localStorage.getItem('fm-dofus:journal')) || [], ss = JSON.parse(localStorage.getItem('fm-dofus:sessions')) || [];
+  const r = corrigerSCReliquat({ journal: j, history: S.history || [], sessions: ss });
+  if (r.journal || r.history || r.sessions) {
+    localStorage.setItem('fm-dofus:journal', JSON.stringify(j)); localStorage.setItem('fm-dofus:sessions', JSON.stringify(ss));
+    localStorage.setItem('fm-dofus:state', JSON.stringify(S));
+    localStorage.removeItem('fm-dofus:journal-exported'); // à réexporter : le journal a changé
+    window.__correction = r;
+  }
+} catch {}
 if (S.settings.model === 'calibre' && !S.settings.modelChosen) S.settings.model = 'dofocus';
 applyModel(S.settings.model);
 let pending = null;      // rune sélectionnée pour la pose
@@ -544,6 +556,7 @@ function journalExport() {
 
 function commit({ rune, outcome, lines, reliquat, changes, simulated = false, gap = 0, reliquatBefore = S.reliquat }) {
   const hid = Date.now();
+  if (outcome === 'SC' && !simulated && Math.abs(reliquat - reliquatBefore) > 0.01) outcome = 'SN'; // un SC ne prend pas de reliquat
   const keepStatus = $('#screen-status')?.textContent;
   if (!S.baseline && Object.keys(S.target).length && !Search.targetReached(S.item, S.target)) freezeBaseline(null);
   if (!simulated) {
@@ -646,6 +659,8 @@ function renderPoseRead(r) {
   let rune = pending;
   for (const it of entry) if (it.delta > 0) { const cand = RUNES.find(x => x.stat === it.stat && x.bonus === it.delta); if (cand) { rune = cand; break; } }
   const info = interpretEntry(entry, rune);
+  // un SC ne touche pas au reliquat : si le reliquat lu a bougé, la ligne « ± reliquat » a échappé à la lecture
+  if (info.outcome === 'SC' && r.reliquat != null && Math.abs(r.reliquat - S.reliquat) > 0.01) info.outcome = 'SN';
   const txt = entry.map(it => it.reliquat ? (it.reliquat > 0 ? '+ reliquat' : '− reliquat') : `${it.delta > 0 ? '+' : ''}${it.delta} ${esc(labelOf(it.stat))}`).join(', ');
   const apply = () => {
     lastEntryKey = key; out.innerHTML = '';
@@ -997,3 +1012,8 @@ pipBtn.onclick = async () => {
 };
 
 renderAll();
+if (window.__correction) {
+  const c = window.__correction, pl = (n, m) => `${n} ${m}${n > 1 ? 's' : ''}`;
+  const parts = [c.journal ? `${pl(c.journal, 'pose')} du journal` : '', c.history ? `${pl(c.history, 'pose')} de la session en cours` : '', c.sessions ? `${pl(c.sessions, 'session archivée')}` : ''].filter(Boolean);
+  setStatus(`Données corrigées (SC qui avaient pris du reliquat → SN) : ${parts.join(', ')}. Pense à réexporter le journal.`);
+}

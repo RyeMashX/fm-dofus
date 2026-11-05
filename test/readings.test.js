@@ -185,3 +185,25 @@ test('départage : égalité aux aléas près, la plus probable passe devant ; �
   const c = r('C', 90, 95, bruit.map(x => 90 + x));
   assert.deepEqual(departager([vi, c, pde]).map(m => m.rune.id), ['Pa Do Eau', 'Vi', 'C']);
 });
+
+// Correction des données : SC avec reliquat modifié → SN
+import { corrigerSCReliquat } from '../src/correction.js';
+test('correction : un SC qui a bougé le reliquat devient un SN (journal, historique, sessions)', () => {
+  const odds = { sc: 50, sn: 50, ec: 0 };
+  const journal = [
+    { session: 7, rune: { id: 'vita:1' }, outcome: 'SC', before: { reliquat: 3 }, after: { reliquat: 0 }, odds },
+    { session: 7, rune: { id: 'vita:1' }, outcome: 'SC', before: { reliquat: 0 }, after: { reliquat: 0 }, odds },
+    { session: 7, rune: { id: 'vita:1' }, outcome: 'SC', before: { reliquat: 0 }, after: { reliquat: 1 }, odds, simulated: true },
+  ];
+  const history = [{ outcome: 'SC', reliquatDelta: -3 }, { outcome: 'SC', reliquatDelta: 0 }];
+  const sessions = [{ id: 7, n: { SC: 3, SN: 0, EC: 0 }, byRune: [{ id: 'vita:1', SC: 3, SN: 0 }], z: 1 }];
+  const r = corrigerSCReliquat({ journal, history, sessions });
+  assert.deepEqual(r, { journal: 1, history: 1, sessions: 1 });
+  assert.deepEqual(journal.map(e => e.outcome), ['SN', 'SC', 'SC']);
+  assert.deepEqual(history.map(e => e.outcome), ['SN', 'SC']);
+  assert.deepEqual(sessions[0].n, { SC: 2, SN: 1, EC: 0 });
+  assert.equal(sessions[0].byRune[0].SC, 2);
+  assert.ok(sessions[0].z < 1);
+  // idempotent
+  assert.deepEqual(corrigerSCReliquat({ journal, history, sessions }), { journal: 0, history: 0, sessions: 0 });
+});
