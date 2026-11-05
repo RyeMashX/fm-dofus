@@ -123,16 +123,9 @@
 
   <!-- Réglages -->
   <section id="settings" class="card view-settings hidden">
-    <div class="row"><h2>Modèle</h2><div class="spacer"></div><select id="model-select" class="small"></select></div>
-    <p class="muted small">« Calibré » ajuste deux paramètres de DoFocus d'après 156 poses réelles (palier des 80 % moins pénalisant, ratio jet/bonus au-delà de 14 plus pénalisant). Il corrige Pa Pui à 60/75 mais repose sur peu de données hors de ce cas : à prendre comme une hypothèse.</p>
-    <div class="row"><h2>Prix des runes</h2><div class="spacer"></div>
-      <button id="prices-export" class="secondary small" title="Télécharge les prix (JSON)">Exporter</button>
-      <button id="prices-import" class="secondary small" title="Charge un fichier de prix (JSON)">Importer</button>
-      <input id="prices-file" type="file" accept="application/json" class="hidden">
+    <div class="row"><h2>Modèle</h2><div class="spacer"></div><select id="model-select" class="small"></select>
       <button id="settings-back" class="primary small">Retour</button></div>
-    <p class="muted small">Prix unitaire en kamas, utilisé pour le coût total du bilan. Les prix sont conservés dans ce navigateur.</p>
-    <input id="prices-filter" type="search" placeholder="Filtrer (vitalité, do, ré…)" autocomplete="off">
-    <div id="prices-list"></div>
+    <p class="muted small">« Calibré » ajuste deux paramètres de DoFocus d'après 156 poses réelles (palier des 80 % moins pénalisant, ratio jet/bonus au-delà de 14 plus pénalisant). Il corrige Pa Pui à 60/75 mais repose sur peu de données hors de ce cas : à prendre comme une hypothèse.</p>
   </section>
 
   <section id="journal-card" class="card view-settings hidden">
@@ -142,6 +135,17 @@
     <p id="journal-stats" class="small"></p>
     <p class="muted small">Toutes les poses réelles, tous objets confondus : état avant et après, rune, chances annoncées, résultat. Il sert à calibrer le modèle et ne vit que dans ce navigateur : exporte-le régulièrement.</p>
   </section>
+
+  <section id="prices-card" class="card view-settings hidden">
+    <div class="row"><h2>Prix des runes</h2><div class="spacer"></div>
+      <button id="prices-export" class="secondary small" title="Télécharge les prix (JSON)">Exporter</button>
+      <button id="prices-import" class="secondary small" title="Charge un fichier de prix (JSON)">Importer</button>
+      <input id="prices-file" type="file" accept="application/json" class="hidden"></div>
+    <p class="muted small">Prix unitaire en kamas, utilisé pour le coût total du bilan. Les prix sont conservés dans ce navigateur.</p>
+    <input id="prices-filter" type="search" placeholder="Filtrer (vitalité, do, ré…)" autocomplete="off">
+    <div id="prices-list"></div>
+  </section>
+
 </main>
 
 <footer class="muted small">
