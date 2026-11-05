@@ -381,6 +381,7 @@ function computeAdvice(scroll = false) {
   }).catch(err => { clearInterval(timer); out.innerHTML = `<p class="warn small">Calcul impossible : ${esc(err.message)}</p>`; });
 }
 
+const adviceOpen = new Set();
 function renderAdvice() {
   const out = $('#advice-out'); const res = lastAdvice;
   if (!res) { out.innerHTML = '<p class="muted small">Clique « Calculer » pour obtenir le prochain coup.</p>'; return; }
@@ -393,13 +394,14 @@ function renderAdvice() {
   out.innerHTML = note + `<div class="advice">${res.moves.map((m, k) => {
     const on = pending && pending.stat === m.rune.stat && pending.tier === m.rune.tier;
     const tie = k > 0 && m.score - res.moves[0].score < 0.3;
-    return `<div class="move ${on ? 'on' : ''}" data-rune="${m.rune.stat}:${m.rune.tier}">
-      <div class="h"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${oddsText(m.odds)}</div>
-      <div class="sub">${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'descente' ? ` · <span class="warn">pour faire baisser ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}</div>
-      <div class="bar">${bar(m.odds)}</div>
-      <div class="meta"><span title="Nombre moyen de poses, celle-ci comprise, pour atteindre toutes les cibles en jouant cette rune maintenant puis en suivant les conseils (sessions simulées)">≈ <b>${f1(m.score)}</b> poses restantes</span><span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span>${diffText(m.odds)}</div>
+    const open = adviceOpen.has(m.rune.id);
+    const sub = `${statImg(m.rune.stat, 'sicon sm')}+${m.rune.bonus} ${esc(labelOf(m.rune.stat))}${m.next ? ` · <span class="muted">puis ${runeImg(m.next, 'ricon sm')}${esc(m.next.name)}</span>` : ''}${m.purpose === 'nettoyage' ? ` · <span class="warn">nettoyage de l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'descente' ? ` · <span class="warn">pour faire baisser ${esc(labelOf(m.cleans))}</span>` : m.cleans ? ` · <span class="warn">retire aussi l'over ${esc(labelOf(m.cleans))}</span>` : m.purpose === 'exo' ? ' · <span class="warn">exo, en dernier</span>' : ''}${tie ? ' · <span class="muted">≈ équivalent au meilleur</span>' : ''}`;
+    return `<div class="move ${on ? 'on' : ''} ${open ? 'open' : ''}" data-rune="${m.rune.id}">
+      <div class="c"><strong>${runeImg(m.rune)}${esc(m.rune.name)}</strong>${m.purpose || m.next ? '<span class="dot warn" title="voir le détail">●</span>' : ''}<div class="bar">${bar(m.odds)}</div><span class="poses" title="Poses restantes, celle-ci comprise (moyenne des sessions simulées)"><b>${f1(m.score)}</b></span>${diffText(m.odds)}<button class="more" data-more="${m.rune.id}" title="${open ? 'Réduire' : 'Détail'}">${open ? '−' : '+'}</button></div>
+      ${open ? `<div class="sub">${sub}</div><div class="meta">${oddsText(m.odds)}<span class="risk" title="Probabilité que cette pose fasse tomber une ligne cible sous sa cible">abîme une cible <b>${Math.round(m.pHurtTarget * 100)} %</b></span><span class="muted">≈ ${f1(m.score)} poses restantes, celle-ci comprise</span></div>` : ''}
     </div>`;
   }).join('')}</div>`;
+  $$('.move .more').forEach(b => b.onclick = e => { e.stopPropagation(); const id = b.dataset.more; adviceOpen.has(id) ? adviceOpen.delete(id) : adviceOpen.add(id); renderAdvice(); });
   $$('.move').forEach(d => d.onclick = () => { const [stat, tier] = d.dataset.rune.split(':'); pending = runeOf(stat, +tier); renderAdvice(); renderPose(); });
 }
 
@@ -507,6 +509,7 @@ function bump(stat, n) {
 function journal() { try { return JSON.parse(localStorage.getItem(JKEY)) || []; } catch { return []; } }
 function journalAdd(entry) { try { const j = journal(); j.push(entry); localStorage.setItem(JKEY, JSON.stringify(j)); } catch {} }
 const XKEY = 'fm-dofus:journal-exported';
+function journalPop(e) { if (e.simulated) return; try { const j = journal(); const last = j.at(-1); if (last && last.rune.stat === e.rune.stat && last.rune.tier === e.rune.tier && last.outcome === e.outcome) { j.pop(); localStorage.setItem(JKEY, JSON.stringify(j)); } } catch {} }
 function journalExport() {
   const j = journal();
   const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), tool: VERSION, model: S.settings.model || 'dofocus', entries: j, sessions: sessions(), prices: prices() }, null, 1)], { type: 'application/json' });
@@ -836,11 +839,28 @@ function renderHistory() {
   $('#journal-stats').innerHTML = `${j.length} pose${j.length > 1 ? 's' : ''} réelle${j.length > 1 ? 's' : ''} (tous objets)${fresh ? ` · <span class="${fresh >= 30 ? 'warn' : 'muted'}">${fresh} non exportée${fresh > 1 ? 's' : ''}</span>` : ' · <span class="ok">tout exporté</span>'}`;
   $('#journal-export').disabled = !j.length;
   $('#undo').disabled = !h.length;
-  $('#history-list').innerHTML = [...h].reverse().slice(0, 12).map(e => {
+  const e = h.at(-1);
+  $('#history-list').innerHTML = !e ? '<li class="muted small">Aucune pose.</li>' : (() => {
     const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(labelOf(c.stat))}`).join(', ');
     const rel = e.reliquatDelta ? ` · reliquat ${e.reliquatDelta > 0 ? '+' : ''}${e.reliquatDelta}` : '';
-    return `<li><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span></li>`;
-  }).join('');
+    return `<li><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button id="hist-edit" class="link small" title="Reprendre cette pose : résultat, reliquat et lignes tombées">modifier</button></li>`;
+  })();
+  const ed = $('#hist-edit'); if (ed) ed.onclick = editLastEntry;
+}
+// Reprise de la dernière pose : on l'annule, puis on rouvre la saisie avec ses valeurs pré-remplies.
+function editLastEntry() {
+  const e = S.history.pop(); if (!e) return;
+  S.item.lines = e.before.lines; S.reliquat = e.before.reliquat; S.reliquatBefore = e.before.reliquatBefore ?? e.before.reliquat;
+  journalPop(e); save();
+  pending = runeOf(e.rune.stat, e.rune.tier);
+  renderAll();
+  if (e.outcome === 'SC') { setStatus('Pose annulée : choisis le résultat (SC / SN / EC).'); setTimeout(() => setStatus(''), 3000); return; }
+  startOutcome(e.outcome);
+  if (lossDraft) {
+    for (const c of e.changes) if (c.delta < 0) lossDraft.deltas[c.stat] = -c.delta;
+    lossDraft.newReliquat = e.after?.reliquat ?? S.reliquat + (e.reliquatDelta || 0);
+    renderLossPanel();
+  }
 }
 $('#undo').onclick = () => {
   const e = S.history.pop(); if (!e) return;
