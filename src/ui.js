@@ -866,7 +866,7 @@ function renderHistory() {
   const row = (e, i) => {
     const ch = e.changes.map(c => `${c.delta > 0 ? '+' : ''}${c.delta} ${esc(STAT_BY_KEY[c.stat]?.short || c.stat)}`).join(', ');
     const rel = e.reliquatDelta ? ` · reliquat ${e.reliquatDelta > 0 ? '+' : ''}${e.reliquatDelta}` : '';
-    return `<li data-i="${i}"><span class="muted small hn">${i + 1}</span><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button class="link small" data-edit="${i}" title="Modifier cette pose">modifier</button></li>`;
+    return `<li data-i="${i}"><span class="muted small hn">${i + 1}</span><span class="tag ${e.outcome}">${e.outcome}</span>${runeImg(runeOf(e.rune.stat, e.rune.tier), 'ricon sm')}${esc(e.rune.name)}${e.simulated ? ' <span class="muted small">(simulé)</span>' : ''} <span class="muted small">${ch || 'rien ne bouge'}${rel}${e.gap ? ` · écart ${e.gap}` : ''}</span> <button class="hedit-btn" data-edit="${i}" title="Modifier cette pose" aria-label="Modifier cette pose"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.2 2.3a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2L6 12.5l-3 .8.8-3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.4"/></svg></button></li>`;
   };
   const last = h.length - 1;
   $('#history-list').innerHTML = (h.length ? row(h[last], last) : '<li class="muted small">Aucune pose.</li>')

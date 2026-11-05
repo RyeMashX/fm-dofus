@@ -345,3 +345,8 @@ body.pip .itembar .grow, body.view-fm .itembar .grow { flex-basis: calc(100% - 4
 body.pip { --w: 100%; }
 body.pip main { padding-bottom: 16px; }
 .pip-placeholder { max-width: 460px; margin: 20px auto; text-align: center; }
+
+/* Historique : crayon « modifier » */
+.hedit-btn { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; margin-left: 4px; vertical-align: middle; background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--muted); cursor: pointer; }
+.hedit-btn:hover { color: var(--accent); border-color: var(--line); }
+.hedit-btn svg { width: 13px; height: 13px; display: block; }
