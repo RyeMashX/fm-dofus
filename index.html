@@ -80,12 +80,9 @@
     <div class="row">
       <div id="pose-rune" class="grow"></div>
     </div>
-    <div class="row">
-      <button class="link small" id="other-rune">autre rune</button>
-    </div>
-    <div id="rune-picker" class="row hidden">
-      <select id="rune-stat"></select>
-      <div id="rune-tiers" class="tiers"></div>
+    <div id="rune-picker" class="rune-picker hidden">
+      <input id="rune-q" type="text" placeholder="Rune : tape pour filtrer (pa vi, do eau…)" autocomplete="off" spellcheck="false">
+      <ul id="rune-list" class="results"></ul>
     </div>
     <div class="outcomes">
       <button id="cap-pose" class="primary hidden" title="Lit la dernière pose dans l'historique du jeu et l'applique">Lire l'écran</button>

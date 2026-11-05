@@ -409,22 +409,44 @@ function renderAdvice() {
 function renderPose() {
   if (!pending) pending = runeOf(S.item.lines[0]?.stat ?? 'vita', 0);
   const o = FM.odds(S.item, pending);
+  const drop = `<button id="rune-drop" class="rune-drop${pickerOpen ? ' on' : ''}" title="Choisir une autre rune">▾</button>`;
   $('#pose-rune').innerHTML = o.blocked
-    ? `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
-    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong> <span class="muted small">${statImg(pending.stat, 'sicon sm')}+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)} ${diffText(o)}`;
+    ? `<strong>${runeImg(pending)}${esc(pending.name)}</strong>${drop} <span class="muted small">pose impossible (${o.blocked === 'line-cap' ? 'plafond de la ligne' : 'plafond over+exo'})</span>`
+    : `<strong>${runeImg(pending)}${esc(pending.name)}</strong>${drop} <span class="muted small">${statImg(pending.stat, 'sicon sm')}+${pending.bonus} ${esc(labelOf(pending.stat))} · poids ${pending.weight}${o.half ? ' (÷2)' : ''}</span><br>${oddsText(o)} ${diffText(o)}`;
   $$('#pose button[data-outcome]').forEach(b => b.disabled = !!o.blocked);
   $('#simulate').disabled = !!o.blocked;
-  // sélecteur manuel
-  const present = S.item.lines.map(l => l.stat);
-  const others = STATS.map(s => s.key).filter(k => !present.includes(k));
-  const opt = k => `<option value="${k}" ${k === pending.stat ? 'selected' : ''}>${esc(labelOf(k))}</option>`;
-  $('#rune-stat').innerHTML = `<optgroup label="Sur l'objet">${present.map(opt).join('')}</optgroup><optgroup label="Exo">${others.map(opt).join('')}</optgroup>`;
-  const st = STAT_BY_KEY[pending.stat];
-  $('#rune-tiers').innerHTML = st.tiers.map(([name, bonus], k) => `<button class="small ${k === pending.tier ? 'on' : ''}" data-tier="${k}">${runeImg(runeOf(pending.stat, k), 'ricon sm')}${esc(name)} +${bonus}</button>`).join('');
-  $$('#rune-tiers button').forEach(b => b.onclick = () => { pending = runeOf(pending.stat, +b.dataset.tier); renderAdvice(); renderPose(); });
+  $('#rune-drop').onclick = e => { e.stopPropagation(); pickerOpen = !pickerOpen; renderPose(); if (pickerOpen) { const q = $('#rune-q'); q.value = ''; pickerActive = 0; renderRuneList(); q.focus(); } };
+  $('#rune-picker').classList.toggle('hidden', !pickerOpen);
 }
-$('#other-rune').onclick = () => $('#rune-picker').classList.toggle('hidden');
-$('#rune-stat').onchange = e => { pending = runeOf(e.target.value, 0); renderAdvice(); renderPose(); };
+
+// Sélecteur de rune : d'abord les runes des lignes de l'objet, puis les exos ; filtre au clavier.
+let pickerOpen = false, pickerActive = 0, pickerItems = [];
+const normTxt = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function renderRuneList() {
+  const q = normTxt($('#rune-q').value.trim()).split(/\s+/).filter(Boolean);
+  const present = S.item.lines.map(l => l.stat);
+  const ordre = [...present, ...STATS.map(s => s.key).filter(k => !present.includes(k))];
+  pickerItems = ordre.flatMap(k => RUNES.filter(r => r.stat === k).map(r => ({ r, exo: !present.includes(k) })))
+    .filter(({ r }) => { const t = normTxt(`${r.name} ${labelOf(r.stat)}`); return q.every(w => t.includes(w)); });
+  pickerActive = Math.min(pickerActive, Math.max(0, pickerItems.length - 1));
+  let exoVu = false;
+  $('#rune-list').innerHTML = pickerItems.slice(0, 80).map(({ r, exo }, i) => {
+    const sep = exo && !exoVu ? (exoVu = true, '<li class="sep muted small">Exo</li>') : '';
+    const o = FM.odds(S.item, r);
+    return `${sep}<li data-i="${i}" class="${i === pickerActive ? 'on' : ''}${r.id === pending.id ? ' cur' : ''}">${runeImg(r, 'ricon sm')}<span class="grow">${esc(r.name)} <span class="muted small">+${r.bonus} ${esc(labelOf(r.stat))}</span></span><span class="small ${o.blocked ? 'muted' : ''}">${o.blocked ? 'bloquée' : `SC ${pct(o.sc)} %`}</span></li>`;
+  }).join('') || '<li class="muted small">Aucune rune</li>';
+  $$('#rune-list li[data-i]').forEach(li => li.onmousedown = e => { e.preventDefault(); choisirRune(pickerItems[+li.dataset.i].r); });
+  $('#rune-list li.on')?.scrollIntoView({ block: 'nearest' });
+}
+function choisirRune(r) { pending = r; pickerOpen = false; renderAdvice(); renderPose(); }
+$('#rune-q').oninput = () => { pickerActive = 0; renderRuneList(); };
+$('#rune-q').onkeydown = e => {
+  if (e.key === 'ArrowDown') { pickerActive = Math.min(pickerItems.length - 1, pickerActive + 1); renderRuneList(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { pickerActive = Math.max(0, pickerActive - 1); renderRuneList(); e.preventDefault(); }
+  else if (e.key === 'Enter') { const x = pickerItems[pickerActive]; if (x) choisirRune(x.r); e.preventDefault(); }
+  else if (e.key === 'Escape') { pickerOpen = false; renderPose(); }
+};
+document.addEventListener('mousedown', e => { if (pickerOpen && !e.target.closest('#rune-picker, #rune-drop')) { pickerOpen = false; renderPose(); } });
 
 $$('#pose button[data-outcome]').forEach(b => b.onclick = () => startOutcome(b.dataset.outcome));
 $('#simulate').onclick = () => {
@@ -653,7 +675,7 @@ function renderPoseRead(r) {
   };
   if (!dup && r.reliquat != null) {
     const ok = apply();
-    screenStatus(`Lu : ${rune.name} en ${info.outcome} (${txt.replace(/<[^>]+>/g, '')})${ok ? ' · appliqué' : ' · à vérifier ci-dessous'}`);
+    screenStatus(''); // la pose lue apparaît dans l'historique (ou dans le panneau de pertes à vérifier)
     return;
   }
   out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${runeImg(rune)}${esc(rune.name)} en ${info.outcome}</strong></div>
@@ -863,6 +885,16 @@ function openHistEditor(i) {
   const rune = e ? e.rune : { stat: pending?.stat ?? S.item.lines[0]?.stat, tier: pending?.tier ?? 0 };
   const draft = { rune: { ...rune }, outcome: e?.outcome ?? 'EC', changes: e ? e.changes.map(c => ({ ...c })) : [], reliquatDelta: e?.reliquatDelta ?? 0 };
   const stats = STATS.filter(st => st.tiers.length);
+  // En SC ou SN, la ligne de la rune monte de son bonus : ajoutée d'office, et suivie quand on change de rune
+  // ou de résultat (la ligne ajoutée d'office est remplacée ; une ligne saisie à la main n'est pas touchée).
+  const syncRune = () => {
+    if (draft.auto) { const k = draft.changes.findIndex(c => c === draft.auto); if (k >= 0) draft.changes.splice(k, 1); draft.auto = null; }
+    const r = runeOf(draft.rune.stat, draft.rune.tier);
+    if (!r || draft.outcome === 'EC' || draft.changes.some(c => c.stat === r.stat)) return;
+    draft.auto = { stat: r.stat, delta: r.bonus };
+    draft.changes.unshift(draft.auto);
+  };
+  if (!e) syncRune();
   const render = () => {
     const tiers = STAT_BY_KEY[draft.rune.stat]?.tiers || [];
     const host = $('#hist-editor');
@@ -873,23 +905,23 @@ function openHistEditor(i) {
       <div class="he-changes">${draft.changes.map((c, k) => `<div class="row small"><span class="grow">${statImg(c.stat, 'sicon sm')}${esc(labelOf(c.stat))}</span><input type="number" class="num small" data-k="${k}" value="${c.delta}"><button class="link small" data-del="${k}">×</button></div>`).join('')}
         <div class="row small"><select id="he-add-stat" class="small"><option value="">+ ligne modifiée…</option>${STATS.map(st => `<option value="${st.key}">${esc(st.label)}</option>`).join('')}</select></div></div>
       <div class="row small"><label class="sel">Reliquat <input id="he-rel" type="number" step="0.1" class="num small" value="${draft.reliquatDelta}" title="variation du reliquat (+ gagné, − consommé)"></label><div class="spacer"></div>${e ? '<button class="link small" id="he-delete">supprimer la pose</button>' : ''}<button id="he-ok" class="primary small">Enregistrer</button></div></div>`;
-    $('#he-stat').onchange = ev => { draft.rune.stat = ev.target.value; draft.rune.tier = 0; render(); };
-    $('#he-tier').onchange = ev => { draft.rune.tier = +ev.target.value; };
-    $$('#hist-editor [data-o]').forEach(b => b.onclick = () => { draft.outcome = b.dataset.o; render(); });
-    $$('#hist-editor input[data-k]').forEach(inp => inp.onchange = ev => { draft.changes[+ev.target.dataset.k].delta = Number(ev.target.value) || 0; });
-    $$('#hist-editor [data-del]').forEach(b => b.onclick = () => { draft.changes.splice(+b.dataset.del, 1); render(); });
+    $('#he-stat').onchange = ev => { draft.rune.stat = ev.target.value; draft.rune.tier = 0; syncRune(); render(); };
+    $('#he-tier').onchange = ev => { draft.rune.tier = +ev.target.value; syncRune(); render(); };
+    $$('#hist-editor [data-o]').forEach(b => b.onclick = () => { draft.outcome = b.dataset.o; syncRune(); render(); });
+    $$('#hist-editor input[data-k]').forEach(inp => inp.onchange = ev => { const c = draft.changes[+ev.target.dataset.k]; c.delta = Number(ev.target.value) || 0; if (c === draft.auto) draft.auto = null; });
+    $$('#hist-editor [data-del]').forEach(b => b.onclick = () => { const [c] = draft.changes.splice(+b.dataset.del, 1); if (c === draft.auto) draft.auto = null; render(); });
     $('#he-add-stat').onchange = ev => { if (ev.target.value) { draft.changes.push({ stat: ev.target.value, delta: 0 }); render(); } };
     $('#he-rel').onchange = ev => { draft.reliquatDelta = w1(Number(ev.target.value) || 0); };
     $('#he-cancel').onclick = () => { host.innerHTML = ''; };
-    const del = $('#he-delete'); if (del) del.onclick = () => { if (!confirm('Supprimer cette pose ?')) return; h.splice(i, 1); journalRemove(e.id); replayHistory(i); host.innerHTML = ''; };
+    const del = $('#he-delete'); if (del) del.onclick = () => { if (!confirm('Supprimer cette pose ?')) return; h.splice(i, 1); journalRemove(e.id); host.innerHTML = ''; replayHistory(i); };
     $('#he-ok').onclick = () => {
       const r = runeOf(draft.rune.stat, draft.rune.tier); if (!r) return;
-      draft.changes = draft.changes.filter(c => c.delta);
+      draft.changes = draft.changes.filter(c => c.delta).map(c => ({ stat: c.stat, delta: c.delta }));
       const entry = { id: e?.id ?? Date.now(), rune: { stat: r.stat, tier: r.tier, name: r.name }, outcome: draft.outcome, changes: draft.changes, reliquatDelta: draft.reliquatDelta, simulated: e?.simulated ?? false, gap: 0, edited: true,
                       before: e ? e.before : { lines: S.item.lines.map(l => ({ ...l })), reliquat: S.reliquat, reliquatBefore: S.reliquatBefore } };
       if (e) h[i] = entry; else h.push(entry);
       journalPatch(entry);
-      replayHistory(e ? i : h.length - 1); host.innerHTML = '';
+      host.innerHTML = ''; replayHistory(e ? i : h.length - 1);
     };
   };
   render();
@@ -907,8 +939,14 @@ function replayHistory(i) {
     for (const c of e.changes) { let l = lines.find(x => x.stat === c.stat); if (!l) { l = { stat: c.stat, value: 0, min: null, max: null }; lines.push(l); } l.value += c.delta; }
     relBefore = rel; rel = w1(rel + (e.reliquatDelta || 0));
   }
-  S.item.lines = lines; S.reliquat = rel; S.reliquatBefore = rel; lastAdvice = null;
+  // l'objet en cours suit l'historique corrigé (comme après une pose), et le prochain coup est recalculé
+  const avant = new Map(S.item.lines.map(l => [l.stat, l.value]));
+  S.item.lines = lines.filter(l => l.min != null || l.value > 0); S.reliquat = rel; S.reliquatBefore = rel; lastAdvice = null;
   save(); renderAll();
+  const diff = S.item.lines.filter(l => (avant.get(l.stat) ?? 0) !== l.value).map(l => `${STAT_BY_KEY[l.stat]?.short || labelOf(l.stat)} ${avant.get(l.stat) ?? 0} → ${l.value}`);
+  for (const [stat, v] of avant) if (v && !S.item.lines.some(l => l.stat === stat)) diff.push(`${STAT_BY_KEY[stat]?.short || labelOf(stat)} ${v} → 0`);
+  const host = $('#hist-editor'); if (host) host.innerHTML = `<p class="small ${diff.length ? 'ok' : 'muted'}">${esc(diff.length ? `Objet mis à jour : ${diff.join(', ')}` : 'Historique mis à jour, objet inchangé.')}</p>`;
+  if (S.settings.view === 'fm' && Object.keys(S.target).length) computeAdvice();
 }
 function journalRemove(hid) { try { const j = journal(); const k = j.findIndex(x => x.hid === hid); if (k >= 0) { j.splice(k, 1); localStorage.setItem(JKEY, JSON.stringify(j)); } } catch {} }
 function journalPatch(e) { try { const j = journal(); const x = j.find(x => x.hid === e.id); if (x) { x.outcome = e.outcome; x.changes = e.changes; x.rune = { ...x.rune, stat: e.rune.stat, tier: e.rune.tier, name: e.rune.name }; x.edited = true; localStorage.setItem(JKEY, JSON.stringify(j)); } } catch {} }

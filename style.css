@@ -281,6 +281,15 @@ button.cta-auto:hover { background: #8f7df0; color: #fff; }
 
 /* Pose */
 #pose-rune strong { font-size: 15px; }
+.rune-drop { padding: 0 7px; margin-left: 4px; font-size: 13px; line-height: 20px; vertical-align: middle; border-radius: 6px; }
+.rune-drop.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.rune-picker { position: relative; margin: 6px 0; }
+.rune-picker input { width: 100%; padding: 5px 10px; }
+.rune-picker .results { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; margin: 0; padding: 0; list-style: none; background: #16181d; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px #000a; max-height: 300px; overflow: auto; }
+.rune-picker .results li { display: flex; align-items: center; gap: 6px; padding: 4px 8px; cursor: pointer; }
+.rune-picker .results li.on, .rune-picker .results li:hover { background: #22252c; }
+.rune-picker .results li.cur { box-shadow: inset 3px 0 0 var(--accent); }
+.rune-picker .results li.sep { cursor: default; background: none; padding-top: 6px; border-top: 1px solid var(--line); }
 .tiers { display: flex; gap: 6px; }
 .tiers button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .outcomes { display: flex; gap: 8px; margin: 8px 0 0; align-items: center; }
