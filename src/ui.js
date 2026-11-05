@@ -658,8 +658,9 @@ function renderPoseRead(r) {
   out.innerHTML = `<div class="loss"><div class="row"><strong>Dernière pose lue : ${runeImg(rune)}${esc(rune.name)} en ${info.outcome}</strong></div>
     <div class="small">${txt}${r.reliquat != null ? ` · reliquat affiché ${r.reliquat}` : ' · <span class="warn">reliquat non lu</span>'}</div>
     ${dup ? '<p class="warn small">Identique à la dernière pose appliquée : as-tu bien posé une nouvelle rune ?</p>' : ''}
-    <div class="row"><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
+    <div class="row"><button id="read-save" class="link small" title="Télécharge l'image lue pour corriger l'OCR">lecture fausse ? enregistrer la capture</button><div class="spacer"></div><button id="read-cancel" class="secondary small">Ignorer</button><button id="read-apply" class="primary">Vérifier et appliquer</button></div></div>`;
   $('#read-cancel').onclick = () => { out.innerHTML = ''; };
+  $('#read-save').onclick = () => { if (!Cap.downloadLastFrame(`fm-dofus-capture-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.png`)) setStatus('Pas de capture en mémoire.'); };
   $('#read-apply').onclick = apply;
 }
 

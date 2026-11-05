@@ -24,6 +24,13 @@ export function stopCapture() {
 }
 
 // Image courante du flux, en ImageData.
+// Dernière image lue, pour l'exporter quand une lecture est fausse (diagnostic de l'OCR).
+let lastCanvas = null;
+export function downloadLastFrame(name = 'fm-dofus-capture.png') {
+  if (!lastCanvas) return false;
+  lastCanvas.toBlob(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }, 'image/png');
+  return true;
+}
 export function grabFrame() {
   if (window.__fmTestFrame) { // image de test injectée (tests automatisés)
     const img = window.__fmTestFrame; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
@@ -33,6 +40,7 @@ export function grabFrame() {
   if (!isCapturing() || !video.videoWidth) throw new Error('Pas de capture en cours.');
   const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight;
   const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(video, 0, 0);
+  lastCanvas = c;
   return { canvas: c, frame: ctx.getImageData(0, 0, c.width, c.height) };
 }
 
