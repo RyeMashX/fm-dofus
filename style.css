@@ -178,7 +178,7 @@ button.busy::after { content: ''; position: absolute; left: 50%; top: 50%; width
 .line .l1 { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 370px; }
 .line .l2 { flex: 1; min-width: 0; margin-top: 0; }
 .line .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; }
-.line .name .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.line .name .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
 .sicon { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; flex: none; }
 .sicon.sm { width: 15px; height: 15px; margin-right: 4px; }
 .line .name .recbadge { margin-left: 8px; }
@@ -212,7 +212,8 @@ button.busy::after { content: ''; position: absolute; left: 50%; top: 50%; width
 #lines.light .l2, .lhead.light .l2 { display: none; }
 .lhead.light .l1 { width: auto; flex: 1; }
 #lines.light .line .l1 { width: auto; flex: 1; }
-#lines.light .line .name { flex: 1; overflow: visible; }
+#lines.light .line .name { flex: 1; min-width: 0; overflow: visible; }
+#lines.light .line .name .lbl { flex: 0 1 auto; }
 .recbadge { display: none; position: relative; vertical-align: middle; margin-left: 8px; padding: 1px 4px; border: 1px solid var(--rec); border-radius: 6px; background: var(--rec-bg); line-height: 0; cursor: default; }
 .recbadge .ricon.sm { margin: 0; }
 #lines.light .recbadge:not(.hidden) { display: inline-flex; }

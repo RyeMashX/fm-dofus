@@ -73,6 +73,18 @@ const STAT_ICONS = {
   re_per_di: 'tx_res_distance', re_per_me: 'tx_res_melee', ret_pa: 'tx_attackAP', ret_pme: 'tx_attackMP', re_pa: 'tx_dodgeAP', re_pme: 'tx_dodgeMP',
   invo: 'tx_summonableCreaturesBoost', po: 'tx_range', pm: 'tx_movementPoints', pa: 'tx_actionPoints',
 };
+// Libellés courts pour la vue Objet (le nom complet reste en infobulle). Ré % ≠ Ré fixe, Do % ≠ Do fixe.
+const STAT_SHORT = {
+  vita: 'Vitalité', fo: 'Force', ine: 'Intel', cha: 'Chance', age: 'Agilité', ini: 'Initiative', pod: 'Pods', sa: 'Sagesse', prospe: 'Prospe',
+  pui: 'Puissance', tacle: 'Tacle', fuite: 'Fuite', cri: 'Cri %', so: 'Soins',
+  do_neutre: 'Do neutre', do_terre: 'Do terre', do_feu: 'Do feu', do_eau: 'Do eau', do_air: 'Do air', do: 'Dommages',
+  do_pou: 'Do pou', do_cri: 'Do cri', do_ren: 'Renvoi', do_pi: 'Do pièges', pui_pi: 'Pui pièges', chasse: 'Chasse',
+  do_per_ar: 'Do % armes', do_per_di: 'Do % dist', do_per_me: 'Do % mêlée', do_per_so: 'Do % sorts',
+  re_neutre: 'Ré neutre', re_terre: 'Ré terre', re_feu: 'Ré feu', re_eau: 'Ré eau', re_air: 'Ré air', re_cri: 'Ré cri', re_pou: 'Ré pou',
+  re_per_neutre: 'Ré % neutre', re_per_terre: 'Ré % terre', re_per_feu: 'Ré % feu', re_per_eau: 'Ré % eau', re_per_air: 'Ré % air', re_per_di: 'Ré % dist', re_per_me: 'Ré % mêlée',
+  ret_pa: 'Ret PA', ret_pme: 'Ret PM', re_pa: 'Ré ret PA', re_pme: 'Ré ret PM', invo: 'Invo', po: 'Portée', pm: 'PM', pa: 'PA',
+};
+for (const s of STATS) s.short = STAT_SHORT[s.key] || s.label;
 for (const s of STATS) s.icon = STAT_ICONS[s.key] ? `https://dofusdb.fr/icons/characteristics/${STAT_ICONS[s.key]}.png` : null;
 const STAT_BY_KEY = Object.fromEntries(STATS.map(s => [s.key, s]));
 
